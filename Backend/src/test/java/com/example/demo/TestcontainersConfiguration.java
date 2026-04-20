@@ -15,7 +15,7 @@ class TestcontainersConfiguration {
     @Bean
     @ServiceConnection
     PostgreSQLContainer<?> postgresContainer() {
-        return new PostgreSQLContainer<>(DockerImageName.parse("postgres:10.10.0"));
+        return new PostgreSQLContainer<>(DockerImageName.parse("postgres:10-alpine"));
     }
 
     // 1. Instancia estática (se crea una sola vez)
