@@ -1,6 +1,7 @@
 package com.logistics.packages.infrastructure.adapter.out.persistence.paquete;
 
 import com.logistics.packages.domain.valueobject.*;
+import com.logistics.packages.infrastructure.adapter.out.persistence.persona.PersonaDbo;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -43,23 +44,13 @@ public class PaqueteDbo {
     @Column(name = "metodo_pago")
     private MetodoPago metodoPago;
 
-    @Column(name = "remitente_documento")
-    private String remitenteDocumento;
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "remitente_id")
+    private PersonaDbo remitente;
 
-    @Column(name = "remitente_nombre")
-    private String remitenteNombre;
-
-    @Column(name = "remitente_telefono")
-    private String remitenteTelefono;
-
-    @Column(name = "destinatario_documento")
-    private String destinatarioDocumento;
-
-    @Column(name = "destinatario_nombre")
-    private String destinatarioNombre;
-
-    @Column(name = "destinatario_telefono")
-    private String destinatarioTelefono;
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "destinatario_id")
+    private PersonaDbo destinatario;
 
     private Double peso;
     private Double largo;
