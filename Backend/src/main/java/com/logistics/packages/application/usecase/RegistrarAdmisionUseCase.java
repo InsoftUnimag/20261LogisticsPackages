@@ -1,12 +1,13 @@
 package com.logistics.packages.application.usecase;
 
+import com.logistics.packages.application.ports.in.RegistrarAdmisionIn;
 import com.logistics.packages.application.ports.out.GeocodingService;
 import com.logistics.packages.application.ports.out.PaqueteRepository;
 import com.logistics.packages.application.ports.out.RutaEventPublisher;
-import com.logistics.packages.domain.model.EstadoGps;
+import com.logistics.packages.domain.exception.TimeoutGeocodingException;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.Coordenadas;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,30 +15,56 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
-public class RegistrarAdmisionUseCase {
+@Transactional
+@AllArgsConstructor
+public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
 
     private final PaqueteRepository paqueteRepository;
     private final GeocodingService geocodingService;
     private final RutaEventPublisher eventPublisher;
 
-    @Transactional
-    public UUID registrarAdmision(Paquete paquete) {
-        // FR-002: Intentar Geocoding con timeout (el timeout debe manejarse en el adaptador)
-        Optional<Coordenadas> coordenadas = geocodingService.localizar(paquete.getDireccionDestino());
-        
-        coordenadas.ifPresent(paquete::asignarCoordenadas);
+    @Override
+    public UUID registrarAdmision(RegistroAdmisionCommand command) {
+        Coordenadas coordenadas = null;
+        Optional<Coordenadas> coordenadasOpt = geocodingService.localizar(command.direccionDestino());
+        if (coordenadasOpt.isEmpty()) {
+            // El fallback: El empleado deberá llenar las coordenadas a mano
+            // a través de React posteriormente al guardado parcial.
+            // Se podría lanzar una excepción o manejarlo como estado PENDIENTE_GPS
+        }
+        coordenadas = coordenadasOpt.orElse(null);
 
-        // FR-011: Nota - Se asume que el pesaje ya se validó antes de llamar a este UC o es parte del flujo.
-        // El IP indica que el evento de ruta se dispara si hay coordenadas y se ejecutó el pesaje.
-        
-        Paquete guardado = paqueteRepository.guardar(paquete);
+        Paquete paquete = Paquete.builder()
+                .sedeId(command.sedeId())
+                .direccionDestino(command.direccionDestino())
+                .valorDeclarado(command.valorDeclarado())
+                .metodoPago(command.metodoPago())
+                .remitente(command.remitente())
+                .destinatario(command.destinatario())
+                .tipoMercancia(command.tipoMercancia())
+                .indicadorFormaIrregular(command.indicadorFormaIrregular())
+                .build();
 
-        // FR-012: Invocar Solicitar Ruta si el GPS está resuelto
-        if (guardado.getEstadoGps() == EstadoGps.RESUELTO) {
-            eventPublisher.publicarSolicitudRuta(guardado.getId());
+        if (coordenadas != null) {
+            paquete.asignarCoordenadas(coordenadas);
         }
 
-        return guardado.getId();
+        // Procesar pesaje si los datos están presentes
+        if (haEjecutadoPesaje(command)) {
+            // El factor de conversión debería ser configurable
+            paquete.procesarPesaje(command.peso(), command.largo(), command.ancho(), command.alto(), 250);
+        }
+
+        Paquete saved = paqueteRepository.save(paquete);
+
+        if (coordenadas != null && haEjecutadoPesaje(command)) {
+            eventPublisher.publicarSolicitudRuta(saved.getId());
+        }
+
+        return saved.getId();
+    }
+
+    private boolean haEjecutadoPesaje(RegistroAdmisionCommand command) {
+        return command.peso() != null && command.largo() != null && command.ancho() != null && command.alto() != null;
     }
 }
