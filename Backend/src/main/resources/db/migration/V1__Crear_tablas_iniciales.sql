@@ -1,0 +1,52 @@
+-- V1: Creación de las tablas iniciales para paquetes y zonas de almacenaje
+
+CREATE TABLE paquetes (
+    id UUID PRIMARY KEY,
+    fecha_ingreso_utc TIMESTAMP,
+    estado VARCHAR(255),
+    sede_id VARCHAR(255),
+    direccion_destino VARCHAR(255),
+    latitud DOUBLE PRECISION,
+    longitud DOUBLE PRECISION,
+    estado_gps VARCHAR(255),
+    valor_declarado NUMERIC(19, 2),
+    metodo_pago VARCHAR(255),
+    remitente_documento VARCHAR(255),
+    remitente_nombre VARCHAR(255),
+    remitente_telefono VARCHAR(255),
+    destinatario_documento VARCHAR(255),
+    destinatario_nombre VARCHAR(255),
+    destinatario_telefono VARCHAR(255),
+    peso DOUBLE PRECISION,
+    largo DOUBLE PRECISION,
+    ancho DOUBLE PRECISION,
+    alto DOUBLE PRECISION,
+    volumen_m3 DOUBLE PRECISION,
+    peso_volumetrico DOUBLE PRECISION,
+    peso_facturable DOUBLE PRECISION,
+    tipo_mercancia VARCHAR(255),
+    categoria_carga VARCHAR(255),
+    indicador_forma_irregular BOOLEAN,
+    precio_envio NUMERIC(19, 2),
+    distancia_estimada_km DOUBLE PRECISION,
+    ruta_id UUID,
+    zona_almacenamiento_id UUID,
+    zona_destino_id UUID
+);
+
+CREATE TABLE zonas_almacenaje (
+    id UUID PRIMARY KEY,
+    nombre VARCHAR(255),
+    codigo VARCHAR(255) UNIQUE,
+    categoria VARCHAR(255),
+    capacidad_max_kg NUMERIC(10, 2),
+    capacidad_max_m3 NUMERIC(10, 3),
+    capacidad_max_paquetes INTEGER,
+    peso_actual_kg NUMERIC(10, 2),
+    volumen_actual_m3 NUMERIC(10, 3),
+    contador_paquetes INTEGER,
+    estado VARCHAR(255),
+    ubicacion_fisica VARCHAR(255),
+    id_sede UUID,
+    zona_contingencia_id UUID
+);
