@@ -1,4 +1,4 @@
-package com.logistics.packages.infrastructure.adapter.out.persistence;
+package com.logistics.packages.infrastructure.adapter.out.persistence.paquete;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

@@ -1,4 +1,4 @@
-package com.logistics.packages.infrastructure.adapter.out.persistence;
+package com.logistics.packages.infrastructure.adapter.out.persistence.paquete;
 
 import com.logistics.packages.application.ports.out.PaqueteRepository;
 import com.logistics.packages.domain.model.Paquete;
