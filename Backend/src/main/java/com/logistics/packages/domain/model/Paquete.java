@@ -1,7 +1,6 @@
 package com.logistics.packages.domain.model;
 
 import com.logistics.packages.domain.valueobject.*;
-import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -14,60 +13,18 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "paquetes")
 public class Paquete {
-    @Id
     private UUID id;
     private LocalDateTime fechaIngresoUtc;
-    @Enumerated(EnumType.STRING)
     private EstadoPaquete estado;
     private String sedeId;
-
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "calle", column = @Column(name = "direccion_destino_calle")),
-            @AttributeOverride(name = "detalles", column = @Column(name = "direccion_destino_detalles")),
-            @AttributeOverride(name = "barrio", column = @Column(name = "direccion_destino_barrio")),
-            @AttributeOverride(name = "ciudad", column = @Column(name = "direccion_destino_ciudad"))
-    })
     private Direccion direccionDestino;
-
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "latitud", column = @Column(name = "coordenadas_latitud")),
-            @AttributeOverride(name = "longitud", column = @Column(name = "coordenadas_longitud"))
-    })
     private Coordenadas coordenadas;
-
-    @Enumerated(EnumType.STRING)
     private EstadoGps estadoGps;
     private BigDecimal valorDeclarado;
-    @Enumerated(EnumType.STRING)
     private MetodoPago metodoPago;
-
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "tipoDocumento", column = @Column(name = "remitente_tipo_documento")),
-            @AttributeOverride(name = "numeroDocumento", column = @Column(name = "remitente_numero_documento")),
-            @AttributeOverride(name = "nombreCompleto", column = @Column(name = "remitente_nombre_completo")),
-            @AttributeOverride(name = "telefono", column = @Column(name = "remitente_telefono")),
-            @AttributeOverride(name = "correoElectronico", column = @Column(name = "remitente_correo_electronico")),
-            @AttributeOverride(name = "direccion", column = @Column(name = "remitente_direccion"))
-    })
     private Persona remitente;
-
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "tipoDocumento", column = @Column(name = "destinatario_tipo_documento")),
-            @AttributeOverride(name = "numeroDocumento", column = @Column(name = "destinatario_numero_documento")),
-            @AttributeOverride(name = "nombreCompleto", column = @Column(name = "destinatario_nombre_completo")),
-            @AttributeOverride(name = "telefono", column = @Column(name = "destinatario_telefono")),
-            @AttributeOverride(name = "correoElectronico", column = @Column(name = "destinatario_correo_electronico")),
-            @AttributeOverride(name = "direccion", column = @Column(name = "destinatario_direccion"))
-    })
     private Persona destinatario;
-
     private Double peso;
     private Double largo;
     private Double ancho;
@@ -75,31 +32,20 @@ public class Paquete {
     private Double volumenM3;
     private Double pesoVolumetrico;
     private Double pesoFacturable;
-    @Enumerated(EnumType.STRING)
     private TipoMercancia tipoMercancia;
-    @Enumerated(EnumType.STRING)
     private CategoriaCarga categoriaCarga;
     private Boolean indicadorFormaIrregular;
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "valor", column = @Column(name = "precio_envio_valor")),
-            @AttributeOverride(name = "moneda", column = @Column(name = "precio_envio_moneda"))
-    })
     private PrecioEnvio precioEnvio;
     private Double distanciaEstimadaKm;
-
     private UUID rutaId;
     private UUID zonaAlmacenamientoId;
     private UUID zonaDestinoId;
 
-    @Transient
     @Builder.Default
     private boolean alertaCargaEspecial = false;
-    @Transient
     @Builder.Default
     private boolean alertaDensidadAtipica = false;
 
-    @PrePersist
     public void prePersist() {
         this.id = UUID.randomUUID();
         this.fechaIngresoUtc = LocalDateTime.now(ZoneOffset.UTC);

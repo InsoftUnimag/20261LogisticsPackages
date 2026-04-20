@@ -15,7 +15,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor(force = true)
 public class Persona {
-    @Enumerated(EnumType.STRING)
     private final TipoDocumento tipoDocumento;
     private final String numeroDocumento;
     private final String nombreCompleto;

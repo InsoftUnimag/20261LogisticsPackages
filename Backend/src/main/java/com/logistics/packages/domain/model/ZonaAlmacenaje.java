@@ -1,24 +1,24 @@
 package com.logistics.packages.domain.model;
 
-import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter
 @Setter
-@Entity
-@Table(name = "zonas_almacenaje")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ZonaAlmacenaje {
 
-    @Id
     private UUID id;
     private String nombre;
-    @Column(unique = true)
     private String codigo;
-    @Enumerated(EnumType.STRING)
     private CategoriaZona categoria;
     private BigDecimal capacidadMaxKg;
     private BigDecimal capacidadMaxM3;
@@ -26,7 +26,6 @@ public class ZonaAlmacenaje {
     private BigDecimal pesoActualKg;
     private BigDecimal volumenActualM3;
     private Integer contadorPaquetes;
-    @Enumerated(EnumType.STRING)
     private EstadoZona estado;
     private String ubicacionFisica;
     private UUID idSede;
