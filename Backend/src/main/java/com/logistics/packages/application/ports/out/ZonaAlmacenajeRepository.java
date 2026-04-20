@@ -1,16 +1,13 @@
 package com.logistics.packages.application.ports.out;
 
 import com.logistics.packages.domain.model.ZonaAlmacenaje;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-@Repository
-public interface ZonaAlmacenajeRepository extends JpaRepository<ZonaAlmacenaje, UUID> {
+public interface ZonaAlmacenajeRepository {
 
-    List<ZonaAlmacenaje> findByCategoriaAndEstado(ZonaAlmacenaje.CategoriaZona categoria, ZonaAlmacenaje.EstadoZona estado);
+    ZonaAlmacenaje save(ZonaAlmacenaje zonaAlmacenaje);
 
-    List<ZonaAlmacenaje> findByIdSedeAndCategoriaAndEstado(UUID idSede, ZonaAlmacenaje.CategoriaZona categoria, ZonaAlmacenaje.EstadoZona estado);
+    Optional<ZonaAlmacenaje> findById(UUID id);
 }
