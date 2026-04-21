@@ -1,8 +1,8 @@
-package com.logistics.packages.infrastructure.adapter.in.web;
+package com.logistics.packages.infrastructure.controller;
 
-import com.logistics.packages.application.ports.in.ConsultarPaqueteIn;
-import com.logistics.packages.application.ports.in.RegistrarAdmisionIn;
-import com.logistics.packages.application.usecase.RegistroAdmisionCommand;
+import com.logistics.packages.application.admision.repositories.ConsultarPaqueteIn;
+import com.logistics.packages.application.admision.repositories.RegistrarAdmisionIn;
+import com.logistics.packages.application.admision.usecase.RegistroAdmisionCommand;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.infrastructure.dto.request.RegistroAdmisionRequest;
 import com.logistics.packages.infrastructure.dto.response.ConsultaPaqueteResponse;
