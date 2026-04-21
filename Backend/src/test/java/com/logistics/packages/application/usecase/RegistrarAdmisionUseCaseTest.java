@@ -1,8 +1,10 @@
 package com.logistics.packages.application.usecase;
 
-import com.logistics.packages.application.ports.out.GeocodingService;
-import com.logistics.packages.application.ports.out.PaqueteRepository;
-import com.logistics.packages.application.ports.out.RutaEventPublisher;
+import com.logistics.packages.application.admision.repositories.GeocodingService;
+import com.logistics.packages.application.admision.repositories.PaqueteRepository;
+import com.logistics.packages.application.admision.repositories.RutaEventPublisher;
+import com.logistics.packages.application.admision.usecase.RegistrarAdmisionUseCase;
+import com.logistics.packages.application.admision.usecase.RegistroAdmisionCommand;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.model.Persona;
 import com.logistics.packages.domain.valueobject.TipoDocumento;
