@@ -1,4 +1,4 @@
-package com.logistics.packages.infrastructure.adapter.out.persistence.persona;
+package com.logistics.packages.infrastructure.adapter.persistence.persona;
 
 import com.logistics.packages.domain.model.Persona;
 import com.logistics.packages.domain.valueobject.TipoDocumento;

@@ -1,4 +1,4 @@
-package com.logistics.packages.infrastructure.adapter.out.persistence.persona;
+package com.logistics.packages.infrastructure.adapter.persistence.persona;
 
 import jakarta.persistence.*;
 import lombok.Getter;
