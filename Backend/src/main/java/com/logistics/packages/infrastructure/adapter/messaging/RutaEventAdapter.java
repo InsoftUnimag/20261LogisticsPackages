@@ -1,6 +1,6 @@
-package com.logistics.packages.infrastructure.adapter.out.messaging;
+package com.logistics.packages.infrastructure.adapter.messaging;
 
-import com.logistics.packages.application.ports.out.RutaEventPublisher;
+import com.logistics.packages.application.admision.repositories.RutaEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
