@@ -44,45 +44,102 @@ frontend/
         └── AdmisionApiService.js            [NUEVO — HTTP Fetchs a Spring Boot]
 
 backend/
-├── build.gradle                             [MODIFICADO — Inclusión de dependencias]
-├── domain/
-│   ├── model/
-│   │   ├── Paquete.java                     [NUEVO]
-│   │   ├── Sede.java                        [NUEVO]
-│   │   └── Persona.java                     [NUEVO — Remitente/Destinatario]
-│   ├── valueobject/
-│   │   ├── Direccion.java                   [NUEVO]
-│   │   └── Coordenadas.java                 [NUEVO]
-│   ├── exception/
-│   │   ├── InvalidCoverageException.java    [NUEVO]
-│   │   └── TimeoutGeocodingException.java   [NUEVO]
-│   └── external/
-│           ├── PaqueteRepository.java       [NUEVO]
-│           ├── GeocodingService.java        [NUEVO]
-│           └── RutaEventPublisher.java      [NUEVO]
-│
-├── application/
-│   └── admision/
-│       └── RegistrarAdmisionUseCase.java    [NUEVO — Orquestador de lógica de negocio]
-│
-└── infrastructure/
-    ├── adapter/
-    │   ├── in/
-    │   │   └── web/
-    │   │       └── AdmisionController.java  [NUEVO — Endpoints consumidos por React]
-    │   └── out/
-    │       ├── persistence/
-    │       │   ├── PaqueteJpaAdapter.java   [NUEVO]
-    │       │   └── PaqueteJpaRepository.java
-    │       ├── external/
-    │       │   └── GoogleMapsAdapter.java   [NUEVO — HTTP client con timeout 5s]
-    │       └── messaging/
-    │           └── RutaEventAdapter.java    [NUEVO — EventPublisherPort para colas]
-    └── dto/
-        ├── request/
-        │   └── RegistroAdmisionRequest.java [NUEVO]
-        └── response/
-            └── RegistroAdmisionResponse.java [NUEVO]
+├── build
+├── build.gradle
+├── docker-compose.yml
+├── gradle
+├── gradlew
+├── gradlew.bat
+├── settings.gradle
+└── src
+    ├── main
+    │   ├── java
+    │   │   └── com
+    │   │       ├── example
+    │   │       └── logistics
+    │   │           └── packages
+    │   │               ├── application
+    │   │               │   ├── repository
+    │   │               │   │   ├── ConsultarPaqueteIn.java
+    │   │               │   │   ├── GeocodingService.java
+    │   │               │   │   ├── PaqueteRepository.java
+    │   │               │   │   ├── RegistrarAdmisionIn.java
+    │   │               │   │   ├── RutaEventPublisher.java
+    │   │               │   │   └── ZonaAlmacenajeRepository.java
+    │   │               │   └── usecase
+    │   │               │       ├── ConsultarPaqueteUseCase.java
+    │   │               │       ├── RegistrarAdmisionUseCase.java
+    │   │               │       └── RegistroAdmisionCommand.java
+    │   │               ├── domain
+    │   │               │   ├── exception
+    │   │               │   │   ├── InvalidCoverageException.java
+    │   │               │   │   └── TimeoutGeocodingException.java
+    │   │               │   ├── model
+    │   │               │   │   ├── Paquete.java
+    │   │               │   │   ├── Persona.java
+    │   │               │   │   ├── Sede.java
+    │   │               │   │   └── ZonaAlmacenaje.java
+    │   │               │   └── valueobject
+    │   │               │       ├── CategoriaCarga.java
+    │   │               │       ├── Coordenadas.java
+    │   │               │       ├── Direccion.java
+    │   │               │       ├── EstadoGps.java
+    │   │               │       ├── EstadoPaquete.java
+    │   │               │       ├── MetodoPago.java
+    │   │               │       ├── PrecioEnvio.java
+    │   │               │       ├── TipoDocumento.java
+    │   │               │       └── TipoMercancia.java
+    │   │               └── infrastructure
+    │   │                   ├── adapter
+    │   │                   │   ├── external
+    │   │                   │   │   └── GoogleMapsAdapter.java
+    │   │                   │   ├── messaging
+    │   │                   │   │   └── RutaEventAdapter.java
+    │   │                   │   └── persistence
+    │   │                   │       ├── paquete
+    │   │                   │       │   ├── PaqueteDbo.java
+    │   │                   │       │   ├── PaqueteJpaAdapter.java
+    │   │                   │       │   ├── PaqueteJpaRepository.java
+    │   │                   │       │   └── PaqueteMapper.java
+    │   │                   │       ├── persona
+    │   │                   │       │   ├── PersonaDbo.java
+    │   │                   │       │   └── PersonaMapper.java
+    │   │                   │       └── zonaalmacenaje
+    │   │                   │           ├── ZonaAlmacenajeDbo.java
+    │   │                   │           ├── ZonaAlmacenajeJpaAdapter.java
+    │   │                   │           ├── ZonaAlmacenajeJpaRepository.java
+    │   │                   │           └── ZonaAlmacenajeMapper.java
+    │   │                   ├── controller
+    │   │                   │   └── AdmisionController.java
+    │   │                   ├── dto
+    │   │                   │   ├── request
+    │   │                   │   │   └── RegistroAdmisionRequest.java
+    │   │                   │   └── response
+    │   │                   │       ├── ConsultaPaqueteResponse.java
+    │   │                   │       └── RegistroAdmisionResponse.java
+    │   │                   └── services
+    │   │                       └── S3Service.java
+    │   └── resources
+    │       ├── application.properties
+    │       ├── application.yml
+    │       └── db
+    │           └── migration
+    │               ├── V1__Crear_Esquema_Normalizado.sql
+    │               ├── V1__Crear_tablas_iniciales.sql
+    │               ├── V1__Crear_tipos_enum_nativos.sql
+    │               └── V2__Crear_esquema_normalizado.sql
+    └── test
+        └── java
+            └── com
+                ├── example
+                └── logistics
+                    └── packages
+                        ├── application
+                        │   └── usecase
+                        │       └── RegistrarAdmisionUseCaseTest.java
+                        └── domain
+                            └── model
+                                └── PaqueteTest.java
 ```
 
 ---
