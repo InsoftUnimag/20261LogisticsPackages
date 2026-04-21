@@ -1,10 +1,9 @@
-package com.logistics.packages.application.usecase;
+package com.logistics.packages.application.admision.usecase;
 
-import com.logistics.packages.application.ports.in.RegistrarAdmisionIn;
-import com.logistics.packages.application.ports.out.GeocodingService;
-import com.logistics.packages.application.ports.out.PaqueteRepository;
-import com.logistics.packages.application.ports.out.RutaEventPublisher;
-import com.logistics.packages.domain.exception.TimeoutGeocodingException;
+import com.logistics.packages.application.admision.repositories.RegistrarAdmisionIn;
+import com.logistics.packages.application.admision.repositories.GeocodingService;
+import com.logistics.packages.application.admision.repositories.PaqueteRepository;
+import com.logistics.packages.application.admision.repositories.RutaEventPublisher;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.Coordenadas;
 import lombok.AllArgsConstructor;

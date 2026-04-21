@@ -1,7 +1,7 @@
-package com.logistics.packages.application.usecase;
+package com.logistics.packages.application.admision.usecase;
 
-import com.logistics.packages.application.ports.in.ConsultarPaqueteIn;
-import com.logistics.packages.application.ports.out.PaqueteRepository;
+import com.logistics.packages.application.admision.repositories.ConsultarPaqueteIn;
+import com.logistics.packages.application.admision.repositories.PaqueteRepository;
 import com.logistics.packages.domain.model.Paquete;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
