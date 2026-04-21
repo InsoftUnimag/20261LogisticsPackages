@@ -1,6 +1,6 @@
-package com.logistics.packages.infrastructure.adapter.out.persistence.paquete;
+package com.logistics.packages.infrastructure.adapter.persistence.paquete;
 
-import com.logistics.packages.application.ports.out.PaqueteRepository;
+import com.logistics.packages.application.admision.repositories.PaqueteRepository;
 import com.logistics.packages.domain.model.Paquete;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;

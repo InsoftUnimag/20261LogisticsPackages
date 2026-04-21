@@ -1,7 +1,7 @@
-package com.logistics.packages.infrastructure.adapter.out.persistence.paquete;
+package com.logistics.packages.infrastructure.adapter.persistence.paquete;
 
 import com.logistics.packages.domain.valueobject.*;
-import com.logistics.packages.infrastructure.adapter.out.persistence.persona.PersonaDbo;
+import com.logistics.packages.infrastructure.adapter.persistence.persona.PersonaDbo;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

@@ -1,4 +1,4 @@
-package com.logistics.packages.infrastructure.adapter.out.persistence.paquete;
+package com.logistics.packages.infrastructure.adapter.persistence.paquete;
 
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.Direccion;
@@ -16,12 +16,12 @@ public interface PaqueteMapper {
     @Mapping(source = "direccionDestino", target = "direccionDestino", qualifiedByName = "direccionToString")
     @Mapping(source = "coordenadas.latitud", target = "latitud")
     @Mapping(source = "coordenadas.longitud", target = "longitud")
-    @Mapping(source = "remitente.numeroDocumento", target = "remitenteDocumento")
-    @Mapping(source = "remitente.nombreCompleto", target = "remitenteNombre")
-    @Mapping(source = "remitente.telefono", target = "remitenteTelefono")
-    @Mapping(source = "destinatario.numeroDocumento", target = "destinatarioDocumento")
-    @Mapping(source = "destinatario.nombreCompleto", target = "destinatarioNombre")
-    @Mapping(source = "destinatario.telefono", target = "destinatarioTelefono")
+    @Mapping(source = "remitente.numeroDocumento", target = "remitente.numeroDocumento")
+    @Mapping(source = "remitente.nombreCompleto", target = "remitente.nombreCompleto")
+    @Mapping(source = "remitente.telefono", target = "remitente.telefono")
+    @Mapping(source = "destinatario.numeroDocumento", target = "destinatario.numeroDocumento")
+    @Mapping(source = "destinatario.nombreCompleto", target = "destinatario.nombreCompleto")
+    @Mapping(source = "destinatario.telefono", target = "destinatario.telefono")
     @Mapping(source = "precioEnvio", target = "precioEnvio", qualifiedByName = "precioToBigDecimal")
     PaqueteDbo toDbo(Paquete domain);
 
@@ -74,11 +74,11 @@ public interface PaqueteMapper {
 
     @Named("dboToRemitente")
     default Persona dboToRemitente(PaqueteDbo dbo) {
-        return new Persona(null, dbo.getRemitenteDocumento(), dbo.getRemitenteNombre(), dbo.getRemitenteTelefono(), null, null);
+        return new Persona(null, dbo.getRemitente().getNumeroDocumento(), dbo.getRemitente().getNombreCompleto(), dbo.getRemitente().getTelefono(), null, null);
     }
 
     @Named("dboToDestinatario")
     default Persona dboToDestinatario(PaqueteDbo dbo) {
-        return new Persona(null, dbo.getDestinatarioDocumento(), dbo.getDestinatarioNombre(), dbo.getDestinatarioTelefono(), null, null);
+        return new Persona(null, dbo.getDestinatario().getNumeroDocumento(), dbo.getDestinatario().getNombreCompleto(), dbo.getDestinatario().getTelefono(), null, null);
     }
 }
