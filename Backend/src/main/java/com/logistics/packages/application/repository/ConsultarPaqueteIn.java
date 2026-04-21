@@ -1,4 +1,4 @@
-package com.logistics.packages.application.ports.in;
+package com.logistics.packages.application.admision.repositories;
 
 import com.logistics.packages.domain.model.Paquete;
 

@@ -1,4 +1,4 @@
-package com.logistics.packages.application.ports.out;
+package com.logistics.packages.application.admision.repositories;
 
 import com.logistics.packages.domain.model.ZonaAlmacenaje;
 
