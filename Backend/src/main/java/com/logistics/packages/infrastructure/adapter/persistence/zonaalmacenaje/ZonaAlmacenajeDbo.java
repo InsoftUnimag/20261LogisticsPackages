@@ -1,4 +1,4 @@
-package com.logistics.packages.infrastructure.adapter.out.persistence.zonaalmacenaje;
+package com.logistics.packages.infrastructure.adapter.persistence.zonaalmacenaje;
 
 import jakarta.persistence.*;
 import lombok.Getter;
