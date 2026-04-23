@@ -5,7 +5,7 @@
 
 ## Summary
 
-Como Empleado de Envío y Recepción, necesito capturar el peso y las dimensiones del paquete para calcular el precio de envío, determinar la categoría de carga y asignar los atributos físicos necesarios para que el `Módulo de Gestión de Rutas` pueda seleccionar el vehículo adecuado. Esta funcionalidad es una extensión del proceso de admisión y actualiza el `Paquete` existente con los datos físicos y tarifarios.
+Como Empleado de Envío y Recepción, necesito capturar el peso y las dimensiones del paquete para calcular el precio de envío, determinar la categoría de carga y asignar los atributos físicos necesarios para que el `Módulo de Gestión de Rutas` pueda seleccionar el vehículo adecuado. Esta funcionalidad es una extensión del proceso de admisión y actualiza el `Paquete` existente con los datos físicos y tarifarios. 
 
 ## Technical Context
 
