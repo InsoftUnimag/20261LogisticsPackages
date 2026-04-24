@@ -25,10 +25,10 @@ public class Paquete {
     private MetodoPago metodoPago;
     private Persona remitente;
     private Persona destinatario;
-    private Double peso;
-    private Double largo;
-    private Double ancho;
-    private Double alto;
+    
+    // Atributos Físicos y Tarifarios (MOD1-UC-002)
+    private Peso peso;
+    private Dimensiones dimensiones;
     private Double volumenM3;
     private Double pesoVolumetrico;
     private Double pesoFacturable;
@@ -58,53 +58,88 @@ public class Paquete {
         this.estadoGps = EstadoGps.RESUELTO;
     }
 
-    public void procesarPesaje(Double peso, Double largo, Double ancho, Double alto, double factorConversion) {
-        if (peso == null || peso <= 0 || peso > 70 || largo == null || largo <= 0 || ancho == null || ancho <= 0 || alto == null || alto <= 0) {
-            throw new IllegalArgumentException("Las dimensiones y el peso deben ser valores positivos y el peso no debe exceder los 70 kg.");
-        }
+    /**
+     * Procesa el pesaje del paquete con los nuevos datos físicos.
+     * FR-001, FR-003: Validaciones en los Value Objects Peso y Dimensiones
+     * FR-004, FR-005, FR-006: Cálculos de volumen, peso volumétrico y facturable
+     * 
+     * @param peso Peso del paquete
+     * @param dimensiones Dimensiones del paquete
+     * @param tipoMercancia Tipo de mercancía
+     * @param irregular Indicador de forma irregular
+     */
+    public void procesarPesaje(Peso peso, Dimensiones dimensiones, TipoMercancia tipoMercancia, boolean irregular) {
         this.peso = peso;
-        this.largo = largo;
-        this.ancho = ancho;
-        this.alto = alto;
-        this.calcularVolumen();
-        this.calcularPesoVolumetrico(factorConversion);
-        this.calcularPesoFacturable();
-        this.determinarCategoriaCarga();
-        this.verificarDensidadAtipica();
+        this.dimensiones = dimensiones;
+        this.tipoMercancia = tipoMercancia;
+        this.indicadorFormaIrregular = irregular;
+
+        // Cálculos según las reglas de negocio
+        this.volumenM3 = calcularVolumen();
+        this.pesoVolumetrico = calcularPesoVolumetrico();
+        this.pesoFacturable = determinarPesoFacturable();
+        this.categoriaCarga = determinarCategoriaCarga();
+        verificarDensidadAtipica();
     }
 
-    public void calcularVolumen() {
-        if (this.largo != null && this.ancho != null && this.alto != null) {
-            this.volumenM3 = (this.largo * this.ancho * this.alto) / 1_000_000.0;
+    /**
+     * FR-004: Calcula el volumen en metros cúbicos
+     * Volumen = (L × A × H) / 1,000,000
+     */
+    private Double calcularVolumen() {
+        if (this.dimensiones != null) {
+            return this.dimensiones.calcularVolumenM3();
         }
+        return null;
     }
 
-    public void calcularPesoVolumetrico(double factorConversion) {
+    /**
+     * FR-005: Calcula el peso volumétrico
+     * Peso Volumétrico = Volumen (m³) × 250 kg/m³
+     */
+    private Double calcularPesoVolumetrico() {
         if (this.volumenM3 != null) {
-            this.pesoVolumetrico = this.volumenM3 * factorConversion;
+            return this.volumenM3 * 250;
         }
+        return null;
     }
 
-    public void calcularPesoFacturable() {
+    /**
+     * FR-006: Determina el peso facturable
+     * Peso Facturable = MAX(Peso Real, Peso Volumétrico)
+     */
+    private Double determinarPesoFacturable() {
         if (this.peso != null && this.pesoVolumetrico != null) {
-            this.pesoFacturable = Math.max(this.peso, this.pesoVolumetrico);
+            return Math.max(this.peso.getKilogramos(), this.pesoVolumetrico);
         }
+        return null;
     }
 
-    private void determinarCategoriaCarga() {
-        if ((peso > 50 && peso <= 70) || (this.volumenM3 != null && this.volumenM3 > 0.5 && this.volumenM3 <= 0.7)) {
-            this.categoriaCarga = CategoriaCarga.CARGA_ESPECIAL;
+    /**
+     * FR-002: Determina la categoría de carga
+     * Carga Especial si: Peso > 50 kg O Volumen > 0.5 m³
+     */
+    private CategoriaCarga determinarCategoriaCarga() {
+        if (this.peso != null && this.peso.getKilogramos() > 50) {
             this.alertaCargaEspecial = true;
-        } else {
-            this.categoriaCarga = CategoriaCarga.NORMAL;
+            return CategoriaCarga.CARGA_ESPECIAL;
         }
+        if (this.volumenM3 != null && this.volumenM3 > 0.5) {
+            this.alertaCargaEspecial = true;
+            return CategoriaCarga.CARGA_ESPECIAL;
+        }
+        return CategoriaCarga.NORMAL;
     }
 
+    /**
+     * FR-010: Verifica si hay una densidad atípica
+     * Densidad Atípica si: |Peso Real - Peso Volumétrico| / Peso Real > 30%
+     */
     private void verificarDensidadAtipica() {
         if (this.peso != null && this.pesoVolumetrico != null) {
-            double diferencia = Math.abs(this.peso - this.pesoVolumetrico);
-            double porcentajeDiferencia = (diferencia / this.peso) * 100;
-            if (porcentajeDiferencia > 30) {
+            double diferencia = Math.abs(this.peso.getKilogramos() - this.pesoVolumetrico);
+            double porcentajeDiferencia = (diferencia / this.peso.getKilogramos());
+            if (porcentajeDiferencia > 0.3) {
                 this.alertaDensidadAtipica = true;
             }
         }
