@@ -1,6 +1,5 @@
 package com.logistics.packages.domain.valueobject;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
@@ -8,7 +7,6 @@ import lombok.Getter;
  * FR-001: El peso debe ser mayor a 0 y no puede exceder los 70 kg.
  */
 @Getter
-@AllArgsConstructor
 public class Peso {
     private final Double kilogramos;
 

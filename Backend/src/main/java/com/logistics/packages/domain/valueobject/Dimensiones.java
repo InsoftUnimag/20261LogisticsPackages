@@ -1,6 +1,5 @@
 package com.logistics.packages.domain.valueobject;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
@@ -8,7 +7,6 @@ import lombok.Getter;
  * FR-003: Las dimensiones deben ser mayores a 0.
  */
 @Getter
-@AllArgsConstructor
 public class Dimensiones {
     private final Double largoCm;
     private final Double anchoCm;
