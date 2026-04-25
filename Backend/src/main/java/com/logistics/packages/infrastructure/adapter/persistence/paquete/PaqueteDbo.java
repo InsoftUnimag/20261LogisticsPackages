@@ -92,4 +92,13 @@ public class PaqueteDbo {
 
     @Column(name = "zona_destino_id")
     private UUID zonaDestinoId;
+
+    @Column(name = "url_evidencia_entrega")
+    private String urlEvidenciaEntrega;
+
+    @Column(name = "nombre_firmante")
+    private String nombreFirmante;
+
+    @Column(name = "fecha_entrega_utc")
+    private LocalDateTime fechaEntregaUtc;
 }

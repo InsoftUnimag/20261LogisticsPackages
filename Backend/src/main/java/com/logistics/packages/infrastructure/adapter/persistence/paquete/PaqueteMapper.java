@@ -21,6 +21,9 @@ public interface PaqueteMapper {
     @Mapping(source = "dimensiones.largoCm", target = "largo")
     @Mapping(source = "dimensiones.anchoCm", target = "ancho")
     @Mapping(source = "dimensiones.altoCm", target = "alto")
+    @Mapping(source = "urlEvidenciaEntrega", target = "urlEvidenciaEntrega")
+    @Mapping(source = "nombreFirmante", target = "nombreFirmante")
+    @Mapping(source = "fechaEntregaUtc", target = "fechaEntregaUtc")
     PaqueteDbo toDbo(Paquete domain);
 
     @Mapping(target = "direccionDestino", source = "direccionDestino", qualifiedByName = "stringToDireccion")
@@ -33,6 +36,9 @@ public interface PaqueteMapper {
     @Mapping(target = "dimensiones.largoCm", source = "largo")
     @Mapping(target = "dimensiones.anchoCm", source = "ancho")
     @Mapping(target = "dimensiones.altoCm", source = "alto")
+    @Mapping(target = "urlEvidenciaEntrega", source = "urlEvidenciaEntrega")
+    @Mapping(target = "nombreFirmante", source = "nombreFirmante")
+    @Mapping(target = "fechaEntregaUtc", source = "fechaEntregaUtc")
     Paquete toDomain(PaqueteDbo dbo);
 
     @Named("direccionToString")

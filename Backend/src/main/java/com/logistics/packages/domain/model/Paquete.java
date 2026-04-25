@@ -27,12 +27,7 @@ public class Paquete {
     private MetodoPago metodoPago;
     private Persona remitente;
     private Persona destinatario;
-    
-    /**
-     * Version para bloqueo optimista (MOD1-UC-006)
-     * Previene actualizaciones concurrentes del mismo paquete
-     */
-    private Long version;
+
     
     // Atributos Físicos y Tarifarios (MOD1-UC-002)
     private Peso peso;
