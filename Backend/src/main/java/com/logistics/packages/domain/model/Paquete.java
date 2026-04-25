@@ -158,8 +158,23 @@ public class Paquete {
         this.estado = nuevoEstado;
     }
 
+    /**
+     * FR-003: Asigna una ruta al paquete y cambia su estado a LISTO_PARA_DESPACHO
+     * T302 [P] - MOD1-IP-003: No permite reasignar si ya tiene ruta
+     * 
+     * @param rutaId El ID de la ruta asignada por el Módulo de Gestión de Rutas
+     * @throws IllegalArgumentException si el rutaId es nulo
+     * @throws IllegalStateException si el paquete ya tiene una ruta asignada
+     */
     public void asignarRuta(UUID rutaId) {
+        if (rutaId == null) {
+            throw new IllegalArgumentException("El ID de ruta no puede ser nulo.");
+        }
+        if (this.rutaId != null) {
+            throw new IllegalStateException("El paquete ya tiene una ruta asignada.");
+        }
         this.rutaId = rutaId;
+        this.estado = EstadoPaquete.LISTO_PARA_DESPACHO;
     }
 
     public void asignarZonaAlmacenamiento(UUID zonaAlmacenamientoId) {
