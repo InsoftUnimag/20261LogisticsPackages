@@ -1,11 +1,12 @@
-package com.logistics.packages.application.admision.usecase;
+package com.logistics.packages.application.usecase;
 
-import com.logistics.packages.application.admision.repositories.RegistrarAdmisionIn;
-import com.logistics.packages.application.admision.repositories.GeocodingService;
-import com.logistics.packages.application.admision.repositories.PaqueteRepository;
-import com.logistics.packages.application.admision.repositories.RutaEventPublisher;
+import com.logistics.packages.application.repository.RegistrarAdmisionIn;
+import com.logistics.packages.application.repository.GeocodingService;
+import com.logistics.packages.application.repository.PaqueteRepository;
+import com.logistics.packages.application.repository.RutaEventPublisher;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.Coordenadas;
+import com.logistics.packages.domain.valueobject.MetodoPago;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,12 +38,13 @@ public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
                 .sedeId(command.sedeId())
                 .direccionDestino(command.direccionDestino())
                 .valorDeclarado(command.valorDeclarado())
-                .metodoPago(command.metodoPago())
+                .metodoPago(MetodoPago.PREPAGO)
                 .remitente(command.remitente())
                 .destinatario(command.destinatario())
                 .tipoMercancia(command.tipoMercancia())
                 .indicadorFormaIrregular(command.indicadorFormaIrregular())
                 .build();
+        paquete.prePersist();
 
         if (coordenadas != null) {
             paquete.asignarCoordenadas(coordenadas);
