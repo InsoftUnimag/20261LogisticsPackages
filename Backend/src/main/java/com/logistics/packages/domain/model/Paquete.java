@@ -185,4 +185,33 @@ public class Paquete {
     public void asignarZonaDestino(UUID zonaDestinoId) {
         this.zonaDestinoId = zonaDestinoId;
     }
+
+    /**
+     * FR-004: Permite actualizar los datos físicos del paquete cuando se detectan discrepancias.
+     * Este método actualiza el peso, dimensiones y recalcula todos los valores derivados.
+     * Se debe registrar en el historial la corrección realizada.
+     * 
+     * @param nuevoPeso Nuevo peso del paquete
+     * @param nuevasDimensiones Nuevas dimensiones del paquete
+     * @throws IllegalArgumentException si el peso o dimensiones son nulos
+     */
+    public void actualizarDatosFisicos(Peso nuevoPeso, Dimensiones nuevasDimensiones) {
+        if (nuevoPeso == null) {
+            throw new IllegalArgumentException("El peso no puede ser nulo al actualizar datos físicos.");
+        }
+        if (nuevasDimensiones == null) {
+            throw new IllegalArgumentException("Las dimensiones no pueden ser nulas al actualizar datos físicos.");
+        }
+
+        // Actualizar datos básicos
+        this.peso = nuevoPeso;
+        this.dimensiones = nuevasDimensiones;
+
+        // Recalcular todos los valores derivados
+        this.volumenM3 = calcularVolumen();
+        this.pesoVolumetrico = calcularPesoVolumetrico();
+        this.pesoFacturable = determinarPesoFacturable();
+        this.categoriaCarga = determinarCategoriaCarga();
+        verificarDensidadAtipica();
+    }
 }
