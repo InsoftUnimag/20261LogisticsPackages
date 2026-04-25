@@ -1,5 +1,6 @@
 package com.logistics.packages.infrastructure.adapter.persistence.persona;
 
+import com.logistics.packages.domain.valueobject.TipoDocumento;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,10 +14,12 @@ import java.util.UUID;
 public class PersonaDbo {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(name = "tipo_documento")
-    private String tipoDocumento;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_documento", columnDefinition = "tipo_documento_enum")
+    private TipoDocumento tipoDocumento;
 
     @Column(name = "numero_documento", unique = true)
     private String numeroDocumento;

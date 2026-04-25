@@ -9,6 +9,7 @@ import org.mapstruct.Named;
 @Mapper(componentModel = "spring")
 public interface PersonaMapper {
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(source = "tipoDocumento", target = "tipoDocumento", qualifiedByName = "tipoDocumentoToString")
     PersonaDbo toDbo(Persona domain);
 
