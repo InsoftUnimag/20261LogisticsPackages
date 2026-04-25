@@ -1,235 +1,171 @@
 package com.logistics.packages.domain.model;
 
-import com.logistics.packages.domain.valueobject.*;
-import lombok.*;
+import com.logistics.packages.domain.exception.PaqueteEnTransitoException;
+import com.logistics.packages.domain.valueobject.EstadoPaquete;
+import com.logistics.packages.domain.valueobject.Evidencia;
+import com.logistics.packages.domain.valueobject.TipoNovedad;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+/**
+ * Entidad raíz de agregado que representa un paquete en el sistema logístico.
+ * Contiene la lógica de negocio para transiciones de estado y registro de novedades.
+ * MOD1-IP-006: Actualizar Estado de Paquete por Novedad
+ */
 public class Paquete {
-    private UUID id;
-    private LocalDateTime fechaIngresoUtc;
-    private EstadoPaquete estado;
-    private String sedeId;
-    private Direccion direccionDestino;
-    private Coordenadas coordenadas;
-    private EstadoGps estadoGps;
-    private BigDecimal valorDeclarado;
-    private MetodoPago metodoPago;
-    private Persona remitente;
-    private Persona destinatario;
     
-    // Atributos Físicos y Tarifarios (MOD1-UC-002)
-    private Peso peso;
-    private Dimensiones dimensiones;
-    private Double volumenM3;
-    private Double pesoVolumetrico;
-    private Double pesoFacturable;
-    private TipoMercancia tipoMercancia;
-    private CategoriaCarga categoriaCarga;
-    private Boolean indicadorFormaIrregular;
-    private PrecioEnvio precioEnvio;
-    private Double distanciaEstimadaKm;
-    private UUID rutaId;
-    private UUID zonaAlmacenamientoId;
-    private UUID zonaDestinoId;
-
-    @Builder.Default
-    private boolean alertaCargaEspecial = false;
-    @Builder.Default
-    private boolean alertaDensidadAtipica = false;
-
-    public void prePersist() {
-        this.id = UUID.randomUUID();
-        this.fechaIngresoUtc = LocalDateTime.now(ZoneOffset.UTC);
+    private final UUID id;
+    private EstadoPaquete estado;
+    private final List<HistorialEstado> historial;
+    
+    /**
+     * Constructor para crear un nuevo paquete.
+     * El paquete inicia en estado RECIBIDO_EN_SEDE.
+     */
+    public Paquete(UUID id) {
+        if (id == null) {
+            throw new IllegalArgumentException("El ID del paquete no puede ser nulo");
+        }
+        this.id = id;
         this.estado = EstadoPaquete.RECIBIDO_EN_SEDE;
-        this.estadoGps = EstadoGps.PENDIENTE;
+        this.historial = new ArrayList<>();
     }
-
-    public void asignarCoordenadas(Coordenadas coordenadas) {
-        this.coordenadas = coordenadas;
-        this.estadoGps = EstadoGps.RESUELTO;
-    }
-
+    
     /**
-     * Procesa el pesaje del paquete con los nuevos datos físicos.
-     * FR-001, FR-003: Validaciones en los Value Objects Peso y Dimensiones
-     * FR-004, FR-005, FR-006: Cálculos de volumen, peso volumétrico y facturable
+     * Constructor para reconstitución desde persistencia.
+     */
+    public Paquete(UUID id, EstadoPaquete estado, List<HistorialEstado> historial) {
+        this.id = id;
+        this.estado = estado;
+        this.historial = historial != null ? new ArrayList<>(historial) : new ArrayList<>();
+    }
+    
+    /**
+     * Registra una novedad en bodega y actualiza el estado del paquete.
+     * FR-006: Bloquear actualizaciones si ya está en tránsito o posterior.
      * 
-     * @param peso Peso del paquete
-     * @param dimensiones Dimensiones del paquete
-     * @param tipoMercancia Tipo de mercancía
-     * @param irregular Indicador de forma irregular
+     * @param tipoNovedad Tipo de novedad (DAÑADO o EXTRAVIADO)
+     * @param descripcion Descripción de la novedad
+     * @param usuarioResponsable Usuario que registra la novedad
+     * @param evidencias Lista de evidencias multimedia
+     * @return La entrada de historial creada
+     * @throws PaqueteEnTransitoException si el paquete ya está en tránsito o posterior
      */
-    public void procesarPesaje(Peso peso, Dimensiones dimensiones, TipoMercancia tipoMercancia, boolean irregular) {
-        this.peso = peso;
-        this.dimensiones = dimensiones;
-        this.tipoMercancia = tipoMercancia;
-        this.indicadorFormaIrregular = irregular;
-
-        // Cálculos según las reglas de negocio
-        this.volumenM3 = calcularVolumen();
-        this.pesoVolumetrico = calcularPesoVolumetrico();
-        this.pesoFacturable = determinarPesoFacturable();
-        this.categoriaCarga = determinarCategoriaCarga();
-        verificarDensidadAtipica();
-    }
-
-    /**
-     * FR-004: Calcula el volumen en metros cúbicos
-     * Volumen = (L × A × H) / 1,000,000
-     */
-    private Double calcularVolumen() {
-        if (this.dimensiones != null) {
-            return this.dimensiones.calcularVolumenM3();
-        }
-        return null;
-    }
-
-    /**
-     * FR-005: Calcula el peso volumétrico
-     * Peso Volumétrico = Volumen (m³) × 250 kg/m³
-     */
-    private Double calcularPesoVolumetrico() {
-        if (this.volumenM3 != null) {
-            return this.volumenM3 * 250;
-        }
-        return null;
-    }
-
-    /**
-     * FR-006: Determina el peso facturable
-     * Peso Facturable = MAX(Peso Real, Peso Volumétrico)
-     */
-    private Double determinarPesoFacturable() {
-        if (this.peso != null && this.pesoVolumetrico != null) {
-            return Math.max(this.peso.getKilogramos(), this.pesoVolumetrico);
-        }
-        return null;
-    }
-
-    /**
-     * FR-002: Determina la categoría de carga
-     * Carga Especial si: Peso > 50 kg O Volumen > 0.5 m³
-     */
-    private CategoriaCarga determinarCategoriaCarga() {
-        if (this.peso != null && this.peso.getKilogramos() > 50) {
-            this.alertaCargaEspecial = true;
-            return CategoriaCarga.CARGA_ESPECIAL;
-        }
-        if (this.volumenM3 != null && this.volumenM3 > 0.5) {
-            this.alertaCargaEspecial = true;
-            return CategoriaCarga.CARGA_ESPECIAL;
-        }
-        return CategoriaCarga.NORMAL;
-    }
-
-    /**
-     * FR-010: Verifica si hay una densidad atípica
-     * Densidad Atípica si: |Peso Real - Peso Volumétrico| / Peso Real > 30%
-     */
-    private void verificarDensidadAtipica() {
-        if (this.peso != null && this.pesoVolumetrico != null) {
-            double diferencia = Math.abs(this.peso.getKilogramos() - this.pesoVolumetrico);
-            double porcentajeDiferencia = (diferencia / this.peso.getKilogramos());
-            if (porcentajeDiferencia > 0.3) {
-                this.alertaDensidadAtipica = true;
-            }
-        }
-    }
-
-    public void calcularPrecioEnvio(BigDecimal tarifaBase, BigDecimal tarifaPorKg, BigDecimal tarifaPorKm, BigDecimal recargoTipoMercancia, BigDecimal recargoCategoriaCarga) {
-        BigDecimal precio = tarifaBase;
-        precio = precio.add(new BigDecimal(this.pesoFacturable).multiply(tarifaPorKg));
-        precio = precio.add(new BigDecimal(this.distanciaEstimadaKm).multiply(tarifaPorKm));
-        precio = precio.add(recargoTipoMercancia);
-        precio = precio.add(recargoCategoriaCarga);
-        this.precioEnvio = new PrecioEnvio(precio);
-    }
-
-    public void cambiarEstado(EstadoPaquete nuevoEstado) {
-        this.estado = nuevoEstado;
-    }
-
-    /**
-     * FR-003: Asigna una ruta al paquete y cambia su estado a LISTO_PARA_DESPACHO
-     * T302 [P] - MOD1-IP-003: No permite reasignar si ya tiene ruta
-     * 
-     * @param rutaId El ID de la ruta asignada por el Módulo de Gestión de Rutas
-     * @throws IllegalArgumentException si el rutaId es nulo
-     * @throws IllegalStateException si el paquete ya tiene una ruta asignada
-     */
-    public void asignarRuta(UUID rutaId) {
-        if (rutaId == null) {
-            throw new IllegalArgumentException("El ID de ruta no puede ser nulo.");
-        }
-        if (this.rutaId != null) {
-            throw new IllegalStateException("El paquete ya tiene una ruta asignada.");
-        }
-        this.rutaId = rutaId;
-        this.estado = EstadoPaquete.LISTO_PARA_DESPACHO;
-    }
-
-    public void asignarZonaAlmacenamiento(UUID zonaAlmacenamientoId) {
-        this.zonaAlmacenamientoId = zonaAlmacenamientoId;
-        this.estado = EstadoPaquete.EN_CLASIFICACION;
-    }
-
-    /**
-     * MOD1-IP-005: Asigna una zona de destino al paquete y cambia su estado a LISTO_PARA_DESPACHO.
-     * FR-001, FR-002: Registra la clasificación lógica de zona de destino.
-     * 
-     * @param zonaDestinoId El ID de la zona de destino asignada
-     * @throws IllegalArgumentException si el zonaDestinoId es nulo
-     * @throws IllegalStateException si el paquete no está en estado EN_CLASIFICACION
-     */
-    public void asignarZonaDestino(UUID zonaDestinoId) {
-        if (zonaDestinoId == null) {
-            throw new IllegalArgumentException("El ID de zona de destino no puede ser nulo.");
-        }
-        if (this.estado != EstadoPaquete.EN_CLASIFICACION) {
-            throw new IllegalStateException(
-                "El paquete debe estar en estado EN_CLASIFICACION para asignar zona de destino. Estado actual: " + this.estado
+    public HistorialEstado registrarNovedad(TipoNovedad tipoNovedad, String descripcion,
+                                           String usuarioResponsable, List<Evidencia> evidencias) {
+        
+        // FR-006: Bloquear si ya está en tránsito o posterior
+        if (this.estado.esPosteriorA(EstadoPaquete.LISTO_PARA_DESPACHO)) {
+            throw new PaqueteEnTransitoException(
+                "No se puede registrar novedad en paquete con estado: " + this.estado
             );
         }
         
-        this.zonaDestinoId = zonaDestinoId;
-        this.estado = EstadoPaquete.LISTO_PARA_DESPACHO;
+        EstadoPaquete estadoAnterior = this.estado;
+        EstadoPaquete nuevoEstado = EstadoPaquete.NOVEDAD_EN_BODEGA;
+        
+        // Crear entrada en historial
+        HistorialEstado entrada = new HistorialEstado(
+            this.id, 
+            estadoAnterior, 
+            nuevoEstado, 
+            usuarioResponsable, 
+            descripcion, 
+            evidencias
+        );
+        
+        // Actualizar estado y agregar al historial
+        this.historial.add(entrada);
+        this.estado = nuevoEstado;
+        
+        return entrada;
     }
-
+    
     /**
-     * FR-004: Permite actualizar los datos físicos del paquete cuando se detectan discrepancias.
-     * Este método actualiza el peso, dimensiones y recalcula todos los valores derivados.
-     * Se debe registrar en el historial la corrección realizada.
+     * Cambia el estado del paquete y registra la transición en el historial.
+     * Método genérico para cualquier transición de estado.
      * 
-     * @param nuevoPeso Nuevo peso del paquete
-     * @param nuevasDimensiones Nuevas dimensiones del paquete
-     * @throws IllegalArgumentException si el peso o dimensiones son nulos
+     * @param nuevoEstado Nuevo estado del paquete
+     * @param usuarioResponsable Usuario que realiza el cambio
+     * @param notas Notas opcionales sobre la transición
+     * @return La entrada de historial creada
      */
-    public void actualizarDatosFisicos(Peso nuevoPeso, Dimensiones nuevasDimensiones) {
-        if (nuevoPeso == null) {
-            throw new IllegalArgumentException("El peso no puede ser nulo al actualizar datos físicos.");
-        }
-        if (nuevasDimensiones == null) {
-            throw new IllegalArgumentException("Las dimensiones no pueden ser nulas al actualizar datos físicos.");
-        }
-
-        // Actualizar datos básicos
-        this.peso = nuevoPeso;
-        this.dimensiones = nuevasDimensiones;
-
-        // Recalcular todos los valores derivados
-        this.volumenM3 = calcularVolumen();
-        this.pesoVolumetrico = calcularPesoVolumetrico();
-        this.pesoFacturable = determinarPesoFacturable();
-        this.categoriaCarga = determinarCategoriaCarga();
-        verificarDensidadAtipica();
+    public HistorialEstado cambiarEstado(EstadoPaquete nuevoEstado, String usuarioResponsable, String notas) {
+        EstadoPaquete estadoAnterior = this.estado;
+        
+        HistorialEstado entrada = new HistorialEstado(
+            this.id,
+            estadoAnterior,
+            nuevoEstado,
+            usuarioResponsable,
+            notas,
+            List.of()
+        );
+        
+        this.historial.add(entrada);
+        this.estado = nuevoEstado;
+        
+        return entrada;
+    }
+    
+    public UUID getId() {
+        return id;
+    }
+    
+    public EstadoPaquete getEstado() {
+        return estado;
+    }
+    
+    /**
+     * @return Copia inmutable del historial de estados
+     */
+    public List<HistorialEstado> getHistorial() {
+        return List.copyOf(this.historial);
+    }
+    
+    /**
+     * @return true si el paquete tiene novedad registrada (estado NOVEDAD_EN_BODEGA)
+     */
+    public boolean tieneNovedad() {
+        return this.estado == EstadoPaquete.NOVEDAD_EN_BODEGA;
+    }
+    
+    /**
+     * @return true si el paquete está en tránsito o posterior
+     */
+    public boolean estaEnTransitoOPosterior() {
+        return this.estado.esPosteriorA(EstadoPaquete.LISTO_PARA_DESPACHO);
+    }
+    
+    /**
+     * @return true si el paquete puede ser modificado desde bodega
+     */
+    public boolean puedeModificarseDesdeBodega() {
+        return !estaEnTransitoOPosterior();
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Paquete paquete = (Paquete) o;
+        return Objects.equals(id, paquete.id);
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+    
+    @Override
+    public String toString() {
+        return "Paquete{" +
+               "id=" + id +
+               ", estado=" + estado +
+               ", historial=" + historial.size() + " entradas" +
+               '}';
     }
 }
