@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Builder;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 
 @Getter
@@ -47,19 +48,15 @@ public class ZonaAlmacenaje {
         if (paquete.getTipoMercancia() == null) {
             return false;
         }
-        
-        switch (paquete.getTipoMercancia()) {
-            case PELIGROSO:
-                return this.categoria == CategoriaZona.ALTO_RIESGO;
-            case FRAGIL:
-                return this.categoria == CategoriaZona.DELICADA || this.categoria == CategoriaZona.ALTO_RIESGO;
-            case ESTANDAR:
-                return this.categoria == CategoriaZona.NORMAL || 
-                       this.categoria == CategoriaZona.DELICADA || 
-                       this.categoria == CategoriaZona.ALTO_RIESGO;
-            default:
-                return false;
-        }
+
+        return switch (paquete.getTipoMercancia()) {
+            case PELIGROSO -> this.categoria == CategoriaZona.ALTO_RIESGO;
+            case FRAGIL -> this.categoria == CategoriaZona.DELICADA || this.categoria == CategoriaZona.ALTO_RIESGO;
+            case ESTANDAR -> this.categoria == CategoriaZona.NORMAL ||
+                    this.categoria == CategoriaZona.DELICADA ||
+                    this.categoria == CategoriaZona.ALTO_RIESGO;
+            default -> false;
+        };
     }
 
     /**
@@ -119,10 +116,10 @@ public class ZonaAlmacenaje {
      */
     private void actualizarEstado() {
         double porcentajeOcupacionPeso = this.capacidadMaxKg != null && this.capacidadMaxKg.compareTo(BigDecimal.ZERO) > 0 ?
-            this.pesoActualKg.divide(this.capacidadMaxKg, 2, BigDecimal.ROUND_HALF_UP).doubleValue() : 0.0;
+            this.pesoActualKg.divide(this.capacidadMaxKg, 2, RoundingMode.HALF_UP).doubleValue() : 0.0;
         
         double porcentajeOcupacionVolumen = this.capacidadMaxM3 != null && this.capacidadMaxM3.compareTo(BigDecimal.ZERO) > 0 ?
-            this.volumenActualM3.divide(this.capacidadMaxM3, 2, BigDecimal.ROUND_HALF_UP).doubleValue() : 0.0;
+            this.volumenActualM3.divide(this.capacidadMaxM3, 2, RoundingMode.HALF_UP).doubleValue() : 0.0;
         
         double porcentajeOcupacionPaquetes = this.capacidadMaxPaquetes != null && this.capacidadMaxPaquetes > 0 ?
             (double) this.contadorPaquetes / this.capacidadMaxPaquetes : 0.0;
