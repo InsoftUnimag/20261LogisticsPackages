@@ -1,5 +1,7 @@
 package com.logistics.packages.infrastructure.adapter.persistence.zonaalmacenaje;
 
+import com.logistics.packages.domain.valueobject.EstadoZona;
+import com.logistics.packages.domain.valueobject.CategoriaZona;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,8 +24,8 @@ public class ZonaAlmacenajeDbo {
     private String codigo;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "categoria")
-    private String categoria; // Storing as String for simplicity, could be enum
+    @Column(name = "categoria", columnDefinition = "categoria_zona_enum")
+    private CategoriaZona categoria; // Storing as String for simplicity, could be enum
 
     @Column(name = "capacidad_max_kg")
     private BigDecimal capacidadMaxKg;
@@ -44,8 +46,8 @@ public class ZonaAlmacenajeDbo {
     private Integer contadorPaquetes;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "estado")
-    private String estado; // Storing as String for simplicity, could be enum
+    @Column(name = "estado", columnDefinition = "estado_zona_enum")
+    private EstadoZona estado; // Storing as String for simplicity, could be enum
 
     @Column(name = "ubicacion_fisica")
     private String ubicacionFisica;

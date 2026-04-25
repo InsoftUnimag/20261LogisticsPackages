@@ -1,6 +1,6 @@
 package com.logistics.packages.application.usecase;
 
-import com.logistics.packages.application.admision.repositories.PaqueteRepository;
+import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.model.Paquete;
 import lombok.RequiredArgsConstructor;

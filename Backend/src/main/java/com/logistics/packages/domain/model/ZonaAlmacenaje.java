@@ -1,5 +1,7 @@
 package com.logistics.packages.domain.model;
 
+import com.logistics.packages.domain.valueobject.CategoriaZona;
+import com.logistics.packages.domain.valueobject.EstadoZona;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.AllArgsConstructor;
@@ -31,17 +33,4 @@ public class ZonaAlmacenaje {
     private UUID idSede;
     private UUID zonaContingenciaId;
 
-    public enum CategoriaZona {
-        NORMAL,
-        DELICADA,
-        ALTO_RIESGO,
-        RETENCION
-    }
-
-    public enum EstadoZona {
-        DISPONIBLE,
-        PARCIAL,
-        SATURADO,
-        BLOQUEADO
-    }
 }

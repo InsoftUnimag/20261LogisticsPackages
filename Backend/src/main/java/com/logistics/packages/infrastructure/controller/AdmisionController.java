@@ -1,8 +1,8 @@
 package com.logistics.packages.infrastructure.controller;
 
-import com.logistics.packages.application.admision.repositories.ConsultarPaqueteIn;
-import com.logistics.packages.application.admision.repositories.RegistrarAdmisionIn;
-import com.logistics.packages.application.admision.usecase.RegistroAdmisionCommand;
+import com.logistics.packages.application.repository.ConsultarPaqueteIn;
+import com.logistics.packages.application.repository.RegistrarAdmisionIn;
+import com.logistics.packages.application.usecase.RegistroAdmisionCommand;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.infrastructure.dto.request.RegistroAdmisionRequest;
 import com.logistics.packages.infrastructure.dto.response.ConsultaPaqueteResponse;
@@ -16,14 +16,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/api/admision")
 @AllArgsConstructor
 public class AdmisionController {
 
     private final RegistrarAdmisionIn registrarAdmisionIn;
     private final ConsultarPaqueteIn consultarPaqueteIn;
 
-    @PostMapping("/admision/registrar")
+    @PostMapping
     public ResponseEntity<RegistroAdmisionResponse> registrarAdmision(@Valid @RequestBody RegistroAdmisionRequest request) {
         RegistroAdmisionCommand command = RegistroAdmisionCommand.builder()
                 .sedeId(request.getSedeId())
@@ -45,12 +45,11 @@ public class AdmisionController {
         return ResponseEntity.ok(new RegistroAdmisionResponse(paqueteId));
     }
 
-    @GetMapping("/route/{idRoute}/package/{idPaquete}")
-    public ResponseEntity<ConsultaPaqueteResponse> consultarPaquete(@PathVariable UUID idRoute, @PathVariable UUID idPaquete) {
+    @GetMapping("/{idPaquete}")
+    public ResponseEntity<ConsultaPaqueteResponse> consultarPaquete(@PathVariable UUID idPaquete) {
         Optional<Paquete> paqueteOpt = consultarPaqueteIn.consultarPaquete(idPaquete);
 
         return paqueteOpt
-                .filter(paquete -> idRoute.equals(paquete.getRutaId()))
                 .map(paquete -> ResponseEntity.ok(new ConsultaPaqueteResponse(
                         paquete.getRutaId(),
                         paquete.getId(),

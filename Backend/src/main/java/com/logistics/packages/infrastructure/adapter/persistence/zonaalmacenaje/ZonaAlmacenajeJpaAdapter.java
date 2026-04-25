@@ -1,6 +1,6 @@
 package com.logistics.packages.infrastructure.adapter.persistence.zonaalmacenaje;
 
-import com.logistics.packages.application.admision.repositories.ZonaAlmacenajeRepository;
+import com.logistics.packages.application.repository.ZonaAlmacenajeRepository;
 import com.logistics.packages.domain.model.ZonaAlmacenaje;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;

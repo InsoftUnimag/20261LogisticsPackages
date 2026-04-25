@@ -22,6 +22,7 @@ public class PaqueteDbo {
     private LocalDateTime fechaIngresoUtc;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "estado", columnDefinition = "estado_paquete_enum")
     private EstadoPaquete estado;
 
     @Column(name = "sede_id")
@@ -34,14 +35,14 @@ public class PaqueteDbo {
     private Double longitud;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "estado_gps")
+    @Column(name = "estado_gps", columnDefinition = "estado_gps_enum")
     private EstadoGps estadoGps;
 
     @Column(name = "valor_declarado")
     private BigDecimal valorDeclarado;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "metodo_pago")
+    @Column(name = "metodo_pago", columnDefinition = "metodo_pago_enum")
     private MetodoPago metodoPago;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
@@ -67,11 +68,11 @@ public class PaqueteDbo {
     private Double pesoFacturable;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_mercancia")
+    @Column(name = "tipo_mercancia", columnDefinition = "tipo_mercancia_enum")
     private TipoMercancia tipoMercancia;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "categoria_carga")
+    @Column(name = "categoria_carga", columnDefinition = "categoria_carga_enum")
     private CategoriaCarga categoriaCarga;
 
     @Column(name = "indicador_forma_irregular")

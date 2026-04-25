@@ -1,4 +1,4 @@
-package com.logistics.packages.application.admision.usecase;
+package com.logistics.packages.application.usecase;
 
 import com.logistics.packages.domain.model.Persona;
 import com.logistics.packages.domain.valueobject.Direccion;

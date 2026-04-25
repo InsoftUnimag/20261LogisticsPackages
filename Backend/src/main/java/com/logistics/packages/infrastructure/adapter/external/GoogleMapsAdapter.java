@@ -1,6 +1,6 @@
 package com.logistics.packages.infrastructure.adapter.external;
 
-import com.logistics.packages.application.admision.repositories.GeocodingService;
+import com.logistics.packages.application.repository.GeocodingService;
 import com.logistics.packages.domain.exception.TimeoutGeocodingException;
 import com.logistics.packages.domain.valueobject.Coordenadas;
 import com.logistics.packages.domain.valueobject.Direccion;

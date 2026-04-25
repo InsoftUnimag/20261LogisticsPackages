@@ -2,34 +2,26 @@ package com.logistics.packages.infrastructure.adapter.persistence.paquete;
 
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.Direccion;
-import com.logistics.packages.domain.model.Persona;
 import com.logistics.packages.domain.valueobject.PrecioEnvio;
+import com.logistics.packages.infrastructure.adapter.persistence.persona.PersonaMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
 import java.math.BigDecimal;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {PersonaMapper.class})
 public interface PaqueteMapper {
 
     @Mapping(source = "direccionDestino", target = "direccionDestino", qualifiedByName = "direccionToString")
     @Mapping(source = "coordenadas.latitud", target = "latitud")
     @Mapping(source = "coordenadas.longitud", target = "longitud")
-    @Mapping(source = "remitente.numeroDocumento", target = "remitente.numeroDocumento")
-    @Mapping(source = "remitente.nombreCompleto", target = "remitente.nombreCompleto")
-    @Mapping(source = "remitente.telefono", target = "remitente.telefono")
-    @Mapping(source = "destinatario.numeroDocumento", target = "destinatario.numeroDocumento")
-    @Mapping(source = "destinatario.nombreCompleto", target = "destinatario.nombreCompleto")
-    @Mapping(source = "destinatario.telefono", target = "destinatario.telefono")
     @Mapping(source = "precioEnvio", target = "precioEnvio", qualifiedByName = "precioToBigDecimal")
     PaqueteDbo toDbo(Paquete domain);
 
     @Mapping(target = "direccionDestino", source = "direccionDestino", qualifiedByName = "stringToDireccion")
     @Mapping(target = "coordenadas.latitud", source = "latitud")
     @Mapping(target = "coordenadas.longitud", source = "longitud")
-    @Mapping(target = "remitente", source = ".", qualifiedByName = "dboToRemitente")
-    @Mapping(target = "destinatario", source = ".", qualifiedByName = "dboToDestinatario")
     @Mapping(target = "precioEnvio", source = "precioEnvio", qualifiedByName = "bigDecimalToPrecio")
     @Mapping(target = "alertaCargaEspecial", ignore = true)
     @Mapping(target = "alertaDensidadAtipica", ignore = true)
@@ -70,15 +62,5 @@ public interface PaqueteMapper {
             return null;
         }
         return new PrecioEnvio(precio);
-    }
-
-    @Named("dboToRemitente")
-    default Persona dboToRemitente(PaqueteDbo dbo) {
-        return new Persona(null, dbo.getRemitente().getNumeroDocumento(), dbo.getRemitente().getNombreCompleto(), dbo.getRemitente().getTelefono(), null, null);
-    }
-
-    @Named("dboToDestinatario")
-    default Persona dboToDestinatario(PaqueteDbo dbo) {
-        return new Persona(null, dbo.getDestinatario().getNumeroDocumento(), dbo.getDestinatario().getNombreCompleto(), dbo.getDestinatario().getTelefono(), null, null);
     }
 }
