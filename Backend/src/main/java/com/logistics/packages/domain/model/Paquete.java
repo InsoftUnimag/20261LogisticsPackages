@@ -53,6 +53,11 @@ public class Paquete {
     private boolean alertaCargaEspecial = false;
     @Builder.Default
     private boolean alertaDensidadAtipica = false;
+    
+    // Atributos para evidencia de entrega (MOD1-UC-007)
+    private String urlEvidenciaEntrega;  // URL de la foto POD (Proof of Delivery)
+    private String nombreFirmante;  // Nombre de quien recibe el paquete
+    private LocalDateTime fechaEntregaUtc;  // Timestamp de entrega
 
     public void prePersist() {
         this.id = UUID.randomUUID();
@@ -273,5 +278,141 @@ public class Paquete {
 
         // Crear y retornar el registro de historial
         return new HistorialEstado(this.id, estadoAnterior, this.estado, observaciones, usuarioId, urlEvidencia);
+    }
+    
+    /**
+     * MOD1-UC-007: Transita el paquete al estado EN_TRANSITO.
+     * Este método es invocado cuando el Módulo 2 notifica que la ruta ha iniciado.
+     * 
+     * @param observaciones Notas sobre la transición
+     * @param moduloId ID del sistema o módulo responsable
+     * @return HistorialEstado Registro de la transición
+     * @throws EstadoTransicionInvalidaException si el estado actual no permite esta transición
+     */
+    public HistorialEstado transitarAEnRuta(String observaciones, UUID moduloId) {
+        if (!EstadoPaquete.EN_TRANSITO.esTransicionValidaDesde(this.estado)) {
+            throw new EstadoTransicionInvalidaException(this.id, this.estado);
+        }
+        
+        EstadoPaquete estadoAnterior = this.estado;
+        this.estado = EstadoPaquete.EN_TRANSITO;
+        
+        return new HistorialEstado(this.id, estadoAnterior, this.estado, observaciones, moduloId, null);
+    }
+    
+    /**
+     * MOD1-UC-007: Transita el paquete al estado EN_PARADA_DE_ENTREGA.
+     * Este método es invocado cuando el Módulo 2 notifica que el transportador llegó al destino.
+     * 
+     * @param observaciones Notas sobre la transición
+     * @param moduloId ID del sistema o módulo responsable
+     * @return HistorialEstado Registro de la transición
+     * @throws EstadoTransicionInvalidaException si el estado actual no permite esta transición
+     */
+    public HistorialEstado transitarAParadaDeEntrega(String observaciones, UUID moduloId) {
+        if (!EstadoPaquete.EN_PARADA_DE_ENTREGA.esTransicionValidaDesde(this.estado)) {
+            throw new EstadoTransicionInvalidaException(this.id, this.estado);
+        }
+        
+        EstadoPaquete estadoAnterior = this.estado;
+        this.estado = EstadoPaquete.EN_PARADA_DE_ENTREGA;
+        
+        return new HistorialEstado(this.id, estadoAnterior, this.estado, observaciones, moduloId, null);
+    }
+    
+    /**
+     * MOD1-UC-007: Registra la entrega exitosa del paquete.
+     * Este método requiere evidencia de entrega (POD) y actualiza el estado a ENTREGADO.
+     * 
+     * @param urlEvidenciaEntrega URL de la foto/firma de entrega (POD)
+     * @param nombreFirmante Nombre de quien recibe el paquete
+     * @param observaciones Notas sobre la entrega
+     * @param moduloId ID del sistema o módulo responsable
+     * @return HistorialEstado Registro de la transición
+     * @throws EstadoTransicionInvalidaException si el estado actual no permite esta transición
+     * @throws EvidenciaRequeridaException si no se proporciona evidencia
+     */
+    public HistorialEstado entregarPaquete(String urlEvidenciaEntrega, String nombreFirmante, 
+                                          String observaciones, UUID moduloId) {
+        if (!EstadoPaquete.ENTREGADO.esTransicionValidaDesde(this.estado)) {
+            throw new EstadoTransicionInvalidaException(this.id, this.estado);
+        }
+        
+        if (urlEvidenciaEntrega == null || urlEvidenciaEntrega.isBlank()) {
+            throw new EvidenciaRequeridaException(this.id);
+        }
+        
+        EstadoPaquete estadoAnterior = this.estado;
+        this.estado = EstadoPaquete.ENTREGADO;
+        this.urlEvidenciaEntrega = urlEvidenciaEntrega;
+        this.nombreFirmante = nombreFirmante;
+        this.fechaEntregaUtc = LocalDateTime.now(ZoneOffset.UTC);
+        
+        return new HistorialEstado(this.id, estadoAnterior, this.estado, observaciones, moduloId, urlEvidenciaEntrega);
+    }
+    
+    /**
+     * MOD1-UC-007: Registra una devolución del paquete desde ruta.
+     * FR-009: Solo puede registrarse desde el Módulo de Gestión de Rutas.
+     * 
+     * @param motivo Motivo de la devolución
+     * @param moduloId ID del sistema o módulo responsable
+     * @return HistorialEstado Registro de la transición
+     * @throws EstadoTransicionInvalidaException si el estado actual no permite esta transición
+     */
+    public HistorialEstado registrarDevolucionEnRuta(String motivo, UUID moduloId) {
+        if (!EstadoPaquete.DEVOLUCION_EN_RUTA.esTransicionValidaDesde(this.estado)) {
+            throw new EstadoTransicionInvalidaException(this.id, this.estado);
+        }
+        
+        EstadoPaquete estadoAnterior = this.estado;
+        this.estado = EstadoPaquete.DEVOLUCION_EN_RUTA;
+        
+        return new HistorialEstado(this.id, estadoAnterior, this.estado, motivo, moduloId, null);
+    }
+    
+    /**
+     * MOD1-UC-007: Registra el extravío del paquete en ruta.
+     * 
+     * @param observaciones Descripción del incidente
+     * @param moduloId ID del sistema o módulo responsable
+     * @return HistorialEstado Registro de la transición
+     * @throws EstadoTransicionInvalidaException si el estado actual no permite esta transición
+     */
+    public HistorialEstado registrarExtraviadoEnRuta(String observaciones, UUID moduloId) {
+        if (!EstadoPaquete.EXTRAVIADO_EN_RUTA.esTransicionValidaDesde(this.estado)) {
+            throw new EstadoTransicionInvalidaException(this.id, this.estado);
+        }
+        
+        EstadoPaquete estadoAnterior = this.estado;
+        this.estado = EstadoPaquete.EXTRAVIADO_EN_RUTA;
+        
+        return new HistorialEstado(this.id, estadoAnterior, this.estado, observaciones, moduloId, null);
+    }
+    
+    /**
+     * MOD1-UC-007: Registra daños en el paquete detectados en ruta.
+     * Requiere evidencia fotográfica obligatoria.
+     * 
+     * @param descripcion Descripción de los daños
+     * @param urlEvidencia URL de la evidencia fotográfica
+     * @param moduloId ID del sistema o módulo responsable
+     * @return HistorialEstado Registro de la transición
+     * @throws EstadoTransicionInvalidaException si el estado actual no permite esta transición
+     * @throws EvidenciaRequeridaException si no se proporciona evidencia
+     */
+    public HistorialEstado registrarDañadoEnRuta(String descripcion, String urlEvidencia, UUID moduloId) {
+        if (!EstadoPaquete.DAÑADO_EN_RUTA.esTransicionValidaDesde(this.estado)) {
+            throw new EstadoTransicionInvalidaException(this.id, this.estado);
+        }
+        
+        if (urlEvidencia == null || urlEvidencia.isBlank()) {
+            throw new EvidenciaRequeridaException(this.id);
+        }
+        
+        EstadoPaquete estadoAnterior = this.estado;
+        this.estado = EstadoPaquete.DAÑADO_EN_RUTA;
+        
+        return new HistorialEstado(this.id, estadoAnterior, this.estado, descripcion, moduloId, urlEvidencia);
     }
 }
