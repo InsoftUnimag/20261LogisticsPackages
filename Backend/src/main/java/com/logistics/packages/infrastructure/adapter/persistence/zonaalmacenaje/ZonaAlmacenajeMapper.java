@@ -1,6 +1,8 @@
 package com.logistics.packages.infrastructure.adapter.persistence.zonaalmacenaje;
 
 import com.logistics.packages.domain.model.ZonaAlmacenaje;
+import com.logistics.packages.domain.valueobject.CategoriaZona;
+import com.logistics.packages.domain.valueobject.EstadoZona;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -17,22 +19,22 @@ public interface ZonaAlmacenajeMapper {
     ZonaAlmacenaje toDomain(ZonaAlmacenajeDbo dbo);
 
     @Named("categoriaZonaToString")
-    default String categoriaZonaToString(ZonaAlmacenaje.CategoriaZona categoria) {
+    default String categoriaZonaToString(CategoriaZona categoria) {
         return categoria != null ? categoria.name() : null;
     }
 
     @Named("stringToCategoriaZona")
-    default ZonaAlmacenaje.CategoriaZona stringToCategoriaZona(String categoria) {
-        return categoria != null ? ZonaAlmacenaje.CategoriaZona.valueOf(categoria) : null;
+    default CategoriaZona stringToCategoriaZona(String categoria) {
+        return categoria != null ? CategoriaZona.valueOf(categoria) : null;
     }
 
     @Named("estadoZonaToString")
-    default String estadoZonaToString(ZonaAlmacenaje.EstadoZona estado) {
+    default String estadoZonaToString(EstadoZona estado) {
         return estado != null ? estado.name() : null;
     }
 
     @Named("stringToEstadoZona")
-    default ZonaAlmacenaje.EstadoZona stringToEstadoZona(String estado) {
-        return estado != null ? ZonaAlmacenaje.EstadoZona.valueOf(estado) : null;
+    default EstadoZona stringToEstadoZona(String estado) {
+        return estado != null ? EstadoZona.valueOf(estado) : null;
     }
 }
