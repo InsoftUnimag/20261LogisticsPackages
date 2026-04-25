@@ -1,10 +1,8 @@
 package com.logistics.packages.application.usecase;
 
-import com.logistics.packages.application.admision.repositories.GeocodingService;
-import com.logistics.packages.application.admision.repositories.PaqueteRepository;
-import com.logistics.packages.application.admision.repositories.RutaEventPublisher;
-import com.logistics.packages.application.admision.usecase.RegistrarAdmisionUseCase;
-import com.logistics.packages.application.admision.usecase.RegistroAdmisionCommand;
+import com.logistics.packages.application.repository.GeocodingService;
+import com.logistics.packages.application.repository.PaqueteRepository;
+import com.logistics.packages.application.repository.RutaEventPublisher;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.model.Persona;
 import com.logistics.packages.domain.valueobject.TipoDocumento;
@@ -55,7 +53,8 @@ class RegistrarAdmisionUseCaseTest {
                 .valorDeclarado(new BigDecimal("100000"))
                 .metodoPago(MetodoPago.CONTRA_ENTREGA)
                 .remitente(remitente)
-                .destinatario(destinatario);
+                .destinatario(destinatario)
+                .indicadorFormaIrregular(false);
     }
 
     @Test

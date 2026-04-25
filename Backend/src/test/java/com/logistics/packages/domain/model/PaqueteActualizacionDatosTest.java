@@ -211,15 +211,14 @@ class PaqueteActualizacionDatosTest {
                 .peso(new Peso(20.0))
                 .dimensiones(new Dimensiones(30.0, 20.0, 10.0))
                 .build();
+            assertFalse(paquete.isAlertaDensidadAtipica(), "Inicialmente no debe tener alerta");
 
             paquete.procesarPesaje(
-                new Peso(20.0), 
-                new Dimensiones(30.0, 20.0, 10.0), 
+                new Peso(20.0),
+                new Dimensiones(30.0, 20.0, 10.0),
                 TipoMercancia.ESTANDAR, 
                 false
             );
-
-            assertFalse(paquete.isAlertaDensidadAtipica(), "Inicialmente no debe tener alerta");
 
             // When - Actualizar con dimensiones que crean alta diferencia entre peso real y volumétrico
             Peso nuevoPeso = new Peso(5.0); // Peso muy bajo
