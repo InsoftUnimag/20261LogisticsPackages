@@ -1,0 +1,9 @@
+spring:
+  flyway:
+    enabled: false
+  cloud:
+    aws:
+      stack:
+        auto: false
+      sqs:
+        queue-name: "solicitud-ruta-test.fifo"
