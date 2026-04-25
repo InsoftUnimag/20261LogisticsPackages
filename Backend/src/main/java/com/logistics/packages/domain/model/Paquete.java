@@ -1,5 +1,7 @@
 package com.logistics.packages.domain.model;
 
+import com.logistics.packages.domain.exception.EstadoTransicionInvalidaException;
+import com.logistics.packages.domain.exception.EvidenciaRequeridaException;
 import com.logistics.packages.domain.valueobject.*;
 import lombok.*;
 
@@ -25,6 +27,12 @@ public class Paquete {
     private MetodoPago metodoPago;
     private Persona remitente;
     private Persona destinatario;
+    
+    /**
+     * Version para bloqueo optimista (MOD1-UC-006)
+     * Previene actualizaciones concurrentes del mismo paquete
+     */
+    private Long version;
     
     // Atributos Físicos y Tarifarios (MOD1-UC-002)
     private Peso peso;
@@ -231,5 +239,39 @@ public class Paquete {
         this.pesoFacturable = determinarPesoFacturable();
         this.categoriaCarga = determinarCategoriaCarga();
         verificarDensidadAtipica();
+    }
+
+    /**
+     * MOD1-UC-006: Registra una novedad en el paquete (dañado o extraviado).
+     * FR-004: Requiere evidencia fotográfica obligatoria para tipo DAÑADO
+     * FR-006: Solo permite novedades en estados RECIBIDO_EN_SEDE o EN_CLASIFICACION
+     * 
+     * @param tipo Tipo de novedad (DAÑADO o EXTRAVIADO)
+     * @param observaciones Notas descriptivas de la novedad
+     * @param usuarioId ID del almacenista responsable del registro
+     * @param urlEvidencia URL de la evidencia multimedia (obligatoria para DAÑADO)
+     * @return HistorialEstado Registro inmutable de la transición de estado
+     * @throws EstadoTransicionInvalidaException si el paquete no está en un estado válido
+     * @throws EvidenciaRequeridaException si es tipo DAÑADO y no se proporciona evidencia
+     */
+    public HistorialEstado registrarNovedad(TipoNovedad tipo, String observaciones, UUID usuarioId, String urlEvidencia) {
+        // FR-006: Validar que el estado permita registrar novedades desde bodega
+        if (!this.estado.permiteNovedadEnBodega()) {
+            throw new EstadoTransicionInvalidaException(this.id, this.estado);
+        }
+        
+        // FR-004: Validar evidencia obligatoria para tipo DAÑADO
+        if (tipo == TipoNovedad.DAÑADO && (urlEvidencia == null || urlEvidencia.isBlank())) {
+            throw new EvidenciaRequeridaException(this.id);
+        }
+
+        // Registrar el estado anterior
+        EstadoPaquete estadoAnterior = this.estado;
+        
+        // Actualizar el estado del paquete
+        this.estado = EstadoPaquete.NOVEDAD_EN_BODEGA;
+
+        // Crear y retornar el registro de historial
+        return new HistorialEstado(this.id, estadoAnterior, this.estado, observaciones, usuarioId, urlEvidencia);
     }
 }
