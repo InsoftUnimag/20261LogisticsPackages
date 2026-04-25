@@ -17,6 +17,10 @@ public interface PaqueteMapper {
     @Mapping(source = "coordenadas.latitud", target = "latitud")
     @Mapping(source = "coordenadas.longitud", target = "longitud")
     @Mapping(source = "precioEnvio", target = "precioEnvio", qualifiedByName = "precioToBigDecimal")
+    @Mapping(source = "peso.kilogramos", target = "peso")
+    @Mapping(source = "dimensiones.largoCm", target = "largo")
+    @Mapping(source = "dimensiones.anchoCm", target = "ancho")
+    @Mapping(source = "dimensiones.altoCm", target = "alto")
     PaqueteDbo toDbo(Paquete domain);
 
     @Mapping(target = "direccionDestino", source = "direccionDestino", qualifiedByName = "stringToDireccion")
@@ -25,6 +29,10 @@ public interface PaqueteMapper {
     @Mapping(target = "precioEnvio", source = "precioEnvio", qualifiedByName = "bigDecimalToPrecio")
     @Mapping(target = "alertaCargaEspecial", ignore = true)
     @Mapping(target = "alertaDensidadAtipica", ignore = true)
+    @Mapping(target = "peso.kilogramos", source = "peso")
+    @Mapping(target = "dimensiones.largoCm", source = "largo")
+    @Mapping(target = "dimensiones.anchoCm", source = "ancho")
+    @Mapping(target = "dimensiones.altoCm", source = "alto")
     Paquete toDomain(PaqueteDbo dbo);
 
     @Named("direccionToString")
