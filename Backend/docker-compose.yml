@@ -27,3 +27,7 @@ services:
       - postgres
       - rabbitmq
       - localstack
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/logistics-packages
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
