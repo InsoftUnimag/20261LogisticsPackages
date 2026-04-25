@@ -1,6 +1,6 @@
-package com.logistics.packages.application.admision.repositories;
+package com.logistics.packages.application.repository;
 
-import com.logistics.packages.application.admision.usecase.RegistroAdmisionCommand;
+import com.logistics.packages.application.usecase.RegistroAdmisionCommand;
 
 import java.util.UUID;
 
