@@ -182,8 +182,26 @@ public class Paquete {
         this.estado = EstadoPaquete.EN_CLASIFICACION;
     }
 
+    /**
+     * MOD1-IP-005: Asigna una zona de destino al paquete y cambia su estado a LISTO_PARA_DESPACHO.
+     * FR-001, FR-002: Registra la clasificación lógica de zona de destino.
+     * 
+     * @param zonaDestinoId El ID de la zona de destino asignada
+     * @throws IllegalArgumentException si el zonaDestinoId es nulo
+     * @throws IllegalStateException si el paquete no está en estado EN_CLASIFICACION
+     */
     public void asignarZonaDestino(UUID zonaDestinoId) {
+        if (zonaDestinoId == null) {
+            throw new IllegalArgumentException("El ID de zona de destino no puede ser nulo.");
+        }
+        if (this.estado != EstadoPaquete.EN_CLASIFICACION) {
+            throw new IllegalStateException(
+                "El paquete debe estar en estado EN_CLASIFICACION para asignar zona de destino. Estado actual: " + this.estado
+            );
+        }
+        
         this.zonaDestinoId = zonaDestinoId;
+        this.estado = EstadoPaquete.LISTO_PARA_DESPACHO;
     }
 
     /**
