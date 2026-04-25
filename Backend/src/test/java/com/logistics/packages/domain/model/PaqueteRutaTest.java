@@ -1,5 +1,9 @@
 package com.logistics.packages.domain.model;
 
+import com.logistics.packages.domain.exception.EstadoTransicionInvalidaException;
+import com.logistics.packages.domain.exception.EvidenciaRequeridaException;
+import com.logistics.packages.domain.valueobject.EstadoPaquete;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -8,62 +12,150 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * T301 [P] - Tests unitarios para la asignación de ruta en Paquete
- * MOD1-IP-003 - Phase 1
+ * Tests unitarios para las transiciones de estado de ruta en Paquete.
+ * MOD1-UC-007: T704 [P] - Test del dominio para transiciones de estado de ruta.
  */
-@DisplayName("Paquete - Asignación de Ruta")
+@DisplayName("Paquete - Transiciones de Estado de Ruta")
 class PaqueteRutaTest {
-
-    @Test
-    @DisplayName("Debe asignar ruta correctamente y cambiar estado a LISTO_PARA_DESPACHO")
-    void debeAsignarRutaCorrectamente() {
-        // Given: Un paquete sin ruta asignada
-        Paquete paquete = Paquete.builder().build();
-        paquete.prePersist();
-        UUID rutaId = UUID.randomUUID();
-
-        // When: Se asigna una ruta
-        paquete.asignarRuta(rutaId);
-
-        // Then: La ruta se asigna y el estado cambia
-        assertEquals(rutaId, paquete.getRutaId());
-        assertEquals(com.logistics.packages.domain.valueobject.EstadoPaquete.LISTO_PARA_DESPACHO, paquete.getEstado());
+    
+    private Paquete paquete;
+    private UUID moduloId;
+    
+    @BeforeEach
+    void setUp() {
+        paquete = Paquete.builder()
+                .id(UUID.randomUUID())
+                .estado(EstadoPaquete.LISTO_PARA_DESPACHO)
+                .build();
+        
+        moduloId = UUID.randomUUID();
     }
-
+    
     @Test
-    @DisplayName("No debe permitir asignar ruta si ya tiene una asignada")
-    void noDebePermitirReasignarRuta() {
-        // Given: Un paquete con ruta ya asignada
-        Paquete paquete = Paquete.builder().build();
-        paquete.prePersist();
-        UUID primeraRuta = UUID.randomUUID();
-        paquete.asignarRuta(primeraRuta);
-
-        // When & Then: Intentar asignar otra ruta debe lanzar excepción
-        UUID segundaRuta = UUID.randomUUID();
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> paquete.asignarRuta(segundaRuta)
-        );
-
-        assertEquals("El paquete ya tiene una ruta asignada.", exception.getMessage());
-        assertEquals(primeraRuta, paquete.getRutaId()); // Mantiene la primera ruta
+    @DisplayName("transitarAEnRuta() cambia el estado a EN_TRANSITO y genera un HistorialEstado")
+    void testTransitarAEnRuta() {
+        // When
+        HistorialEstado historial = paquete.transitarAEnRuta("Ruta iniciada", moduloId);
+        
+        // Then
+        assertEquals(EstadoPaquete.EN_TRANSITO, paquete.getEstado());
+        assertNotNull(historial);
+        assertEquals(EstadoPaquete.LISTO_PARA_DESPACHO, historial.getEstadoAnterior());
+        assertEquals(EstadoPaquete.EN_TRANSITO, historial.getEstadoNuevo());
+        assertEquals("Ruta iniciada", historial.getObservaciones());
     }
-
+    
     @Test
-    @DisplayName("No debe permitir asignar ruta nula")
-    void noDebePermitirRutaNula() {
-        // Given: Un paquete sin ruta
-        Paquete paquete = Paquete.builder().build();
-        paquete.prePersist();
-
-        // When & Then: Intentar asignar ruta nula debe lanzar excepción
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> paquete.asignarRuta(null)
-        );
-
-        assertEquals("El ID de ruta no puede ser nulo.", exception.getMessage());
-        assertNull(paquete.getRutaId());
+    @DisplayName("transitarAParadaDeEntrega() desde EN_TRANSITO cambia el estado correctamente")
+    void testTransitarAParadaDeEntrega() {
+        // Given
+        paquete.setEstado(EstadoPaquete.EN_TRANSITO);
+        
+        // When
+        HistorialEstado historial = paquete.transitarAParadaDeEntrega("Llegando al destino", moduloId);
+        
+        // Then
+        assertEquals(EstadoPaquete.EN_PARADA_DE_ENTREGA, paquete.getEstado());
+        assertNotNull(historial);
+        assertEquals(EstadoPaquete.EN_TRANSITO, historial.getEstadoAnterior());
+        assertEquals(EstadoPaquete.EN_PARADA_DE_ENTREGA, historial.getEstadoNuevo());
+    }
+    
+    @Test
+    @DisplayName("entregarPaquete() cambia el estado a ENTREGADO y asocia evidencia")
+    void testEntregarPaquete() {
+        // Given
+        paquete.setEstado(EstadoPaquete.EN_PARADA_DE_ENTREGA);
+        String urlEvidencia = "https://storage.com/pod/123.jpg";
+        String nombreFirmante = "Juan Pérez";
+        
+        // When
+        HistorialEstado historial = paquete.entregarPaquete(
+                urlEvidencia, nombreFirmante, "Entrega exitosa", moduloId);
+        
+        // Then
+        assertEquals(EstadoPaquete.ENTREGADO, paquete.getEstado());
+        assertEquals(urlEvidencia, paquete.getUrlEvidenciaEntrega());
+        assertEquals(nombreFirmante, paquete.getNombreFirmante());
+        assertNotNull(paquete.getFechaEntregaUtc());
+        assertNotNull(historial);
+    }
+    
+    @Test
+    @DisplayName("entregarPaquete() lanza excepción si no se proporciona evidencia")
+    void testEntregarPaqueteSinEvidencia() {
+        // Given
+        paquete.setEstado(EstadoPaquete.EN_PARADA_DE_ENTREGA);
+        
+        // When & Then
+        assertThrows(EvidenciaRequeridaException.class, () -> 
+                paquete.entregarPaquete(null, "Juan Pérez", "Sin evidencia", moduloId));
+    }
+    
+    @Test
+    @DisplayName("No se puede transitar a un estado anterior desde ENTREGADO")
+    void testNoRetrocederDesdeEntregado() {
+        // Given
+        paquete.setEstado(EstadoPaquete.ENTREGADO);
+        
+        // When & Then
+        assertThrows(EstadoTransicionInvalidaException.class, () -> 
+                paquete.transitarAEnRuta("Intento inválido", moduloId));
+    }
+    
+    @Test
+    @DisplayName("registrarDevolucionEnRuta() cambia el estado correctamente")
+    void testRegistrarDevolucionEnRuta() {
+        // Given
+        paquete.setEstado(EstadoPaquete.EN_TRANSITO);
+        String motivo = "Dirección incorrecta";
+        
+        // When
+        HistorialEstado historial = paquete.registrarDevolucionEnRuta(motivo, moduloId);
+        
+        // Then
+        assertEquals(EstadoPaquete.DEVOLUCION_EN_RUTA, paquete.getEstado());
+        assertEquals(motivo, historial.getObservaciones());
+    }
+    
+    @Test
+    @DisplayName("registrarExtraviadoEnRuta() cambia el estado correctamente")
+    void testRegistrarExtraviadoEnRuta() {
+        // Given
+        paquete.setEstado(EstadoPaquete.EN_TRANSITO);
+        
+        // When
+        HistorialEstado historial = paquete.registrarExtraviadoEnRuta("Paquete extraviado", moduloId);
+        
+        // Then
+        assertEquals(EstadoPaquete.EXTRAVIADO_EN_RUTA, paquete.getEstado());
+        assertNotNull(historial);
+    }
+    
+    @Test
+    @DisplayName("registrarDañadoEnRuta() requiere evidencia obligatoria")
+    void testRegistrarDañadoEnRutaConEvidencia() {
+        // Given
+        paquete.setEstado(EstadoPaquete.EN_TRANSITO);
+        String urlEvidencia = "https://storage.com/damage/456.jpg";
+        
+        // When
+        HistorialEstado historial = paquete.registrarDañadoEnRuta(
+                "Caja aplastada", urlEvidencia, moduloId);
+        
+        // Then
+        assertEquals(EstadoPaquete.DAÑADO_EN_RUTA, paquete.getEstado());
+        assertEquals(urlEvidencia, historial.getUrlEvidencia());
+    }
+    
+    @Test
+    @DisplayName("registrarDañadoEnRuta() lanza excepción sin evidencia")
+    void testRegistrarDañadoEnRutaSinEvidencia() {
+        // Given
+        paquete.setEstado(EstadoPaquete.EN_TRANSITO);
+        
+        // When & Then
+        assertThrows(EvidenciaRequeridaException.class, () -> 
+                paquete.registrarDañadoEnRuta("Daños", null, moduloId));
     }
 }
