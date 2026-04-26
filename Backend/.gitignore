@@ -5,6 +5,7 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 Externo/
+**/src/main/java/com/logistics/packages/agent/
 
 ### STS ###
 .apt_generated
