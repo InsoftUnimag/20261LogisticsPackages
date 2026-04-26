@@ -190,9 +190,9 @@ class PaqueteActualizacionDatosTest {
                 false
             );
 
-            // When - Actualizar con dimensiones que generan volumen > 0.5 m³
+            // When - Actualizar con dimensiones que generan volumen > 0.5 m³ y <= 0.7 m³
             Peso nuevoPeso = new Peso(30.0);
-            Dimensiones nuevasDimensiones = new Dimensiones(100.0, 100.0, 80.0); // 0.8 m³
+            Dimensiones nuevasDimensiones = new Dimensiones(100.0, 100.0, 60.0); // 0.6 m³
             paquete.actualizarDatosFisicos(nuevoPeso, nuevasDimensiones);
 
             // Then

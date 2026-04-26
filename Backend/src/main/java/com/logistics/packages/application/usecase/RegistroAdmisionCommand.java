@@ -1,6 +1,7 @@
 package com.logistics.packages.application.usecase;
 
 import com.logistics.packages.domain.model.Persona;
+import com.logistics.packages.domain.valueobject.Coordenadas;
 import com.logistics.packages.domain.valueobject.Direccion;
 import com.logistics.packages.domain.valueobject.MetodoPago;
 import com.logistics.packages.domain.valueobject.TipoMercancia;
@@ -21,6 +22,7 @@ public record RegistroAdmisionCommand(
         Double peso,
         Double largo,
         Double ancho,
-        Double alto
+        Double alto,
+        Coordenadas coordenadasManuales
 ) {
 }
