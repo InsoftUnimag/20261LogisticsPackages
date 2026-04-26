@@ -1,6 +1,6 @@
 package com.logistics.packages.application.usecase;
 
-import com.logistics.packages.application.ports.PaqueteRepository;
+import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.EstadoPaquete;
@@ -61,17 +61,17 @@ class AsignarRutaUseCaseTest {
                 .tiempoEstimadoDias(7)
                 .build();
         
-        when(paqueteRepository.buscarPorId(paqueteId)).thenReturn(Optional.of(paquete));
-        when(paqueteRepository.guardar(any(Paquete.class))).thenReturn(paquete);
+        when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.of(paquete));
+        when(paqueteRepository.save(any(Paquete.class))).thenReturn(paquete);
 
         // When: Se ejecuta el caso de uso
         asignarRutaUseCase.asignarRuta(respuesta);
 
         // Then: Se busca el paquete, se le asigna la ruta y se guarda
-        verify(paqueteRepository).buscarPorId(paqueteId);
+        verify(paqueteRepository).findById(paqueteId);
         
         ArgumentCaptor<Paquete> paqueteCaptor = ArgumentCaptor.forClass(Paquete.class);
-        verify(paqueteRepository).guardar(paqueteCaptor.capture());
+        verify(paqueteRepository).save(paqueteCaptor.capture());
         
         Paquete paqueteGuardado = paqueteCaptor.getValue();
         assertEquals(rutaId, paqueteGuardado.getRutaId());
@@ -89,13 +89,13 @@ class AsignarRutaUseCaseTest {
                 .estado("asignada")
                 .build();
         
-        when(paqueteRepository.buscarPorId(paqueteInexistente)).thenReturn(Optional.empty());
+        when(paqueteRepository.findById(paqueteInexistente)).thenReturn(Optional.empty());
 
         // When & Then: Debe lanzar excepción
         assertThrows(PaqueteNotFoundException.class, () -> asignarRutaUseCase.asignarRuta(respuesta));
         
-        verify(paqueteRepository).buscarPorId(paqueteInexistente);
-        verify(paqueteRepository, never()).guardar(any());
+        verify(paqueteRepository).findById(paqueteInexistente);
+        verify(paqueteRepository, never()).save(any());
     }
 
     @Test
@@ -109,14 +109,14 @@ class AsignarRutaUseCaseTest {
                 .mensaje("Esperando disponibilidad de vehículos")
                 .build();
         
-        when(paqueteRepository.buscarPorId(paqueteId)).thenReturn(Optional.of(paquete));
+        when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.of(paquete));
 
         // When: Se ejecuta el caso de uso
         asignarRutaUseCase.asignarRuta(respuesta);
 
         // Then: Se busca el paquete pero no se asigna ruta ni se guarda
-        verify(paqueteRepository).buscarPorId(paqueteId);
-        verify(paqueteRepository, never()).guardar(any());
+        verify(paqueteRepository).findById(paqueteId);
+        verify(paqueteRepository, never()).save(any());
         assertNull(paquete.getRutaId());
     }
 
@@ -133,13 +133,13 @@ class AsignarRutaUseCaseTest {
                 .estado("asignada")
                 .build();
         
-        when(paqueteRepository.buscarPorId(paqueteId)).thenReturn(Optional.of(paquete));
+        when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.of(paquete));
 
         // When & Then: Debe lanzar excepción por intento de reasignación
         assertThrows(IllegalStateException.class, () -> asignarRutaUseCase.asignarRuta(respuesta));
         
-        verify(paqueteRepository).buscarPorId(paqueteId);
-        verify(paqueteRepository, never()).guardar(any());
+        verify(paqueteRepository).findById(paqueteId);
+        verify(paqueteRepository, never()).save(any());
         assertEquals(primeraRuta, paquete.getRutaId()); // Mantiene la primera ruta
     }
 }

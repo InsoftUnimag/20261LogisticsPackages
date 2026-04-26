@@ -1,6 +1,6 @@
 package com.logistics.packages.application.usecase;
 
-import com.logistics.packages.application.ports.PaqueteRepository;
+import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.application.ports.ZonaDestinoRepository;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.exception.ZonaDestinoNotFoundException;
@@ -47,7 +47,7 @@ public class ClasificarPaqueteUseCase {
         log.info("Iniciando sugerencia de zona de destino para paquete {}", paqueteId);
         
         // 1. Obtener el paquete
-        Paquete paquete = paqueteRepository.buscarPorId(paqueteId)
+        Paquete paquete = paqueteRepository.findById(paqueteId)
                 .orElseThrow(() -> new PaqueteNotFoundException(paqueteId));
         
         // 2. Calcular la zona de destino usando el servicio de dominio
@@ -79,7 +79,7 @@ public class ClasificarPaqueteUseCase {
         log.info("Confirmando clasificación. Paquete: {}, Zona: {}", paqueteId, zonaDestinoId);
         
         // 1. Obtener el paquete
-        Paquete paquete = paqueteRepository.buscarPorId(paqueteId)
+        Paquete paquete = paqueteRepository.findById(paqueteId)
                 .orElseThrow(() -> new PaqueteNotFoundException(paqueteId));
         
         // 2. Obtener la zona de destino
@@ -114,7 +114,7 @@ public class ClasificarPaqueteUseCase {
         zona.incrementarContador();
         
         // 7. Guardar cambios
-        paqueteRepository.guardar(paquete);
+        paqueteRepository.save(paquete);
         zonaDestinoRepository.save(zona);
         
         log.info("Clasificación confirmada. Paquete {} asignado a zona {}. Estado: {}", 

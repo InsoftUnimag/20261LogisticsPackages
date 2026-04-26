@@ -1,6 +1,6 @@
 package com.logistics.packages.application.usecase;
 
-import com.logistics.packages.application.ports.PaqueteRepository;
+import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.application.ports.ZonaDestinoRepository;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.exception.ZonaDestinoNotFoundException;
@@ -76,7 +76,7 @@ class ClasificarPaqueteUseCaseTest {
     @DisplayName("[T508] Debe sugerir zona para paquete exitosamente")
     void debeSugerirZonaParaPaqueteExitosamente() {
         // Given
-        when(paqueteRepository.buscarPorId(paquete.getId())).thenReturn(Optional.of(paquete));
+        when(paqueteRepository.findById(paquete.getId())).thenReturn(Optional.of(paquete));
         when(calculoZonaService.calcularZona(paquete)).thenReturn(zonaDestino);
 
         // When
@@ -88,7 +88,7 @@ class ClasificarPaqueteUseCaseTest {
         assertEquals(zonaDestino.getId(), response.getZonaDestinoId());
         assertEquals("Zona Norte", response.getNombreZona());
         
-        verify(paqueteRepository).buscarPorId(paquete.getId());
+        verify(paqueteRepository).findById(paquete.getId());
         verify(calculoZonaService).calcularZona(paquete);
     }
 
@@ -97,13 +97,13 @@ class ClasificarPaqueteUseCaseTest {
     void debeLanzarExcepcionSiPaqueteNoExisteAlSugerir() {
         // Given
         UUID paqueteId = UUID.randomUUID();
-        when(paqueteRepository.buscarPorId(paqueteId)).thenReturn(Optional.empty());
+        when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.empty());
 
         // When & Then
         assertThrows(PaqueteNotFoundException.class,
                 () -> clasificarUseCase.sugerirZonaParaPaquete(paqueteId));
         
-        verify(paqueteRepository).buscarPorId(paqueteId);
+        verify(paqueteRepository).findById(paqueteId);
         verify(calculoZonaService, never()).calcularZona(any());
     }
 
@@ -111,9 +111,9 @@ class ClasificarPaqueteUseCaseTest {
     @DisplayName("[T509] Debe confirmar clasificación exitosamente")
     void debeConfirmarClasificacionExitosamente() {
         // Given
-        when(paqueteRepository.buscarPorId(paquete.getId())).thenReturn(Optional.of(paquete));
+        when(paqueteRepository.findById(paquete.getId())).thenReturn(Optional.of(paquete));
         when(zonaDestinoRepository.findById(zonaDestino.getId())).thenReturn(Optional.of(zonaDestino));
-        when(paqueteRepository.guardar(any(Paquete.class))).thenReturn(paquete);
+        when(paqueteRepository.save(any(Paquete.class))).thenReturn(paquete);
 
         // When
         clasificarUseCase.confirmarClasificacion(paquete.getId(), zonaDestino.getId());
@@ -123,9 +123,9 @@ class ClasificarPaqueteUseCaseTest {
         assertEquals(EstadoPaquete.LISTO_PARA_DESPACHO, paquete.getEstado());
         assertEquals(51, zonaDestino.getContadorPaquetes());
         
-        verify(paqueteRepository).buscarPorId(paquete.getId());
+        verify(paqueteRepository).findById(paquete.getId());
         verify(zonaDestinoRepository).findById(zonaDestino.getId());
-        verify(paqueteRepository).guardar(paquete);
+        verify(paqueteRepository).save(paquete);
         verify(zonaDestinoRepository).save(zonaDestino);
     }
 
@@ -134,13 +134,13 @@ class ClasificarPaqueteUseCaseTest {
     void debeLanzarExcepcionSiPaqueteNoExisteAlConfirmar() {
         // Given
         UUID paqueteId = UUID.randomUUID();
-        when(paqueteRepository.buscarPorId(paqueteId)).thenReturn(Optional.empty());
+        when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.empty());
 
         // When & Then
         assertThrows(PaqueteNotFoundException.class,
                 () -> clasificarUseCase.confirmarClasificacion(paqueteId, zonaDestino.getId()));
         
-        verify(paqueteRepository).buscarPorId(paqueteId);
+        verify(paqueteRepository).findById(paqueteId);
         verify(zonaDestinoRepository, never()).findById(any());
     }
 
@@ -149,16 +149,16 @@ class ClasificarPaqueteUseCaseTest {
     void debeLanzarExcepcionSiZonaNoExisteAlConfirmar() {
         // Given
         UUID zonaId = UUID.randomUUID();
-        when(paqueteRepository.buscarPorId(paquete.getId())).thenReturn(Optional.of(paquete));
+        when(paqueteRepository.findById(paquete.getId())).thenReturn(Optional.of(paquete));
         when(zonaDestinoRepository.findById(zonaId)).thenReturn(Optional.empty());
 
         // When & Then
         assertThrows(ZonaDestinoNotFoundException.class,
                 () -> clasificarUseCase.confirmarClasificacion(paquete.getId(), zonaId));
         
-        verify(paqueteRepository).buscarPorId(paquete.getId());
+        verify(paqueteRepository).findById(paquete.getId());
         verify(zonaDestinoRepository).findById(zonaId);
-        verify(paqueteRepository, never()).guardar(any());
+        verify(paqueteRepository, never()).save(any());
     }
 
     @Test
@@ -168,16 +168,16 @@ class ClasificarPaqueteUseCaseTest {
         paquete.setTipoMercancia(TipoMercancia.PELIGROSO);
         zonaDestino.setCategoria(CategoriaZona.NORMAL); // NORMAL no puede con PELIGROSO
 
-        when(paqueteRepository.buscarPorId(paquete.getId())).thenReturn(Optional.of(paquete));
+        when(paqueteRepository.findById(paquete.getId())).thenReturn(Optional.of(paquete));
         when(zonaDestinoRepository.findById(zonaDestino.getId())).thenReturn(Optional.of(zonaDestino));
 
         // When & Then
         assertThrows(ZonaNoAptaException.class,
                 () -> clasificarUseCase.confirmarClasificacion(paquete.getId(), zonaDestino.getId()));
         
-        verify(paqueteRepository).buscarPorId(paquete.getId());
+        verify(paqueteRepository).findById(paquete.getId());
         verify(zonaDestinoRepository).findById(zonaDestino.getId());
-        verify(paqueteRepository, never()).guardar(any());
+        verify(paqueteRepository, never()).save(any());
     }
 
     @Test
@@ -187,15 +187,15 @@ class ClasificarPaqueteUseCaseTest {
         zonaDestino.setCapacidadMaxPaquetes(100);
         zonaDestino.setContadorPaquetes(100); // Saturada
 
-        when(paqueteRepository.buscarPorId(paquete.getId())).thenReturn(Optional.of(paquete));
+        when(paqueteRepository.findById(paquete.getId())).thenReturn(Optional.of(paquete));
         when(zonaDestinoRepository.findById(zonaDestino.getId())).thenReturn(Optional.of(zonaDestino));
 
         // When & Then
         assertThrows(ZonaDestinoSaturadaException.class,
                 () -> clasificarUseCase.confirmarClasificacion(paquete.getId(), zonaDestino.getId()));
         
-        verify(paqueteRepository).buscarPorId(paquete.getId());
+        verify(paqueteRepository).findById(paquete.getId());
         verify(zonaDestinoRepository).findById(zonaDestino.getId());
-        verify(paqueteRepository, never()).guardar(any());
+        verify(paqueteRepository, never()).save(any());
     }
 }

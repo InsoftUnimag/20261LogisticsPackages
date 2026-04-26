@@ -1,6 +1,6 @@
 package com.logistics.packages.application.usecase;
 
-import com.logistics.packages.application.ports.PaqueteRepository;
+import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.infrastructure.dto.response.RespuestaRutaPayload;
@@ -39,7 +39,7 @@ public class AsignarRutaUseCase {
                 payload.getPaqueteId(), payload.getEstado());
         
         // Buscar el paquete existente
-        Paquete paquete = paqueteRepository.buscarPorId(payload.getPaqueteId())
+        Paquete paquete = paqueteRepository.findById(payload.getPaqueteId())
                 .orElseThrow(() -> new PaqueteNotFoundException(payload.getPaqueteId()));
 
         // Verificar si la ruta fue asignada exitosamente
@@ -48,7 +48,7 @@ public class AsignarRutaUseCase {
             paquete.asignarRuta(payload.getRutaId());
             
             // Persistir los cambios
-            paqueteRepository.guardar(paquete);
+            paqueteRepository.save(paquete);
             
             log.info("Ruta {} asignada exitosamente al paquete {}. Nuevo estado: {}",
                     payload.getRutaId(),

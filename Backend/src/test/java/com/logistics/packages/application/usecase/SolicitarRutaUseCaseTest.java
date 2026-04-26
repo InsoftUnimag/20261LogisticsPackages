@@ -1,6 +1,6 @@
 package com.logistics.packages.application.usecase;
 
-import com.logistics.packages.application.ports.PaqueteRepository;
+import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.application.ports.RutaQueuePort;
 import com.logistics.packages.domain.event.SolicitudRutaEvent;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
@@ -72,7 +72,7 @@ class SolicitarRutaUseCaseTest {
     @DisplayName("Debe construir el payload y enviar solicitud cuando el paquete existe")
     void debeEnviarSolicitudConPayloadCompleto() {
         // Given: El paquete existe en el repositorio
-        when(paqueteRepository.buscarPorId(paqueteId)).thenReturn(Optional.of(paqueteCompleto));
+        when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.of(paqueteCompleto));
         
         SolicitudRutaEvent event = SolicitudRutaEvent.of(paqueteId);
 
@@ -80,7 +80,7 @@ class SolicitarRutaUseCaseTest {
         solicitarRutaUseCase.handle(event);
 
         // Then: Se construye el payload y se envía a la cola
-        verify(paqueteRepository).buscarPorId(paqueteId);
+        verify(paqueteRepository).findById(paqueteId);
         
         ArgumentCaptor<SolicitudRutaPayload> payloadCaptor = ArgumentCaptor.forClass(SolicitudRutaPayload.class);
         verify(rutaQueuePort).enviarSolicitud(payloadCaptor.capture());
@@ -100,14 +100,14 @@ class SolicitarRutaUseCaseTest {
     void debeLanzarExcepcionCuandoPaqueteNoExiste() {
         // Given: El paquete no existe
         UUID paqueteInexistente = UUID.randomUUID();
-        when(paqueteRepository.buscarPorId(paqueteInexistente)).thenReturn(Optional.empty());
+        when(paqueteRepository.findById(paqueteInexistente)).thenReturn(Optional.empty());
         
         SolicitudRutaEvent event = SolicitudRutaEvent.of(paqueteInexistente);
 
         // When & Then: Debe lanzar excepción
         assertThrows(PaqueteNotFoundException.class, () -> solicitarRutaUseCase.handle(event));
         
-        verify(paqueteRepository).buscarPorId(paqueteInexistente);
+        verify(paqueteRepository).findById(paqueteInexistente);
         verify(rutaQueuePort, never()).enviarSolicitud(any());
     }
 
@@ -120,7 +120,7 @@ class SolicitarRutaUseCaseTest {
                 .estado(EstadoPaquete.RECIBIDO_EN_SEDE)
                 .build();
         
-        when(paqueteRepository.buscarPorId(paqueteId)).thenReturn(Optional.of(paqueteMinimo));
+        when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.of(paqueteMinimo));
         
         SolicitudRutaEvent event = SolicitudRutaEvent.of(paqueteId);
 

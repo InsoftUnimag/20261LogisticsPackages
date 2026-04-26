@@ -1,6 +1,6 @@
 package com.logistics.packages.application.usecase;
 
-import com.logistics.packages.application.ports.PaqueteRepository;
+import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.application.ports.RutaQueuePort;
 import com.logistics.packages.domain.event.SolicitudRutaEvent;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
@@ -40,7 +40,7 @@ public class SolicitarRutaUseCase {
         log.info("Procesando solicitud de ruta para paquete: {}", event.getPaqueteId());
         
         // Buscar el paquete existente
-        Paquete paquete = paqueteRepository.buscarPorId(event.getPaqueteId())
+        Paquete paquete = paqueteRepository.findById(event.getPaqueteId())
                 .orElseThrow(() -> new PaqueteNotFoundException(event.getPaqueteId()));
 
         // FR-002: Construir el payload JSON con los datos del paquete

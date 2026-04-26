@@ -1,6 +1,6 @@
 package com.logistics.packages.application.usecase;
 
-import com.logistics.packages.application.ports.PaqueteRepository;
+import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.domain.event.SolicitudRutaEvent;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.model.Paquete;
@@ -74,8 +74,8 @@ class ProcesarPesajeUseCaseTest {
                 .recargoCategoriaCarga(new BigDecimal("0.00"))
                 .build();
 
-        when(paqueteRepository.buscarPorId(paqueteId)).thenReturn(Optional.of(paqueteExistente));
-        when(paqueteRepository.guardar(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.of(paqueteExistente));
+        when(paqueteRepository.save(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
         PesajeResponse response = procesarPesajeUseCase.procesarPesaje(command);
@@ -92,7 +92,7 @@ class ProcesarPesajeUseCaseTest {
 
         // Verificar que se llamó a save y al evento de ruta
         ArgumentCaptor<Paquete> paqueteCaptor = ArgumentCaptor.forClass(Paquete.class);
-        verify(paqueteRepository).guardar(paqueteCaptor.capture());
+        verify(paqueteRepository).save(paqueteCaptor.capture());
         verify(solicitarRutaUseCase).handle(any(SolicitudRutaEvent.class));
         
         Paquete paqueteGuardado = paqueteCaptor.getValue();
@@ -121,8 +121,8 @@ class ProcesarPesajeUseCaseTest {
                 .recargoCategoriaCarga(new BigDecimal("0.00"))
                 .build();
 
-        when(paqueteRepository.buscarPorId(paqueteId)).thenReturn(Optional.of(paqueteExistente));
-        when(paqueteRepository.guardar(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.of(paqueteExistente));
+        when(paqueteRepository.save(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
         PesajeResponse response = procesarPesajeUseCase.procesarPesaje(command);
@@ -152,8 +152,8 @@ class ProcesarPesajeUseCaseTest {
                 .recargoCategoriaCarga(new BigDecimal("10.00"))
                 .build();
 
-        when(paqueteRepository.buscarPorId(paqueteId)).thenReturn(Optional.of(paqueteExistente));
-        when(paqueteRepository.guardar(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.of(paqueteExistente));
+        when(paqueteRepository.save(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
         PesajeResponse response = procesarPesajeUseCase.procesarPesaje(command);
@@ -185,8 +185,8 @@ class ProcesarPesajeUseCaseTest {
                 .recargoCategoriaCarga(new BigDecimal("10.00"))
                 .build();
 
-        when(paqueteRepository.buscarPorId(paqueteId)).thenReturn(Optional.of(paqueteExistente));
-        when(paqueteRepository.guardar(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.of(paqueteExistente));
+        when(paqueteRepository.save(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
         PesajeResponse response = procesarPesajeUseCase.procesarPesaje(command);
@@ -215,8 +215,8 @@ class ProcesarPesajeUseCaseTest {
                 .recargoCategoriaCarga(new BigDecimal("0.00"))
                 .build();
 
-        when(paqueteRepository.buscarPorId(paqueteId)).thenReturn(Optional.of(paqueteExistente));
-        when(paqueteRepository.guardar(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.of(paqueteExistente));
+        when(paqueteRepository.save(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
         PesajeResponse response = procesarPesajeUseCase.procesarPesaje(command);
@@ -243,14 +243,14 @@ class ProcesarPesajeUseCaseTest {
                 .recargoCategoriaCarga(new BigDecimal("0.00"))
                 .build();
 
-        when(paqueteRepository.buscarPorId(paqueteIdInexistente)).thenReturn(Optional.empty());
+        when(paqueteRepository.findById(paqueteIdInexistente)).thenReturn(Optional.empty());
 
         // When/Then
         assertThrows(PaqueteNotFoundException.class, () -> {
             procesarPesajeUseCase.procesarPesaje(command);
         });
 
-        verify(paqueteRepository, never()).guardar(any());
+        verify(paqueteRepository, never()).save(any());
     }
 
     @Test
@@ -270,15 +270,15 @@ class ProcesarPesajeUseCaseTest {
                 .recargoCategoriaCarga(new BigDecimal("0.00"))
                 .build();
 
-        when(paqueteRepository.buscarPorId(paqueteId)).thenReturn(Optional.of(paqueteExistente));
-        when(paqueteRepository.guardar(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.of(paqueteExistente));
+        when(paqueteRepository.save(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
         procesarPesajeUseCase.procesarPesaje(command);
 
         // Then
         ArgumentCaptor<Paquete> paqueteCaptor = ArgumentCaptor.forClass(Paquete.class);
-        verify(paqueteRepository).guardar(paqueteCaptor.capture());
+        verify(paqueteRepository).save(paqueteCaptor.capture());
         
         Paquete paqueteGuardado = paqueteCaptor.getValue();
         assertTrue(paqueteGuardado.getIndicadorFormaIrregular());

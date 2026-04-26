@@ -1,6 +1,6 @@
 package com.logistics.packages.application.usecase;
 
-import com.logistics.packages.application.ports.PaqueteRepository;
+import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.domain.event.SolicitudRutaEvent;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.model.Paquete;
@@ -32,7 +32,7 @@ public class ProcesarPesajeUseCase {
      */
     public PesajeResponse procesarPesaje(PesajeCommand command) {
         // Buscar el paquete existente
-        Paquete paquete = paqueteRepository.buscarPorId(command.getPaqueteId())
+        Paquete paquete = paqueteRepository.findById(command.getPaqueteId())
                 .orElseThrow(() -> new PaqueteNotFoundException(command.getPaqueteId()));
 
         // Procesar el pesaje en el dominio (validaciones y cálculos)
@@ -53,7 +53,7 @@ public class ProcesarPesajeUseCase {
         );
 
         // Persistir los cambios
-        paqueteRepository.guardar(paquete);
+        paqueteRepository.save(paquete);
 
         // MOD1-IP-003: Después del pesaje exitoso, disparar solicitud de ruta
         log.info("Pesaje completado exitosamente para paquete {}. Disparando solicitud de ruta", paquete.getId());
