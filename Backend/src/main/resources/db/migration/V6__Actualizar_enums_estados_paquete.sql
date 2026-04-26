@@ -1,7 +1,10 @@
--- V6: Actualización de enums para incluir nuevos estados de ruta
--- MOD1-UC-007: Agregar estados de ruta al enum estado_paquete_enum
+-- V6: Actualización de enums para incluir nuevos estados de ruta y novedades
+-- MOD1-UC-006, MOD1-UC-007: Agregar estados de novedad y ruta al enum estado_paquete_enum
 
--- Agregar nuevos valores al enum estado_paquete_enum
+-- Agregar estados de novedad en bodega (MOD1-UC-006)
+ALTER TYPE estado_paquete_enum ADD VALUE IF NOT EXISTS 'NOVEDAD_EN_BODEGA';
+
+-- Agregar estados de ruta (MOD1-UC-007)
 ALTER TYPE estado_paquete_enum ADD VALUE IF NOT EXISTS 'EN_PARADA_DE_ENTREGA';
 ALTER TYPE estado_paquete_enum ADD VALUE IF NOT EXISTS 'DEVOLUCION_EN_RUTA';
 ALTER TYPE estado_paquete_enum ADD VALUE IF NOT EXISTS 'EXTRAVIADO_EN_RUTA';
