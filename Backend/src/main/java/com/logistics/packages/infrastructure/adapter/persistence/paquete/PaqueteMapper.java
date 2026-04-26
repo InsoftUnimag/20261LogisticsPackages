@@ -24,14 +24,15 @@ public interface PaqueteMapper {
     @Mapping(source = "urlEvidenciaEntrega", target = "urlEvidenciaEntrega")
     @Mapping(source = "nombreFirmante", target = "nombreFirmante")
     @Mapping(source = "fechaEntregaUtc", target = "fechaEntregaUtc")
+    @Mapping(source = "alertaCargaEspecial", target = "alertaCargaEspecial")
+    @Mapping(source = "alertaDensidadAtipica", target = "alertaDensidadAtipica")
+    @Mapping(source = "etiquetaDigital", target = "etiquetaDigital")
     PaqueteDbo toDbo(Paquete domain);
 
     @Mapping(target = "direccionDestino", source = "direccionDestino", qualifiedByName = "stringToDireccion")
     @Mapping(target = "coordenadas.latitud", source = "latitud")
     @Mapping(target = "coordenadas.longitud", source = "longitud")
     @Mapping(target = "precioEnvio", source = "precioEnvio", qualifiedByName = "bigDecimalToPrecio")
-    @Mapping(target = "alertaCargaEspecial", ignore = true)
-    @Mapping(target = "alertaDensidadAtipica", ignore = true)
     @Mapping(target = "peso.kilogramos", source = "peso")
     @Mapping(target = "dimensiones.largoCm", source = "largo")
     @Mapping(target = "dimensiones.anchoCm", source = "ancho")
@@ -39,6 +40,9 @@ public interface PaqueteMapper {
     @Mapping(target = "urlEvidenciaEntrega", source = "urlEvidenciaEntrega")
     @Mapping(target = "nombreFirmante", source = "nombreFirmante")
     @Mapping(target = "fechaEntregaUtc", source = "fechaEntregaUtc")
+    @Mapping(target = "alertaCargaEspecial", source = "alertaCargaEspecial")
+    @Mapping(target = "alertaDensidadAtipica", source = "alertaDensidadAtipica")
+    @Mapping(target = "etiquetaDigital", source = "etiquetaDigital")
     Paquete toDomain(PaqueteDbo dbo);
 
     @Named("direccionToString")

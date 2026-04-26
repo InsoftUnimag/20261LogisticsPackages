@@ -101,4 +101,13 @@ public class PaqueteDbo {
 
     @Column(name = "fecha_entrega_utc")
     private LocalDateTime fechaEntregaUtc;
+
+    @Column(name = "alerta_carga_especial")
+    private Boolean alertaCargaEspecial;
+
+    @Column(name = "alerta_densidad_atipica")
+    private Boolean alertaDensidadAtipica;
+
+    @Column(name = "etiqueta_digital")
+    private String etiquetaDigital;
 }
