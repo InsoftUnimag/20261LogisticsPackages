@@ -43,6 +43,9 @@ public class RabbitMQConfig {
     @Value("${app.messaging.ruta.dlx.queue:solicitudes_ruta_dlq}")
     private String dlxQueue;
 
+    @Value("${app.messaging.clasificacion.queue:paquete_listo_para_clasificar_queue}")
+    private String clasificacionQueue;
+
     /**
      * ObjectMapper configurado para JSON
      */
@@ -60,6 +63,11 @@ public class RabbitMQConfig {
     @Bean
     public MessageConverter jsonMessageConverter(ObjectMapper objectMapper) {
         return new Jackson2JsonMessageConverter(objectMapper);
+    }
+
+    @Bean
+    public Queue eventosRutaQueue() {
+        return new Queue("eventos_ruta_queue", true);
     }
 
     /**
@@ -126,6 +134,11 @@ public class RabbitMQConfig {
     @Bean
     public Queue dlxQueue() {
         return new Queue(dlxQueue, true);
+    }
+
+    @Bean
+    public Queue clasificacionQueue() {
+        return new Queue(clasificacionQueue, true);
     }
 
     /**
