@@ -1,18 +1,21 @@
 package com.logistics.packages;
 
+import com.logistics.packages.application.repository.CoverageService;
+import com.logistics.packages.application.repository.ZonaAlmacenajeRepository;
+import com.logistics.packages.application.usecase.RegistrarAdmisionUseCase;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
-import static org.junit.jupiter.api.Assertions.*;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ActiveProfiles;
 
-@DisplayName("Application Tests")
+@SpringBootTest
+@ActiveProfiles("local")
 class ApplicationTests {
 
+    @MockBean
+    private RegistrarAdmisionUseCase registrarAdmisionUseCase;
+
 	@Test
-	@DisplayName("verifica que la clase Application existe y es configurable")
 	void contextLoads() {
-		// Verifica que la clase Application puede ser referenciada
-		// sin cargar el contexto de Spring
-		assertNotNull(Application.class);
-		assertTrue(Application.class.getSimpleName().equals("Application"));
 	}
 }
