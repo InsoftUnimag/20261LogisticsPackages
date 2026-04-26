@@ -37,4 +37,8 @@ public class Peso {
     public String toString() {
         return kilogramos + " kg";
     }
+
+    public String getValue() {
+        return kilogramos.toString();
+    }
 }

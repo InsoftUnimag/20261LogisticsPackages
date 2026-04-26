@@ -10,4 +10,13 @@ public class Direccion {
     private String ciudad;
     private String departamento;
     private String pais;
+
+    public String getDireccionCompleta() {
+        return String.format("%s, %s, %s, %s", direccion, ciudad, departamento, pais);
+    }
+
+    @Override
+    public String toString() {
+        return getDireccionCompleta();
+    }
 }

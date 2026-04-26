@@ -9,4 +9,9 @@ public record Coordenadas(double latitud, double longitud) {
             throw new IllegalArgumentException("Longitud fuera de rango");
         }
     }
+
+    @Override
+    public String toString() {
+        return String.format("(%f, %f)", latitud, longitud);
+    }
 }
