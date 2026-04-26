@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: logistics-packages
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/logistics-packages
+    username: user
+    password: password
+
+  flyway:
+    url: jdbc:postgresql://localhost:5432/logistics-packages
+    user: user
+    password: password
+    enabled: true
+
+  cloud:
+    aws:
+      region:
+        static: us-east-1
+      credentials:
+        access-key: test
+        secret-key: test
+      sqs:
+        endpoint: http://localhost:4566
+      s3:
+        endpoint: http://localhost:4566
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: user
+    password: password
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+  server:
+    port: 8080
+
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: "*"
+    endpoint:
+      health:
+        show-details: always
+      flyway:
+        enabled: true
