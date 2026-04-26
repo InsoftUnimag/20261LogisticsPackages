@@ -66,6 +66,10 @@ public class Paquete {
         this.estadoGps = EstadoGps.RESUELTO;
     }
 
+    public void asignarPrecio(BigDecimal precio) {
+        this.precioEnvio = new PrecioEnvio(precio);
+    }
+
     /**
      * Procesa el pesaje del paquete con los nuevos datos físicos.
      * FR-001, FR-003: Validaciones en los Value Objects Peso y Dimensiones
