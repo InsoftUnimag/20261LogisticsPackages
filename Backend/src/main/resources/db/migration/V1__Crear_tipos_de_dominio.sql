@@ -49,3 +49,9 @@ CREATE TYPE estado_zona_enum AS ENUM (
     'SATURADO',
     'BLOQUEADO'
 );
+
+-- Enum para tipo de sede
+CREATE TYPE tipo_sede_enum AS ENUM (
+    'PRINCIPAL',
+    'AUXILIAR'
+);
