@@ -1,10 +1,12 @@
 package com.logistics.packages.domain.valueobject;
 
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 public class Direccion {
     private String direccion;
     private String ciudad;
