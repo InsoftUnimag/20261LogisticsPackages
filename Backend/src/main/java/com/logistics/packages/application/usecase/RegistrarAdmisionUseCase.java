@@ -22,6 +22,7 @@ public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
     private final RutaEventPublisher eventPublisher;
     private final CoverageService coverageService;
     private final PriceCalculationService priceCalculationService;
+    private final DistanceService distanceService;
 
     @Override
     public UUID registrarAdmision(RegistroAdmisionCommand command) {
@@ -52,6 +53,9 @@ public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
                 Peso peso = new Peso(command.peso());
                 Dimensiones dimensiones = new Dimensiones(command.largo(), command.ancho(), command.alto());
                 paquete.procesarPesaje(peso, dimensiones, command.tipoMercancia(), command.indicadorFormaIrregular());
+
+                double distanciaKm = distanceService.calcularDistanciaDesdeSede(coordenadas);
+                paquete.setDistanciaEstimadaKm(distanciaKm);
 
                 BigDecimal precio = priceCalculationService.calculatePrice(paquete);
                 paquete.asignarPrecio(precio);

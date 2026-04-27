@@ -1,5 +1,6 @@
 package com.logistics.packages.application.repository;
 
+import com.logistics.packages.domain.exception.DistanciaRequeridaException;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.CategoriaCarga;
 import com.logistics.packages.domain.valueobject.TipoMercancia;
@@ -33,9 +34,7 @@ public class PriceCalculationServiceImpl implements PriceCalculationService {
         }
 
         if (paquete.getDistanciaEstimadaKm() == null) {
-            throw new IllegalArgumentException(
-                "El paquete debe tener distancia estimada para calcular el precio."
-            );
+            throw new DistanciaRequeridaException();
         }
 
         BigDecimal precio = TARIFA_BASE;
