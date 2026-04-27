@@ -1,5 +1,6 @@
 package com.logistics.packages.application.usecase;
 
+import com.logistics.packages.application.repository.DistanceService;
 import com.logistics.packages.application.repository.GeocodingService;
 import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.application.repository.RutaEventPublisher;
@@ -21,6 +22,7 @@ import org.mockito.MockitoAnnotations;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.UUID;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,6 +42,9 @@ class RegistrarAdmisionUseCaseTest {
     private PriceCalculationService priceCalculationService;
 
     @Mock
+    private DistanceService distanceService;
+
+    @Mock
     private RutaEventPublisher eventPublisher;
 
     @InjectMocks
@@ -56,7 +61,7 @@ class RegistrarAdmisionUseCaseTest {
         Direccion direccion = new Direccion("Calle Falsa 123", "Apto 101", "Barrio", "Ciudad");
 
         return RegistroAdmisionCommand.builder()
-                .sedeId("Sede-Principal")
+                .sedeId(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"))
                 .direccionDestino(direccion)
                 .valorDeclarado(new BigDecimal("100000"))
                 .metodoPago(MetodoPago.CONTRA_ENTREGA)
@@ -79,6 +84,7 @@ class RegistrarAdmisionUseCaseTest {
         when(geocodingService.localizar(command.direccionDestino())).thenReturn(Optional.of(coordenadas));
         when(coverageService.isWithinCoverage(coordenadas)).thenReturn(true);
         when(priceCalculationService.calculatePrice(any())).thenReturn(new BigDecimal("5000"));
+        when(distanceService.calcularDistanciaDesdeSede(coordenadas)).thenReturn(150.0);
         
         Paquete paqueteGuardado = new Paquete();
         paqueteGuardado.prePersist();
@@ -102,6 +108,7 @@ class RegistrarAdmisionUseCaseTest {
 
         when(coverageService.isWithinCoverage(command.coordenadasManuales())).thenReturn(true);
         when(priceCalculationService.calculatePrice(any())).thenReturn(new BigDecimal("5000"));
+        when(distanceService.calcularDistanciaDesdeSede(command.coordenadasManuales())).thenReturn(150.0);
         
         Paquete paqueteGuardado = new Paquete();
         paqueteGuardado.prePersist();
@@ -151,6 +158,7 @@ class RegistrarAdmisionUseCaseTest {
         when(geocodingService.localizar(any())).thenReturn(Optional.of(new Coordenadas(4.5, -74.5)));
         when(coverageService.isWithinCoverage(any())).thenReturn(true);
         when(priceCalculationService.calculatePrice(any())).thenReturn(new BigDecimal("10000"));
+        when(distanceService.calcularDistanciaDesdeSede(any())).thenReturn(150.0);
         when(paqueteRepository.save(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
@@ -180,6 +188,7 @@ class RegistrarAdmisionUseCaseTest {
         when(geocodingService.localizar(any())).thenReturn(Optional.of(new Coordenadas(4.5, -74.5)));
         when(coverageService.isWithinCoverage(any())).thenReturn(true);
         when(priceCalculationService.calculatePrice(any())).thenReturn(new BigDecimal("10000"));
+        when(distanceService.calcularDistanciaDesdeSede(any())).thenReturn(150.0);
         when(paqueteRepository.save(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
