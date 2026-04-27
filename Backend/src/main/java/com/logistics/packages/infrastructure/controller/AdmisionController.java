@@ -16,14 +16,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/admision")
+@RequestMapping("/api/paquetes")
 @AllArgsConstructor
 public class AdmisionController {
 
     private final RegistrarAdmisionIn registrarAdmisionIn;
     private final ConsultarPaqueteIn consultarPaqueteIn;
 
-    @PostMapping
+    @PostMapping("/admision")
     public ResponseEntity<RegistroAdmisionResponse> registrarAdmision(@Valid @RequestBody RegistroAdmisionRequest request) {
         RegistroAdmisionCommand command = RegistroAdmisionCommand.builder()
                 .sedeId(request.getSedeId())
