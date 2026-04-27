@@ -15,6 +15,7 @@ Externo/
 .settings
 .springBeans
 .sts4-cache
+.env
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
