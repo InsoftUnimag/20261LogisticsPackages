@@ -21,11 +21,13 @@ services:
       - "4566:4566"
     environment:
       - SERVICES=sqs,s3
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:-}
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:4566/_localstack/health | grep '\"sqs\": \"running\"'"]
+      test: ["CMD-SHELL", "curl -f http://localhost:4566/_localstack/health || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
 
   rabbitmq:
     image: rabbitmq:3.13-management-alpine

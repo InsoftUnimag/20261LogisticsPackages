@@ -7,3 +7,13 @@ spring:
         access-key: test-access-key
         secret-key: test-secret-key
       endpoint: http://localhost:4566
+
+app:
+  geocoding:
+    api-key: ${GOOGLE_MAPS_API_KEY:}
+    timeout-ms: 5000
+  coverage:
+    latitud-min: 4.0
+    latitud-max: 12.0
+    longitud-min: -77.0
+    longitud-max: -72.0
