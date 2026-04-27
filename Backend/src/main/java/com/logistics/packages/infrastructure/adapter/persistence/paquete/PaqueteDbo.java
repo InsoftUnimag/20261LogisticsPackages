@@ -5,6 +5,8 @@ import com.logistics.packages.infrastructure.adapter.persistence.persona.Persona
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -23,6 +25,7 @@ public class PaqueteDbo {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", columnDefinition = "estado_paquete_enum")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private EstadoPaquete estado;
 
     @Column(name = "sede_id")
@@ -36,6 +39,7 @@ public class PaqueteDbo {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado_gps", columnDefinition = "estado_gps_enum")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private EstadoGps estadoGps;
 
     @Column(name = "valor_declarado")
@@ -43,6 +47,7 @@ public class PaqueteDbo {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "metodo_pago", columnDefinition = "metodo_pago_enum")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private MetodoPago metodoPago;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
@@ -69,10 +74,12 @@ public class PaqueteDbo {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo_mercancia", columnDefinition = "tipo_mercancia_enum")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private TipoMercancia tipoMercancia;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "categoria_carga", columnDefinition = "categoria_carga_enum")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private CategoriaCarga categoriaCarga;
 
     @Column(name = "indicador_forma_irregular")

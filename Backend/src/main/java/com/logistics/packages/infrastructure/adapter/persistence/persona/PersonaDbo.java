@@ -4,6 +4,8 @@ import com.logistics.packages.domain.valueobject.TipoDocumento;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
@@ -19,6 +21,7 @@ public class PersonaDbo {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo_documento", columnDefinition = "tipo_documento_enum")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private TipoDocumento tipoDocumento;
 
     @Column(name = "numero_documento", unique = true)
