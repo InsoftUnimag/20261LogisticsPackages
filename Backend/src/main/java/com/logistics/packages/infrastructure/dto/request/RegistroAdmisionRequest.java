@@ -8,11 +8,12 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Getter
 public class RegistroAdmisionRequest {
     @NotNull
-    private String sedeId;
+    private UUID sedeId;
     @NotNull
     private Direccion direccionDestino;
     @NotNull

@@ -29,7 +29,7 @@ public class PaqueteDbo {
     private EstadoPaquete estado;
 
     @Column(name = "sede_id")
-    private String sedeId;
+    private UUID sedeId;
 
     @Column(name = "direccion_destino")
     private String direccionDestino;

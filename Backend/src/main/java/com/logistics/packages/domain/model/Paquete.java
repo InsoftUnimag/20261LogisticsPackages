@@ -19,7 +19,7 @@ public class Paquete {
     private UUID id;
     private LocalDateTime fechaIngresoUtc;
     private EstadoPaquete estado;
-    private String sedeId;
+    private UUID sedeId;
     private Direccion direccionDestino;
     private Coordenadas coordenadas;
     private EstadoGps estadoGps;

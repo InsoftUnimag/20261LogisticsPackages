@@ -8,10 +8,11 @@ import com.logistics.packages.domain.valueobject.TipoMercancia;
 import lombok.Builder;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Builder
 public record RegistroAdmisionCommand(
-        String sedeId,
+        UUID sedeId,
         Direccion direccionDestino,
         BigDecimal valorDeclarado,
         MetodoPago metodoPago,
