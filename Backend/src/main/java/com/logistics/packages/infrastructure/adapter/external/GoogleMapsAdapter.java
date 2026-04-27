@@ -5,16 +5,13 @@ import com.logistics.packages.domain.exception.CoordenadasInvalidasException;
 import com.logistics.packages.domain.exception.TimeoutGeocodingException;
 import com.logistics.packages.domain.valueobject.Coordenadas;
 import com.logistics.packages.domain.valueobject.Direccion;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -62,6 +59,15 @@ public class GoogleMapsAdapter implements GeocodingService {
         }
     }
 
+    @PostConstruct
+    public void verifyApiKey() {
+        if (apiKey == null || apiKey.isEmpty()) {
+            log.error("¡ALERTA! La API Key de Google Maps no está configurada.");
+        } else {
+            log.info("API Key de Google Maps cargada exitosamente.");
+        }
+    }
+
     private String buildGeocodingUrl(String direccion) {
         String direccionCodificada = URLEncoder.encode(direccion, StandardCharsets.UTF_8);
         return "https://maps.googleapis.com/maps/api/geocode/json?address=" 
@@ -88,7 +94,7 @@ public class GoogleMapsAdapter implements GeocodingService {
             return Optional.empty();
         }
 
-        Map<String, Object> firstResult = results.get(0);
+        Map<String, Object> firstResult = results.getFirst();
         Map<String, Object> geometry = (Map<String, Object>) firstResult.get("geometry");
         if (geometry == null) {
             log.warn("Geometry no encontrado en la respuesta");

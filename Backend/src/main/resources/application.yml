@@ -17,3 +17,6 @@ app:
     latitud-max: 12.0
     longitud-min: -77.0
     longitud-max: -72.0
+  sede:
+    latitud: 4.624335
+    longitud: -74.063644
