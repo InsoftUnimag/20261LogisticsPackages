@@ -1,6 +1,7 @@
 package com.logistics.packages.infrastructure.adapter.persistence.paquete;
 
 import com.logistics.packages.domain.valueobject.*;
+import com.logistics.packages.domain.valueobject.Direccion;
 import com.logistics.packages.infrastructure.adapter.persistence.persona.PersonaDbo;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -18,6 +19,7 @@ import java.util.UUID;
 @Setter
 public class PaqueteDbo {
     @Id
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID id;
 
     @Column(name = "fecha_ingreso_utc")
@@ -29,10 +31,17 @@ public class PaqueteDbo {
     private EstadoPaquete estado;
 
     @Column(name = "sede_id")
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID sedeId;
 
-    @Column(name = "direccion_destino")
-    private String direccionDestino;
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "direccion", column = @Column(name = "direccion_linea")),
+        @AttributeOverride(name = "ciudad", column = @Column(name = "ciudad_destino")),
+        @AttributeOverride(name = "departamento", column = @Column(name = "departamento_destino")),
+        @AttributeOverride(name = "pais", column = @Column(name = "pais_destino"))
+    })
+    private Direccion direccionDestino;
 
     private Double latitud;
     private Double longitud;
@@ -92,12 +101,15 @@ public class PaqueteDbo {
     private Double distanciaEstimadaKm;
 
     @Column(name = "ruta_id")
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID rutaId;
 
     @Column(name = "zona_almacenamiento_id")
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID zonaAlmacenamientoId;
 
     @Column(name = "zona_destino_id")
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID zonaDestinoId;
 
     @Column(name = "url_evidencia_entrega")

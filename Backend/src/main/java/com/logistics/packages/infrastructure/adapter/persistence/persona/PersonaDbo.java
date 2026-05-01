@@ -1,5 +1,6 @@
 package com.logistics.packages.infrastructure.adapter.persistence.persona;
 
+import com.logistics.packages.domain.valueobject.Direccion;
 import com.logistics.packages.domain.valueobject.TipoDocumento;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -17,6 +18,7 @@ public class PersonaDbo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID id;
 
     @Enumerated(EnumType.STRING)
@@ -35,5 +37,12 @@ public class PersonaDbo {
     @Column(name = "correo_electronico")
     private String correoElectronico;
 
-    private String direccion;
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "direccion", column = @Column(name = "direccion_linea")),
+        @AttributeOverride(name = "ciudad", column = @Column(name = "ciudad")),
+        @AttributeOverride(name = "departamento", column = @Column(name = "departamento")),
+        @AttributeOverride(name = "pais", column = @Column(name = "pais"))
+    })
+    private Direccion direccion;
 }

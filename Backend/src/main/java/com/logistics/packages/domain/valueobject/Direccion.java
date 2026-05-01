@@ -1,5 +1,6 @@
 package com.logistics.packages.domain.valueobject;
 
+import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Getter;
@@ -7,6 +8,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@Embeddable
 public class Direccion {
     private String direccion;
     private String ciudad;
