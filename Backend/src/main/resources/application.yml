@@ -1,5 +1,7 @@
 spring:
   cloud:
+    flyway:
+      baseline-on-migrate: true
     aws:
       region:
         static: us-east-1

@@ -9,6 +9,9 @@ spring:
       - io.awspring.cloud.autoconfigure.sqs.SqsAutoConfiguration
   flyway:
     enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: update
   cloud:
     aws:
       stack:
