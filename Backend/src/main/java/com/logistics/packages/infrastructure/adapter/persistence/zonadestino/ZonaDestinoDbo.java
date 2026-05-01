@@ -20,6 +20,7 @@ import java.util.UUID;
 public class ZonaDestinoDbo {
 
     @Id
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID id;
 
     private String nombre;
@@ -51,5 +52,6 @@ public class ZonaDestinoDbo {
     private Integer contadorPaquetes;
 
     @Column(name = "id_sede")
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID idSede;
 }

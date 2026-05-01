@@ -18,6 +18,7 @@ import java.util.UUID;
 public class ZonaAlmacenajeDbo {
 
     @Id
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID id;
 
     private String nombre;
@@ -57,8 +58,10 @@ public class ZonaAlmacenajeDbo {
     private String ubicacionFisica;
 
     @Column(name = "id_sede")
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID idSede;
 
     @Column(name = "zona_contingencia_id")
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID zonaContingenciaId;
 }
