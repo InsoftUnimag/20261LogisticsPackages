@@ -1,6 +1,7 @@
 package com.logistics.packages.infrastructure.adapter.messaging;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logistics.packages.application.usecase.ClasificarPaqueteUseCase;
 import lombok.RequiredArgsConstructor;
@@ -37,15 +38,13 @@ public class PaqueteListoClasificacionListener {
         log.info("Evento recibido: paquete listo para clasificación - {}", message);
         
         try {
-            // Deserializar el mensaje para obtener el paqueteId
-            Map<String, String> payload = objectMapper.readValue(message, Map.class);
+            // Deserializar el mensaje de forma segura usando TypeReference
+            Map<String, String> payload = objectMapper.readValue(message, new TypeReference<Map<String, String>>() {});
             UUID paqueteId = UUID.fromString(payload.get("paqueteId"));
             
             log.info("Procesando clasificación automática para paquete: {}", paqueteId);
             
             // Calcular y sugerir la zona de destino
-            // Nota: La sugerencia se almacena temporalmente o se procesa directamente
-            // dependiendo de si se requiere confirmación manual del almacenista
             var sugerencia = clasificarPaqueteUseCase.sugerirZonaParaPaquete(paqueteId);
             
             log.info("Zona sugerida: {} ({}) para paquete {}", 

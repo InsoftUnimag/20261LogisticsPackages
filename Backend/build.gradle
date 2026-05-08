@@ -47,6 +47,7 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation "org.testcontainers:localstack"
     testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'com.h2database:h2'
 }
 
 tasks.named('test') {

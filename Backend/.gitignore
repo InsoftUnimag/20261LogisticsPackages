@@ -5,6 +5,7 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 Externo/
+**/src/main/java/com/logistics/packages/agent/
 
 ### STS ###
 .apt_generated
@@ -14,6 +15,7 @@ Externo/
 .settings
 .springBeans
 .sts4-cache
+.env
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/

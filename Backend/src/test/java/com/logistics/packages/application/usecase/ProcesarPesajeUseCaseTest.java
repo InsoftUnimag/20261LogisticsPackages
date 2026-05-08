@@ -1,6 +1,7 @@
 package com.logistics.packages.application.usecase;
 
-import com.logistics.packages.application.admision.repositories.PaqueteRepository;
+import com.logistics.packages.application.repository.PaqueteRepository;
+import com.logistics.packages.domain.event.SolicitudRutaEvent;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.*;
@@ -32,6 +33,9 @@ class ProcesarPesajeUseCaseTest {
     @Mock
     private PaqueteRepository paqueteRepository;
 
+    @Mock
+    private SolicitarRutaUseCase solicitarRutaUseCase;
+
     @InjectMocks
     private ProcesarPesajeUseCase procesarPesajeUseCase;
 
@@ -43,7 +47,7 @@ class ProcesarPesajeUseCaseTest {
         paqueteId = UUID.randomUUID();
         paqueteExistente = Paquete.builder()
                 .id(paqueteId)
-                .sedeId("SEDE-001")
+                .sedeId(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"))
                 .distanciaEstimadaKm(50.0)
                 .build();
     }
@@ -86,9 +90,10 @@ class ProcesarPesajeUseCaseTest {
         assertNotNull(response.getPrecioEnvio());
         assertEquals(CategoriaCarga.NORMAL, response.getCategoriaCarga());
 
-        // Verificar que se llamó a save
+        // Verificar que se llamó a save y al evento de ruta
         ArgumentCaptor<Paquete> paqueteCaptor = ArgumentCaptor.forClass(Paquete.class);
         verify(paqueteRepository).save(paqueteCaptor.capture());
+        verify(solicitarRutaUseCase).handle(any(SolicitudRutaEvent.class));
         
         Paquete paqueteGuardado = paqueteCaptor.getValue();
         assertNotNull(paqueteGuardado.getPeso());
@@ -124,7 +129,7 @@ class ProcesarPesajeUseCaseTest {
 
         // Then
         // Precio = 10 (base) + 15*2 (peso) + 50*0.5 (distancia) + 5 (tipo) + 0 (categoría) = 70
-        assertEquals(new BigDecimal("70.00"), response.getPrecioEnvio());
+        assertEquals(0, new BigDecimal("70.00").compareTo(response.getPrecioEnvio()));
     }
 
     @Test

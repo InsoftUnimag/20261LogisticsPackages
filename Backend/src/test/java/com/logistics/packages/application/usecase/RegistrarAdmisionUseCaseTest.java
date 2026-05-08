@@ -1,10 +1,11 @@
 package com.logistics.packages.application.usecase;
 
-import com.logistics.packages.application.admision.repositories.GeocodingService;
-import com.logistics.packages.application.admision.repositories.PaqueteRepository;
-import com.logistics.packages.application.admision.repositories.RutaEventPublisher;
-import com.logistics.packages.application.admision.usecase.RegistrarAdmisionUseCase;
-import com.logistics.packages.application.admision.usecase.RegistroAdmisionCommand;
+import com.logistics.packages.application.repository.DistanceService;
+import com.logistics.packages.application.repository.GeocodingService;
+import com.logistics.packages.application.repository.PaqueteRepository;
+import com.logistics.packages.application.repository.RutaEventPublisher;
+import com.logistics.packages.application.repository.CoverageService;
+import com.logistics.packages.application.repository.PriceCalculationService;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.model.Persona;
 import com.logistics.packages.domain.valueobject.TipoDocumento;
@@ -21,6 +22,7 @@ import org.mockito.MockitoAnnotations;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.UUID;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,6 +34,15 @@ class RegistrarAdmisionUseCaseTest {
 
     @Mock
     private GeocodingService geocodingService;
+
+    @Mock
+    private CoverageService coverageService;
+
+    @Mock
+    private PriceCalculationService priceCalculationService;
+
+    @Mock
+    private DistanceService distanceService;
 
     @Mock
     private RutaEventPublisher eventPublisher;
@@ -50,12 +61,13 @@ class RegistrarAdmisionUseCaseTest {
         Direccion direccion = new Direccion("Calle Falsa 123", "Apto 101", "Barrio", "Ciudad");
 
         return RegistroAdmisionCommand.builder()
-                .sedeId("Sede-Principal")
+                .sedeId(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"))
                 .direccionDestino(direccion)
                 .valorDeclarado(new BigDecimal("100000"))
                 .metodoPago(MetodoPago.CONTRA_ENTREGA)
                 .remitente(remitente)
-                .destinatario(destinatario);
+                .destinatario(destinatario)
+                .indicadorFormaIrregular(false);
     }
 
     @Test
@@ -68,9 +80,12 @@ class RegistrarAdmisionUseCaseTest {
                 .alto(20.0)
                 .build();
 
-        Coordenadas coordenadas = new Coordenadas(11.22, -74.18);
+        Coordenadas coordenadas = new Coordenadas(4.5, -74.5);
         when(geocodingService.localizar(command.direccionDestino())).thenReturn(Optional.of(coordenadas));
-
+        when(coverageService.isWithinCoverage(coordenadas)).thenReturn(true);
+        when(priceCalculationService.calculatePrice(any())).thenReturn(new BigDecimal("5000"));
+        when(distanceService.calcularDistanciaDesdeSede(coordenadas)).thenReturn(150.0);
+        
         Paquete paqueteGuardado = new Paquete();
         paqueteGuardado.prePersist();
         when(paqueteRepository.save(any(Paquete.class))).thenReturn(paqueteGuardado);
@@ -85,11 +100,16 @@ class RegistrarAdmisionUseCaseTest {
     }
 
     @Test
-    void registrarAdmisionConGeocodingFallido() {
-        // Given
-        RegistroAdmisionCommand command = createBaseCommandBuilder().build();
+    void registrarAdmisionConCoordenadasManuales() {
+        // Given - Simula fallback con coordenadas manuales cuando geocoding falla
+        RegistroAdmisionCommand command = createBaseCommandBuilder()
+                .coordenadasManuales(new Coordenadas(4.5, -74.5))
+                .build();
 
-        when(geocodingService.localizar(command.direccionDestino())).thenReturn(Optional.empty());
+        when(coverageService.isWithinCoverage(command.coordenadasManuales())).thenReturn(true);
+        when(priceCalculationService.calculatePrice(any())).thenReturn(new BigDecimal("5000"));
+        when(distanceService.calcularDistanciaDesdeSede(command.coordenadasManuales())).thenReturn(150.0);
+        
         Paquete paqueteGuardado = new Paquete();
         paqueteGuardado.prePersist();
         when(paqueteRepository.save(any(Paquete.class))).thenReturn(paqueteGuardado);
@@ -99,8 +119,8 @@ class RegistrarAdmisionUseCaseTest {
 
         // Then
         assertNotNull(paqueteId);
+        verify(geocodingService, never()).localizar(any());
         verify(paqueteRepository, times(1)).save(any(Paquete.class));
-        verify(eventPublisher, never()).publicarSolicitudRuta(any(UUID.class));
     }
 
     @Test
@@ -112,6 +132,11 @@ class RegistrarAdmisionUseCaseTest {
                 .ancho(30.0)
                 .alto(20.0)
                 .build();
+
+        // Mock geocoding para que retorne coordenadas válidas
+        // y pueda llegar a la validación de peso
+        when(geocodingService.localizar(any())).thenReturn(Optional.of(new Coordenadas(4.5, -74.5)));
+        when(coverageService.isWithinCoverage(any())).thenReturn(true);
 
         // When & Then
         assertThrows(IllegalArgumentException.class, () -> {
@@ -130,7 +155,10 @@ class RegistrarAdmisionUseCaseTest {
                 .alto(60.0) // Volumen que también activa la alerta
                 .build();
         
-        when(geocodingService.localizar(any())).thenReturn(Optional.of(new Coordenadas(1.0, 1.0)));
+        when(geocodingService.localizar(any())).thenReturn(Optional.of(new Coordenadas(4.5, -74.5)));
+        when(coverageService.isWithinCoverage(any())).thenReturn(true);
+        when(priceCalculationService.calculatePrice(any())).thenReturn(new BigDecimal("10000"));
+        when(distanceService.calcularDistanciaDesdeSede(any())).thenReturn(150.0);
         when(paqueteRepository.save(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
@@ -157,7 +185,10 @@ class RegistrarAdmisionUseCaseTest {
         // El peso volumétrico será (100*100*100)/1_000_000 * 250 = 250 kg
         // La diferencia con el peso real (10kg) es > 30%
 
-        when(geocodingService.localizar(any())).thenReturn(Optional.of(new Coordenadas(1.0, 1.0)));
+        when(geocodingService.localizar(any())).thenReturn(Optional.of(new Coordenadas(4.5, -74.5)));
+        when(coverageService.isWithinCoverage(any())).thenReturn(true);
+        when(priceCalculationService.calculatePrice(any())).thenReturn(new BigDecimal("10000"));
+        when(distanceService.calcularDistanciaDesdeSede(any())).thenReturn(150.0);
         when(paqueteRepository.save(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When

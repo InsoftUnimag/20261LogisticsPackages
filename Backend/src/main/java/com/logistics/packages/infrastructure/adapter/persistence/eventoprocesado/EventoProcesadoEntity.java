@@ -6,6 +6,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 /**
  * Entidad JPA para persistir eventos procesados.
  * MOD1-UC-007: FR-008 - Garantiza idempotencia en el procesamiento de eventos.
@@ -24,6 +27,7 @@ public class EventoProcesadoEntity {
     private String eventoId;
     
     @Column(name = "paquete_id", nullable = false)
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID paqueteId;
     
     @Column(name = "tipo_evento", nullable = false, length = 100)

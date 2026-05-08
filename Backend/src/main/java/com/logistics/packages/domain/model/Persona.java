@@ -1,5 +1,6 @@
 package com.logistics.packages.domain.model;
 
+import com.logistics.packages.domain.valueobject.Direccion;
 import com.logistics.packages.domain.valueobject.TipoDocumento;
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
@@ -18,5 +19,5 @@ public class Persona {
     private final String nombreCompleto;
     private final String telefono;
     private final String correoElectronico;
-    private final String direccion;
+    private final Direccion direccion;
 }

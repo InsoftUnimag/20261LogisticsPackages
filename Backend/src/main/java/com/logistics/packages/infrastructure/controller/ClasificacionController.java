@@ -24,7 +24,7 @@ import java.util.UUID;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/clasificacion")
+@RequestMapping("/api/paquetes")
 @RequiredArgsConstructor
 public class ClasificacionController {
 
@@ -37,7 +37,7 @@ public class ClasificacionController {
      * @param paqueteId El ID del paquete
      * @return Respuesta con la zona sugerida
      */
-    @GetMapping("/sugerencia/{paqueteId}")
+    @GetMapping("/clasificacion/sugerencia/{paqueteId}")
     public ResponseEntity<ClasificacionSugeridaResponseDTO> obtenerSugerenciaZona(
             @PathVariable UUID paqueteId) {
         
@@ -73,7 +73,7 @@ public class ClasificacionController {
      * @param request Solicitud con paqueteId y zonaDestinoId
      * @return Respuesta de confirmación
      */
-    @PostMapping("/confirmar")
+    @PostMapping("/clasificacion/confirmar")
     public ResponseEntity<ConfirmacionClasificacionResponse> confirmarClasificacion(
             @Valid @RequestBody ConfirmarZonaRequest request) {
         

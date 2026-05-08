@@ -6,6 +6,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 /**
  * Entidad JPA para el historial de estados de paquetes.
  * MOD1-UC-006: Persistencia inmutable del historial de transiciones.
@@ -21,9 +24,11 @@ public class HistorialEstadoEntity {
     
     @Id
     @Column(name = "id", updatable = false, nullable = false)
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID id;
     
     @Column(name = "paquete_id", nullable = false)
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID paqueteId;
     
     @Column(name = "estado_anterior", nullable = false, length = 50)
@@ -36,6 +41,7 @@ public class HistorialEstadoEntity {
     private String observaciones;
     
     @Column(name = "usuario_id", nullable = false)
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID usuarioId;
     
     @Column(name = "url_evidencia", length = 500)

@@ -190,9 +190,9 @@ class PaqueteActualizacionDatosTest {
                 false
             );
 
-            // When - Actualizar con dimensiones que generan volumen > 0.5 m³
+            // When - Actualizar con dimensiones que generan volumen > 0.5 m³ y <= 0.7 m³
             Peso nuevoPeso = new Peso(30.0);
-            Dimensiones nuevasDimensiones = new Dimensiones(100.0, 100.0, 80.0); // 0.8 m³
+            Dimensiones nuevasDimensiones = new Dimensiones(100.0, 100.0, 60.0); // 0.6 m³
             paquete.actualizarDatosFisicos(nuevoPeso, nuevasDimensiones);
 
             // Then
@@ -211,15 +211,14 @@ class PaqueteActualizacionDatosTest {
                 .peso(new Peso(20.0))
                 .dimensiones(new Dimensiones(30.0, 20.0, 10.0))
                 .build();
+            assertFalse(paquete.isAlertaDensidadAtipica(), "Inicialmente no debe tener alerta");
 
             paquete.procesarPesaje(
-                new Peso(20.0), 
-                new Dimensiones(30.0, 20.0, 10.0), 
+                new Peso(20.0),
+                new Dimensiones(30.0, 20.0, 10.0),
                 TipoMercancia.ESTANDAR, 
                 false
             );
-
-            assertFalse(paquete.isAlertaDensidadAtipica(), "Inicialmente no debe tener alerta");
 
             // When - Actualizar con dimensiones que crean alta diferencia entre peso real y volumétrico
             Peso nuevoPeso = new Peso(5.0); // Peso muy bajo

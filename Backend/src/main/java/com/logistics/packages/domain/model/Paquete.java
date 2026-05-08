@@ -19,7 +19,7 @@ public class Paquete {
     private UUID id;
     private LocalDateTime fechaIngresoUtc;
     private EstadoPaquete estado;
-    private String sedeId;
+    private UUID sedeId;
     private Direccion direccionDestino;
     private Coordenadas coordenadas;
     private EstadoGps estadoGps;
@@ -27,12 +27,7 @@ public class Paquete {
     private MetodoPago metodoPago;
     private Persona remitente;
     private Persona destinatario;
-    
-    /**
-     * Version para bloqueo optimista (MOD1-UC-006)
-     * Previene actualizaciones concurrentes del mismo paquete
-     */
-    private Long version;
+
     
     // Atributos Físicos y Tarifarios (MOD1-UC-002)
     private Peso peso;
@@ -59,16 +54,26 @@ public class Paquete {
     private String nombreFirmante;  // Nombre de quien recibe el paquete
     private LocalDateTime fechaEntregaUtc;  // Timestamp de entrega
 
+    @Getter
+    @Setter
+    @Builder.Default
+    private String etiquetaDigital = null;  // FR-007: Etiqueta digital vinculada al UUID
+
     public void prePersist() {
         this.id = UUID.randomUUID();
         this.fechaIngresoUtc = LocalDateTime.now(ZoneOffset.UTC);
         this.estado = EstadoPaquete.RECIBIDO_EN_SEDE;
         this.estadoGps = EstadoGps.PENDIENTE;
+        this.etiquetaDigital = "PK-" + this.id.toString().toUpperCase();
     }
 
     public void asignarCoordenadas(Coordenadas coordenadas) {
         this.coordenadas = coordenadas;
         this.estadoGps = EstadoGps.RESUELTO;
+    }
+
+    public void asignarPrecio(BigDecimal precio) {
+        this.precioEnvio = new PrecioEnvio(precio);
     }
 
     /**
@@ -130,16 +135,22 @@ public class Paquete {
 
     /**
      * FR-002: Determina la categoría de carga
-     * Carga Especial si: Peso > 50 kg O Volumen > 0.5 m³
+     * Carga Especial si: Peso > 50 kg AND Peso ≤ 70 kg O Volumen > 0.5 m³ AND Volumen ≤ 0.7 m³
+     * Fuera de estos rangos: peso > 70 kg o volumen > 0.7 m³ deben ser bloqueados
      */
     private CategoriaCarga determinarCategoriaCarga() {
-        if (this.peso != null && this.peso.getKilogramos() > 50) {
-            this.alertaCargaEspecial = true;
-            return CategoriaCarga.CARGA_ESPECIAL;
+        if (this.peso != null) {
+            double pesoKg = this.peso.getKilogramos();
+            if (pesoKg > 50 && pesoKg <= 70) {
+                this.alertaCargaEspecial = true;
+                return CategoriaCarga.CARGA_ESPECIAL;
+            }
         }
-        if (this.volumenM3 != null && this.volumenM3 > 0.5) {
-            this.alertaCargaEspecial = true;
-            return CategoriaCarga.CARGA_ESPECIAL;
+        if (this.volumenM3 != null) {
+            if (this.volumenM3 > 0.5 && this.volumenM3 <= 0.7) {
+                this.alertaCargaEspecial = true;
+                return CategoriaCarga.CARGA_ESPECIAL;
+            }
         }
         return CategoriaCarga.NORMAL;
     }

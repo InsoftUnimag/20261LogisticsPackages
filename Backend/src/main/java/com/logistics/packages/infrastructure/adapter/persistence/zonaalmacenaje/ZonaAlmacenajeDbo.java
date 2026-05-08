@@ -5,6 +5,8 @@ import com.logistics.packages.domain.valueobject.CategoriaZona;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -16,6 +18,7 @@ import java.util.UUID;
 public class ZonaAlmacenajeDbo {
 
     @Id
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID id;
 
     private String nombre;
@@ -25,7 +28,8 @@ public class ZonaAlmacenajeDbo {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "categoria", columnDefinition = "categoria_zona_enum")
-    private CategoriaZona categoria; // Storing as String for simplicity, could be enum
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    private CategoriaZona categoria;
 
     @Column(name = "capacidad_max_kg")
     private BigDecimal capacidadMaxKg;
@@ -47,14 +51,17 @@ public class ZonaAlmacenajeDbo {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", columnDefinition = "estado_zona_enum")
-    private EstadoZona estado; // Storing as String for simplicity, could be enum
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    private EstadoZona estado;
 
     @Column(name = "ubicacion_fisica")
     private String ubicacionFisica;
 
     @Column(name = "id_sede")
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID idSede;
 
     @Column(name = "zona_contingencia_id")
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID zonaContingenciaId;
 }

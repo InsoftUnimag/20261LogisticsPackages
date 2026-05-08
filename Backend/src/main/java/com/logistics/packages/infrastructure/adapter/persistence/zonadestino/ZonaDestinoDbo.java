@@ -4,6 +4,8 @@ import com.logistics.packages.domain.valueobject.CategoriaZona;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
@@ -18,6 +20,7 @@ import java.util.UUID;
 public class ZonaDestinoDbo {
 
     @Id
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID id;
 
     private String nombre;
@@ -27,6 +30,7 @@ public class ZonaDestinoDbo {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "categoria", columnDefinition = "categoria_zona_enum")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private CategoriaZona categoria;
 
     @Column(name = "latitud_min")
@@ -48,5 +52,6 @@ public class ZonaDestinoDbo {
     private Integer contadorPaquetes;
 
     @Column(name = "id_sede")
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID idSede;
 }

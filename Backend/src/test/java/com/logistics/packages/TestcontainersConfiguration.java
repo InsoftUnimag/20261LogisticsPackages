@@ -1,4 +1,4 @@
-package com.example.demo;
+package com.logistics.packages;
 
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -18,23 +18,24 @@ class TestcontainersConfiguration {
         return new PostgreSQLContainer<>(DockerImageName.parse("postgres:10-alpine"));
     }
 
-    // 1. Instancia estática (se crea una sola vez)
-    static final LocalStackContainer localstack = new LocalStackContainer(
-            DockerImageName.parse("localstack/localstack:3.4.0")
-    ).withServices(LocalStackContainer.Service.SQS, LocalStackContainer.Service.S3);
+    private static LocalStackContainer localstack;
 
     @Bean
-    LocalStackContainer localstackContainer() {
-        // 2. El bean solo expone la instancia estática
+    static LocalStackContainer localstackContainer() {
+        if (localstack == null) {
+            localstack = new LocalStackContainer(
+                    DockerImageName.parse("localstack/localstack:3.4.0")
+            ).withServices(LocalStackContainer.Service.SQS, LocalStackContainer.Service.S3);
+            localstack.start();
+        }
         return localstack;
     }
 
     @DynamicPropertySource
     static void initializeLocalStackProperties(DynamicPropertyRegistry registry) {
-        // 3. Usamos la instancia estática directamente
-        registry.add("spring.cloud.aws.endpoint", localstack::getEndpoint);
-        registry.add("spring.cloud.aws.credentials.access-key", localstack::getAccessKey);
-        registry.add("spring.cloud.aws.credentials.secret-key", localstack::getSecretKey);
-        registry.add("spring.cloud.aws.region.static", localstack::getRegion);
+        registry.add("spring.cloud.aws.endpoint", () -> localstackContainer().getEndpoint().toString());
+        registry.add("spring.cloud.aws.credentials.access-key", localstackContainer()::getAccessKey);
+        registry.add("spring.cloud.aws.credentials.secret-key", localstackContainer()::getSecretKey);
+        registry.add("spring.cloud.aws.region.static", localstackContainer()::getRegion);
     }
 }
