@@ -1,6 +1,7 @@
 package com.logistics.packages.infrastructure.dto.response;
 
 import com.logistics.packages.domain.valueobject.CategoriaCarga;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,15 +22,23 @@ import java.util.UUID;
 @AllArgsConstructor
 public class PesajeResponseDto {
     
+    @Schema(description = "ID del paquete pesado")
     private UUID paqueteId;
+    @Schema(description = "Peso real del paquete en kg")
     private Double peso;
+    @Schema(description = "Volumen calculado del paquete en m³")
     private Double volumenM3;
+    @Schema(description = "Peso volumétrico calculado (para comparar con peso real)")
     private Double pesoVolumetrico;
+    @Schema(description = "Peso facturable final (máximo entre peso real y volumétrico)")
     private Double pesoFacturable;
+    @Schema(description = "Categoría de carga (NORMAL | CARGA_ESPECIAL)")
     private CategoriaCarga categoriaCarga;
+    @Schema(description = "Precio total calculado del envío")
     private BigDecimal precioEnvio;
     
     @Builder.Default
+    @Schema(description = "Lista de alertas generadas durante el proceso (carga especial, densidad atípica)")
     private List<String> alertas = new ArrayList<>();
     
     /**

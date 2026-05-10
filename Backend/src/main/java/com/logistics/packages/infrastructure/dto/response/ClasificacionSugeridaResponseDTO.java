@@ -1,5 +1,6 @@
 package com.logistics.packages.infrastructure.dto.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,10 +17,16 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ClasificacionSugeridaResponseDTO {
+    @Schema(description = "ID del paquete a clasificar")
     private UUID paqueteId;
+    @Schema(description = "ID de la zona de destino sugerida")
     private UUID zonaDestinoId;
+    @Schema(description = "Nombre de la zona de destino")
     private String nombreZona;
+    @Schema(description = "Código de la zona de destino")
     private String codigoZona;
+    @Schema(description = "Indica si la zona tiene capacidad disponible")
     private boolean tieneCapacidad;
+    @Schema(description = "Mensaje informativo de la sugerencia")
     private String mensaje;
 }
