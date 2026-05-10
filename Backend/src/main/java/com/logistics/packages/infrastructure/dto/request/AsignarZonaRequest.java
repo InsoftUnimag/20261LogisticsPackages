@@ -1,5 +1,6 @@
 package com.logistics.packages.infrastructure.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,12 +21,14 @@ import java.util.UUID;
 public class AsignarZonaRequest {
     
     @NotNull(message = "El ID del paquete es obligatorio")
+    @Schema(description = "ID del paquete a asignar")
     private UUID paqueteId;
     
     @NotNull(message = "El ID de la zona es obligatorio")
+    @Schema(description = "ID de la zona de almacenamiento destino")
     private UUID zonaId;
     
-    // FR-004: Campos opcionales para actualización de datos físicos por discrepancia
+    @Schema(description = "Datos físicos corregidos si hay discrepancia con los registrados")
     private DatosFisicosDiscrepanciaDto datosDiscrepancia;
     
     /**
