@@ -1,5 +1,6 @@
 package com.logistics.packages.infrastructure.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,8 +20,10 @@ import java.util.UUID;
 public class ConfirmarZonaRequest {
     
     @NotNull(message = "El ID del paquete es obligatorio")
+    @Schema(description = "ID del paquete a clasificar")
     private UUID paqueteId;
     
     @NotNull(message = "El ID de la zona de destino es obligatorio")
+    @Schema(description = "ID de la zona de destino confirmada")
     private UUID zonaDestinoId;
 }

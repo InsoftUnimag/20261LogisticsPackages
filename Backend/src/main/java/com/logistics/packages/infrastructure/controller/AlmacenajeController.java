@@ -8,6 +8,9 @@ import com.logistics.packages.infrastructure.dto.request.AsignarZonaRequest;
 import com.logistics.packages.infrastructure.dto.response.AsignacionZonaResponse;
 import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.application.repository.ZonaAlmacenajeRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +28,7 @@ import java.util.UUID;
  * - GET /api/paquetes/{paqueteId}/almacenaje/sugerencia - Obtiene zona sugerida
  * - POST /api/paquetes/{paqueteId}/almacenaje - Asigna zona de almacenamiento
  */
+@Tag(name = "Almacenaje", description = "Asignación y gestión de zonas de almacenamiento físico")
 @Slf4j
 @RestController
 @RequestMapping("/api/paquetes")
@@ -42,6 +46,10 @@ public class AlmacenajeController {
      * @param paqueteId El ID del paquete
      * @return Respuesta con la zona sugerida
      */
+    @Operation(summary = "Obtener zona de almacenaje sugerida", description = "Sugiere automáticamente la zona de almacenamiento más apropiada para un paquete según su tipo de mercancía y capacidad disponible")
+    @ApiResponse(responseCode = "200", description = "Zona sugerida encontrada exitosamente")
+    @ApiResponse(responseCode = "404", description = "Paquete no encontrado o no hay zona disponible")
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     @GetMapping("/{paqueteId}/almacenaje/sugerencia")
     public ResponseEntity<AsignacionZonaResponse> obtenerZonaSugerida(
             @PathVariable UUID paqueteId) {
@@ -79,6 +87,11 @@ public class AlmacenajeController {
      * @param request Solicitud con ID de la zona
      * @return Respuesta de asignación confirmada
      */
+    @Operation(summary = "Asignar zona de almacenaje", description = "Asigna una zona de almacenamiento a un paquete y actualiza su estado a 'En Clasificación'. Soporta actualización de datos físicos por discrepancia")
+    @ApiResponse(responseCode = "201", description = "Zona asignada y paquete actualizado exitosamente")
+    @ApiResponse(responseCode = "400", description = "Solicitud inválida: IDs no coinciden, zona no apta o capacidad excedida")
+    @ApiResponse(responseCode = "404", description = "Paquete o zona de almacenamiento no encontrados")
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     @PostMapping("/{paqueteId}/almacenaje")
     public ResponseEntity<AsignacionZonaResponse> asignarZonaAlmacenamiento(
             @PathVariable UUID paqueteId,

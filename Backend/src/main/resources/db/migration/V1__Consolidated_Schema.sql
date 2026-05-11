@@ -151,7 +151,7 @@ CREATE TABLE paquetes (
     zona_destino_id UUID,
 
     -- Columnas agregadas en V6 (evidencia de entrega)
-    url_evidencia_entrega TEXT,
+    url_evidencia_entrega VARCHAR(500),
     nombre_firmante VARCHAR(255),
     fecha_entrega_utc TIMESTAMP,
 

@@ -3,6 +3,7 @@ package com.logistics.packages.infrastructure.dto.request;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.TipoMercancia;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,30 +24,39 @@ import java.util.UUID;
 public class SolicitudRutaPayload {
 
     @JsonProperty("paquete_id")
+    @Schema(description = "ID del paquete")
     private UUID paqueteId;
 
     @JsonProperty("peso_kg")
+    @Schema(description = "Peso del paquete en kg")
     private Double pesoKg;
 
     @JsonProperty("volumen_m3")
+    @Schema(description = "Volumen del paquete en m³")
     private Double volumenM3;
 
     @JsonProperty("tipo_mercancia")
+    @Schema(description = "Tipo de mercancía (ESTANDAR | FRAGIL | PELIGROSO)")
     private TipoMercancia tipoMercancia;
 
     @JsonProperty("direccion_destino")
+    @Schema(description = "Dirección completa de destino formateada")
     private String direccionDestino;
 
     @JsonProperty("latitud")
+    @Schema(description = "Latitud de la coordenada de destino")
     private Double latitud;
 
     @JsonProperty("longitud")
+    @Schema(description = "Longitud de la coordenada de destino")
     private Double longitud;
 
     @JsonProperty("peso_facturable")
+    @Schema(description = "Peso facturable calculado (máximo entre peso real y volumétrico)")
     private Double pesoFacturable;
 
     @JsonProperty("categoria_carga")
+    @Schema(description = "Categoría de carga (NORMAL | CARGA_ESPECIAL)")
     private String categoriaCarga;
 
     /**

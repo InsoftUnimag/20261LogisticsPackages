@@ -7,6 +7,9 @@ import com.logistics.packages.domain.valueobject.Dimensiones;
 import com.logistics.packages.domain.valueobject.Peso;
 import com.logistics.packages.infrastructure.dto.request.PesajeRequest;
 import com.logistics.packages.infrastructure.dto.response.PesajeResponseDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
  * Controlador REST para el procesamiento de pesaje de paquetes (MOD1-UC-002)
  * T208: Expone el endpoint POST /api/paquetes/pesaje
  */
+@Tag(name = "Pesaje", description = "Procesamiento de pesaje y dimensiones de paquetes")
 @Slf4j
 @RestController
 @RequestMapping("/api/paquetes")
@@ -33,6 +37,10 @@ public class PesajeController {
      * @param request Datos del pesaje con validaciones
      * @return Respuesta con el precio calculado y alertas
      */
+    @Operation(summary = "Procesar pesaje de paquete", description = "Procesa el pesaje y dimensiones de un paquete existente. Calcula peso volumétrico, peso facturable, categoría de carga, precio de envío y genera alertas si aplica")
+    @ApiResponse(responseCode = "200", description = "Pesaje procesado exitosamente con precio calculado")
+    @ApiResponse(responseCode = "400", description = "Error de validación en los datos de pesaje")
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     @PostMapping("/pesaje")
     public ResponseEntity<PesajeResponseDto> procesarPesaje(@Valid @RequestBody PesajeRequest request) {
         log.info("Procesando pesaje para paquete ID: {}", request.getPaqueteId());
@@ -97,6 +105,8 @@ public class PesajeController {
     /**
      * Health check endpoint
      */
+    @Operation(summary = "Health check de pesaje", description = "Endpoint de verificación del servicio de pesaje")
+    @ApiResponse(responseCode = "200", description = "Servicio operativo")
     @GetMapping("/pesaje/health")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Servicio de pesaje operativo");

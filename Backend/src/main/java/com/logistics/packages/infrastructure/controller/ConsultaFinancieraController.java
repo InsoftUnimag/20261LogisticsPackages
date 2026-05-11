@@ -3,6 +3,9 @@ package com.logistics.packages.infrastructure.controller;
 import com.logistics.packages.application.usecase.gestionnovedad.ConsultaPaqueteResponse;
 import com.logistics.packages.application.usecase.gestionnovedad.ConsultarEstadoPaqueteUseCase;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -23,6 +26,7 @@ import java.util.UUID;
  * - 404 Not Found: Paquete no existe
  * - 500 Internal Server Error: Error interno del servidor
  */
+@Tag(name = "Consultas Financieras", description = "Endpoints para consulta de estado de paquetes desde el Módulo de Finanzas")
 @RestController
 @RequestMapping("/route")
 @RequiredArgsConstructor
@@ -39,6 +43,10 @@ public class ConsultaFinancieraController {
      * @param idPaquete ID del paquete
      * @return ResponseEntity con ConsultaPaqueteResponse
      */
+    @Operation(summary = "Consultar estado de paquete por ruta", description = "Permite al Módulo de Finanzas consultar el estado de un paquete asociado a una ruta específica")
+    @ApiResponse(responseCode = "200", description = "Paquete encontrado con información completa")
+    @ApiResponse(responseCode = "404", description = "Paquete no encontrado o no pertenece a la ruta especificada")
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     @GetMapping("/{idRoute}/package/{idPaquete}")
     public ResponseEntity<ConsultaPaqueteResponse> consultarEstadoPaquete(
             @PathVariable UUID idRoute,

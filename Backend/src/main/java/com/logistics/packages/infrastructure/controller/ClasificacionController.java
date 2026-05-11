@@ -5,6 +5,9 @@ import com.logistics.packages.application.usecase.ClasificacionSugeridaResponse;
 import com.logistics.packages.infrastructure.dto.request.ConfirmarZonaRequest;
 import com.logistics.packages.infrastructure.dto.response.ClasificacionSugeridaResponseDTO;
 import com.logistics.packages.infrastructure.dto.response.ConfirmacionClasificacionResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +25,7 @@ import java.util.UUID;
  * - GET /api/clasificacion/sugerencia/{paqueteId} - Obtiene sugerencia de zona
  * - POST /api/clasificacion/confirmar - Confirma la clasificación
  */
+@Tag(name = "Clasificación", description = "Sugerencia y confirmación de zonas de destino para clasificación de paquetes")
 @Slf4j
 @RestController
 @RequestMapping("/api/paquetes")
@@ -37,6 +41,10 @@ public class ClasificacionController {
      * @param paqueteId El ID del paquete
      * @return Respuesta con la zona sugerida
      */
+    @Operation(summary = "Obtener sugerencia de zona destino", description = "Obtiene la zona de destino sugerida para un paquete basada en su geolocalización")
+    @ApiResponse(responseCode = "200", description = "Sugerencia de zona obtenida exitosamente")
+    @ApiResponse(responseCode = "404", description = "Paquete no encontrado")
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     @GetMapping("/clasificacion/sugerencia/{paqueteId}")
     public ResponseEntity<ClasificacionSugeridaResponseDTO> obtenerSugerenciaZona(
             @PathVariable UUID paqueteId) {
@@ -73,6 +81,11 @@ public class ClasificacionController {
      * @param request Solicitud con paqueteId y zonaDestinoId
      * @return Respuesta de confirmación
      */
+    @Operation(summary = "Confirmar clasificación de paquete", description = "Confirma la clasificación de un paquete en una zona de destino específica y actualiza su estado a 'Listo para Despacho'")
+    @ApiResponse(responseCode = "200", description = "Clasificación confirmada exitosamente")
+    @ApiResponse(responseCode = "400", description = "Solicitud inválida: datos de confirmación incorrectos")
+    @ApiResponse(responseCode = "404", description = "Paquete o zona de destino no encontrados")
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     @PostMapping("/clasificacion/confirmar")
     public ResponseEntity<ConfirmacionClasificacionResponse> confirmarClasificacion(
             @Valid @RequestBody ConfirmarZonaRequest request) {

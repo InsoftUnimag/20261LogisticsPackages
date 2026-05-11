@@ -5,6 +5,9 @@ import com.logistics.packages.application.usecase.novedad.RegistrarNovedadUseCas
 import com.logistics.packages.application.usecase.novedad.RegistroNovedadResponse;
 import com.logistics.packages.infrastructure.dto.request.RegistroNovedadRequest;
 import com.logistics.packages.infrastructure.dto.response.RegistroNovedadResponseDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +23,7 @@ import java.util.UUID;
  * Controlador REST para gestionar novedades de paquetes.
  * MOD1-UC-006: Endpoint POST /api/paquetes/{id}/novedades
  */
+@Tag(name = "Novedades", description = "Registro de novedades (dañado o extraviado) en paquetes")
 @RestController
 @RequestMapping("/api/paquetes")
 @RequiredArgsConstructor
@@ -37,6 +41,11 @@ public class NovedadController {
      * @param evidencia Archivo de evidencia (obligatorio para tipo DAÑADO)
      * @return ResponseEntity con el resultado del registro
      */
+    @Operation(summary = "Registrar novedad en paquete", description = "Registra una novedad (DAÑADO o EXTRAVIADO) en un paquete. Acepta archivo de evidencia en formato multipart/form-data (obligatorio para tipo DAÑADO)")
+    @ApiResponse(responseCode = "201", description = "Novedad registrada exitosamente")
+    @ApiResponse(responseCode = "400", description = "Error de validación: tipo de novedad inválido o evidencia faltante")
+    @ApiResponse(responseCode = "404", description = "Paquete no encontrado")
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     @PostMapping(value = "/{paqueteId}/novedades", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RegistroNovedadResponseDto> registrarNovedad(
             @PathVariable UUID paqueteId,
