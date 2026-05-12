@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/paquetes")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class PesajeController {
 
     private final ProcesarPesajeUseCase procesarPesajeUseCase;

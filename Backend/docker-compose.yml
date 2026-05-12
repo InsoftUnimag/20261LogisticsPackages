@@ -21,7 +21,6 @@ services:
       - "4566:4566"
     environment:
       - SERVICES=sqs,s3
-      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:-}
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:4566/_localstack/health || exit 1"]
       interval: 10s
