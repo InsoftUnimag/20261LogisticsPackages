@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -60,6 +61,15 @@ public class GlobalExceptionHandler {
             "CONFLICTO_CONCURRENCIA",
             "El paquete fue actualizado por otro usuario. Por favor, intente de nuevo."
         );
+    }
+
+    /**
+     * Maneja recursos estáticos no encontrados (favicon.ico, .well-known, etc.)
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Void> handleNoResourceFound(NoResourceFoundException ex) {
+        log.warn("Recurso estático no encontrado: {} {}", ex.getHttpMethod(), ex.getResourcePath());
+        return ResponseEntity.notFound().build();
     }
 
     /**
