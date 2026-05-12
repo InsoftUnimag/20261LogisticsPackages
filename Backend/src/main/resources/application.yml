@@ -26,3 +26,6 @@ app:
   sede:
     latitud: 4.624335
     longitud: -74.063644
+  jwt:
+    secret: ${JWT_SECRET:dGhpcyBpcyBhIHNlY3JldCBrZXkgZm9yIEpXVCB0b2tlbiBpbiBsb2dpc3RpY3MgcGFja2FnZXMgYXBpIDIwMjY=}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
