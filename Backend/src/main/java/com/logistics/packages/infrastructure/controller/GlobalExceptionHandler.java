@@ -1,61 +1,44 @@
 package com.logistics.packages.infrastructure.controller;
 
-import com.logistics.packages.domain.exception.EstadoTransicionInvalidaException;
-import com.logistics.packages.domain.exception.EvidenciaRequeridaException;
-import com.logistics.packages.domain.exception.PaqueteNotFoundException;
+import com.logistics.packages.domain.exception.*;
+import com.logistics.packages.infrastructure.dto.ApiError;
+import com.logistics.packages.infrastructure.dto.ApiError.ValidationError;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
-/**
- * Manejador global de excepciones para los controladores REST.
- * MOD1-UC-006: Manejo centralizado de errores con mensajes descriptivos.
- */
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 
-    /**
-     * Maneja excepciones cuando no se encuentra un paquete.
-     */
     @ExceptionHandler(PaqueteNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handlePaqueteNotFound(PaqueteNotFoundException ex) {
+    public ResponseEntity<ApiError> handlePaqueteNotFound(PaqueteNotFoundException ex) {
         log.warn("Paquete no encontrado: {}", ex.getMessage());
         return buildErrorResponse(HttpStatus.NOT_FOUND, "PAQUETE_NO_ENCONTRADO", ex.getMessage());
     }
 
-    /**
-     * Maneja excepciones cuando se intenta una transición de estado inválida.
-     */
     @ExceptionHandler(EstadoTransicionInvalidaException.class)
-    public ResponseEntity<Map<String, Object>> handleEstadoTransicionInvalida(EstadoTransicionInvalidaException ex) {
+    public ResponseEntity<ApiError> handleEstadoTransicionInvalida(EstadoTransicionInvalidaException ex) {
         log.warn("Transición de estado inválida: {}", ex.getMessage());
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "TRANSICION_INVALIDA", ex.getMessage());
     }
 
-    /**
-     * Maneja excepciones cuando falta evidencia requerida.
-     */
     @ExceptionHandler(EvidenciaRequeridaException.class)
-    public ResponseEntity<Map<String, Object>> handleEvidenciaRequerida(EvidenciaRequeridaException ex) {
+    public ResponseEntity<ApiError> handleEvidenciaRequerida(EvidenciaRequeridaException ex) {
         log.warn("Evidencia requerida faltante: {}", ex.getMessage());
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "EVIDENCIA_REQUERIDA", ex.getMessage());
     }
 
-    /**
-     * Maneja conflictos de concurrencia optimista.
-     */
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
-    public ResponseEntity<Map<String, Object>> handleOptimisticLocking(ObjectOptimisticLockingFailureException ex) {
+    public ResponseEntity<ApiError> handleOptimisticLocking(ObjectOptimisticLockingFailureException ex) {
         log.warn("Conflicto de concurrencia: {}", ex.getMessage());
         return buildErrorResponse(
             HttpStatus.CONFLICT,
@@ -64,29 +47,85 @@ public class GlobalExceptionHandler {
         );
     }
 
-    /**
-     * Maneja credenciales inválidas en autenticación.
-     */
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException ex) {
+    public ResponseEntity<ApiError> handleBadCredentials(BadCredentialsException ex) {
         log.warn("Intento de login con credenciales inválidas");
         return buildErrorResponse(HttpStatus.UNAUTHORIZED, "CREDENCIALES_INVALIDAS", "Usuario o contraseña incorrectos");
     }
 
-    /**
-     * Maneja recursos estáticos no encontrados (favicon.ico, .well-known, etc.)
-     */
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<Void> handleNoResourceFound(NoResourceFoundException ex) {
-        log.warn("Recurso estático no encontrado: {} {}", ex.getHttpMethod(), ex.getResourcePath());
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<ApiError> handleNoResourceFound(NoResourceFoundException ex) {
+        log.warn("Recurso no encontrado: {} {}", ex.getHttpMethod(), ex.getResourcePath());
+        return buildErrorResponse(HttpStatus.NOT_FOUND, "RECURSO_NO_ENCONTRADO", "El recurso solicitado no existe.");
     }
 
-    /**
-     * Maneja excepciones genéricas no capturadas.
-     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiError> handleValidationErrors(MethodArgumentNotValidException ex) {
+        log.warn("Error de validación: {}", ex.getMessage());
+        List<ValidationError> errores = ex.getBindingResult().getFieldErrors().stream()
+                .map(fe -> new ValidationError(fe.getField(), fe.getDefaultMessage()))
+                .toList();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError(HttpStatus.BAD_REQUEST.value(), "ERROR_VALIDACION",
+                        "Errores de validación en los datos de entrada", errores));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex) {
+        log.warn("Argumento inválido: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "ARGUMENTO_INVALIDO", ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiError> handleIllegalState(IllegalStateException ex) {
+        log.warn("Estado inválido: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.CONFLICT, "ESTADO_INVALIDO", ex.getMessage());
+    }
+
+    @ExceptionHandler(ZonaNoAptaException.class)
+    public ResponseEntity<ApiError> handleZonaNoApta(ZonaNoAptaException ex) {
+        log.warn("Zona no apta: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "ZONA_NO_APTA", ex.getMessage());
+    }
+
+    @ExceptionHandler(ZonaSaturadaException.class)
+    public ResponseEntity<ApiError> handleZonaSaturada(ZonaSaturadaException ex) {
+        log.warn("Zona saturada: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.CONFLICT, "ZONA_SATURADA", ex.getMessage());
+    }
+
+    @ExceptionHandler(ZonaAlmacenajeNotFoundException.class)
+    public ResponseEntity<ApiError> handleZonaAlmacenajeNotFound(ZonaAlmacenajeNotFoundException ex) {
+        log.warn("Zona de almacenaje no encontrada: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.NOT_FOUND, "ZONA_ALMACENAJE_NO_ENCONTRADA", ex.getMessage());
+    }
+
+    @ExceptionHandler(ZonaDestinoNotFoundException.class)
+    public ResponseEntity<ApiError> handleZonaDestinoNotFound(ZonaDestinoNotFoundException ex) {
+        log.warn("Zona de destino no encontrada: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.NOT_FOUND, "ZONA_DESTINO_NO_ENCONTRADA", ex.getMessage());
+    }
+
+    @ExceptionHandler(CoordenadasInvalidasException.class)
+    public ResponseEntity<ApiError> handleCoordenadasInvalidas(CoordenadasInvalidasException ex) {
+        log.warn("Coordenadas inválidas: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "COORDENADAS_INVALIDAS", ex.getMessage());
+    }
+
+    @ExceptionHandler(EventoDuplicadoException.class)
+    public ResponseEntity<ApiError> handleEventoDuplicado(EventoDuplicadoException ex) {
+        log.warn("Evento duplicado: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.CONFLICT, "EVENTO_DUPLICADO", ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidCoverageException.class)
+    public ResponseEntity<ApiError> handleInvalidCoverage(InvalidCoverageException ex) {
+        log.warn("Cobertura inválida: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "COBERTURA_INVALIDA", ex.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
+    public ResponseEntity<ApiError> handleGenericException(Exception ex) {
         log.error("Error inesperado: ", ex);
         return buildErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -95,15 +134,8 @@ public class GlobalExceptionHandler {
         );
     }
 
-    /**
-     * Construye una respuesta de error estándar.
-     */
-    private ResponseEntity<Map<String, Object>> buildErrorResponse(HttpStatus status, String codigo, String mensaje) {
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", status.value());
-        error.put("codigo", codigo);
-        error.put("mensaje", mensaje);
-        return ResponseEntity.status(status).body(error);
+    private ResponseEntity<ApiError> buildErrorResponse(HttpStatus status, String codigo, String mensaje) {
+        return ResponseEntity.status(status)
+                .body(new ApiError(status.value(), codigo, mensaje));
     }
 }
