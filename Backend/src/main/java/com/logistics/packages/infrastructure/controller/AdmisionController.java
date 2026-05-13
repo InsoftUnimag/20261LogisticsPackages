@@ -1,20 +1,28 @@
 package com.logistics.packages.infrastructure.controller;
 
 import com.logistics.packages.application.repository.ConsultarPaqueteIn;
+import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.application.repository.RegistrarAdmisionIn;
 import com.logistics.packages.application.usecase.RegistroAdmisionCommand;
 import com.logistics.packages.domain.model.Paquete;
+import com.logistics.packages.domain.valueobject.EstadoPaquete;
 import com.logistics.packages.infrastructure.dto.request.RegistroAdmisionRequest;
 import com.logistics.packages.infrastructure.dto.response.ConsultaPaqueteResponse;
+import com.logistics.packages.infrastructure.dto.response.PaqueteListadoResponse;
 import com.logistics.packages.infrastructure.dto.response.RegistroAdmisionResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,6 +34,7 @@ public class AdmisionController {
 
     private final RegistrarAdmisionIn registrarAdmisionIn;
     private final ConsultarPaqueteIn consultarPaqueteIn;
+    private final PaqueteRepository paqueteRepository;
 
     @Operation(summary = "Registrar admisión de paquete", description = "Registra un nuevo paquete en el sistema con datos del remitente, destinatario, tipo de mercancía y método de pago. Retorna el ID asignado al paquete")
     @ApiResponse(responseCode = "200", description = "Paquete registrado exitosamente")
@@ -51,6 +60,21 @@ public class AdmisionController {
         UUID paqueteId = registrarAdmisionIn.registrarAdmision(command);
 
         return ResponseEntity.ok(new RegistroAdmisionResponse(paqueteId));
+    }
+
+    @Operation(summary = "Listar paquetes con paginación y filtros", description = "Obtiene una lista paginada de paquetes con filtros opcionales por estado y rango de fechas de ingreso. Los resultados se ordenan por fecha de ingreso descendente.")
+    @ApiResponse(responseCode = "200", description = "Lista de paquetes obtenida exitosamente")
+    @GetMapping
+    public ResponseEntity<Page<PaqueteListadoResponse>> listarPaquetes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) EstadoPaquete estado,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta) {
+        LocalDateTime desde = fechaDesde != null ? fechaDesde.atStartOfDay() : null;
+        LocalDateTime hasta = fechaHasta != null ? fechaHasta.plusDays(1).atStartOfDay() : null;
+        Page<Paquete> paquetes = paqueteRepository.findAll(estado, desde, hasta, PageRequest.of(page, size));
+        return ResponseEntity.ok(paquetes.map(PaqueteListadoResponse::fromDomain));
     }
 
     @Operation(summary = "Consultar paquete por ID", description = "Obtiene la información básica de un paquete (ID de ruta, ID de paquete y estado actual) dado su ID único")
