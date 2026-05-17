@@ -282,17 +282,19 @@ Config:
 
 ---
 
+---
+
 ## Anexo: Estado de Archivos Actual (infrastructure)
-*Generado automáticamente por sync-agent-docs.py el 2026-05-16 21:09:49 UTC*
+*Generado automáticamente por sync-agent-docs.py el 2026-05-17 18:02:10 UTC*
 
 | Indicador | Valor |
 |---|---|
-| Clases | 63 |
+| Clases | 62 |
 | Interfaces | 11 |
 | Enumeraciones | 0 |
 | Records | 0 |
-| Métodos públicos (significativos) | 51 |
-| Archivos analizados | 74 |
+| Métodos públicos (significativos) | 38 |
+| Archivos analizados | 73 |
 
 ### Tipos Detectados
 
@@ -302,11 +304,11 @@ Config:
 | 🟦 Cls | `DistanceCalculatorAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `calcularDistanciaKm, calcularDistanciaDesdeSede` |
 | 🟦 Cls | `GoogleMapsAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `verifyApiKey` |
 | 🟦 Cls | `NovedadEventAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarNovedadRegistrada` |
-| 🟦 Cls | `PaqueteListoClasificacionListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `procesarPaqueteListoParaClasificacion` |
-| 🟦 Cls | `RutaAmqpAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `enviarSolicitud` |
+| 🟦 Cls | `PaqueteListoClasificacionSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `procesarPaqueteListoParaClasificacion` |
 | 🟦 Cls | `RutaEventAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarSolicitudRuta` |
-| 🟦 Cls | `RutaEventListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `onEventoRuta` |
-| 🟦 Cls | `RutaMessageListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `recibirRespuesta` |
+| 🟦 Cls | `RutaEventSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `onEventoRuta` |
+| 🟦 Cls | `RutaSqsAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `enviarSolicitud` |
+| 🟦 Cls | `RutaSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `recibirRespuesta` |
 | 🟦 Cls | `MockNotificacionAdapter` | `com.logistics.packages.infrastructure.adapter.notification` | `enviarSms, enviarEmail, enviar` |
 | 🟦 Cls | `EventoProcesadoEntity` | `com.logistics.packages.infrastructure.adapter.persistence.eventoprocesado` | `—` |
 | 🟦 Cls | `EventoProcesadoJpaAdapter` | `com.logistics.packages.infrastructure.adapter.persistence.eventoprocesado` | `guardar, yaFueProcesado` |
@@ -336,7 +338,6 @@ Config:
 | 🟦 Cls | `S3ArchivoStorageAdapter` | `com.logistics.packages.infrastructure.adapter.storage` | `guardar` |
 | 🟦 Cls | `CorsConfig` | `com.logistics.packages.infrastructure.config` | `addCorsMappings` |
 | 🟦 Cls | `OpenApiConfig` | `com.logistics.packages.infrastructure.config` | `logisticsPackagesOpenAPI` |
-| 🟦 Cls | `RabbitMQConfig` | `com.logistics.packages.infrastructure.config` | `objectMapper, jsonMessageConverter, eventosRutaQueue, rabbitTemplate, requestExchange, requestQue...` |
 | 🟦 Cls | `RestTemplateConfig` | `com.logistics.packages.infrastructure.config` | `restTemplate` |
 | 🟦 Cls | `AdmisionController` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `AlmacenajeController` | `com.logistics.packages.infrastructure.controller` | `—` |
