@@ -1,0 +1,254 @@
+# 02 — Application Use Cases
+
+## Mapeo de Casos de Uso
+
+| # | Caso de Uso | Puerto Entrada | Puertos Salida Orquestados | Command/Input | Response/Output |
+|---|---|---|---|---|---|
+| 1 | `RegistrarAdmisionUseCase` | `RegistrarAdmisionIn.registrarAdmision()` | `GeocodingService`, `CoverageService`, `DistanceService`, `PriceCalculationService`, `PaqueteRepository`, `RutaEventPublisher` | `RegistroAdmisionCommand` | `UUID` (paqueteId) |
+| 2 | `ProcesarPesajeUseCase` | (directo) `procesarPesaje(PesajeCommand)` | `PaqueteRepository`, `SolicitarRutaUseCase` | `PesajeCommand` | `PesajeResponse` |
+| 3 | `ClasificarPaqueteUseCase` | (directo) `sugerirZonaParaPaquete()`, `confirmarClasificacion()` | `PaqueteRepository`, `ZonaDestinoRepository`, `CalculoZonaDestinoService` | UUID paqueteId + UUID zonaDestinoId | `ClasificacionSugeridaResponse` / void |
+| 4 | `PrepararAlmacenajeUseCase` | `PrepararAlmacenajeIn.prepararAlmacenaje()` | `PaqueteRepository`, `ZonaAlmacenajeRepository` | `PrepararAlmacenajeCommand` | void |
+| 5 | `SolicitarRutaUseCase` | (directo) `handle(SolicitudRutaEvent)` | `PaqueteRepository`, `RutaQueuePort` | `SolicitudRutaEvent` | void |
+| 6 | `AsignarRutaUseCase` | (directo) `asignarRuta(RespuestaRutaPayload)` | `PaqueteRepository` | `RespuestaRutaPayload` | void |
+| 7 | `ConsultarPaqueteUseCase` | `ConsultarPaqueteIn.consultarPaquete()` | `PaqueteRepository` | UUID paqueteId | `Optional<Paquete>` |
+| 8 | `ConsultarEstadoPaqueteUseCase` | (directo) `consultar(UUID, UUID)` | `PaqueteRepository`, `HistorialEstadoRepository` | rutaId + paqueteId | `ConsultaPaqueteResponse` |
+| 9 | `ProcesarEventoRutaUseCase` | (directo) `procesar(EventoRutaDto)` | `PaqueteRepository`, `HistorialEstadoRepository`, `EventoProcesadoRepository`, `NotificacionPort` | `EventoRutaDto` | void |
+| 10 | `RegistrarNovedadUseCase` | (directo) `registrarNovedad(RegistrarNovedadCommand)` | `PaqueteRepository`, `HistorialEstadoRepository`, `ArchivoStoragePort`, `NovedadEventPublisher` | `RegistrarNovedadCommand` | `RegistroNovedadResponse` |
+
+## Puertos de Salida (Interfaces del Application Layer)
+
+### Puerto → Adaptador mapping
+
+| Puerto | Métodos | Implementado por |
+|---|---|---|
+| `PaqueteRepository` | save, findById, findAll | `PaqueteJpaAdapter` |
+| `ZonaAlmacenajeRepository` | save, findById, findCompatibleZonesWithCapacity, findBySedeId, findByCategoriaAndSedeId | `ZonaAlmacenajeJpaAdapter` |
+| `ZonaDestinoRepository` | findById, findAllActivas, save, findBySedeId | `ZonaDestinoJpaAdapter` |
+| `UsuarioRepository` | save, findById, findByUsername, existsByUsername | `UsuarioJpaAdapter` |
+| `HistorialEstadoRepository` | guardar, obtenerHistorialPorPaqueteId | `HistorialEstadoJpaAdapter` |
+| `EventoProcesadoRepository` | guardar, yaFueProcesado, buscarPorEventoId | `EventoProcesadoJpaAdapter` |
+| `GeocodingService` (app.repository) | localizar(Direccion) | `GoogleMapsAdapter` |
+| `CoverageService` | isWithinCoverage(Coordenadas) | `CoverageAreaAdapter` |
+| `DistanceService` | calcularDistanciaKm, calcularDistanciaDesdeSede | `DistanceCalculatorAdapter` |
+| `PriceCalculationService` | calculatePrice(Paquete) | `PriceCalculationServiceImpl` |
+| `ArchivoStoragePort` | guardar(carpeta, identificador, MultipartFile) | `S3ArchivoStorageAdapter` |
+| `RutaQueuePort` | enviarSolicitud(SolicitudRutaPayload) | `RutaAmqpAdapter` |
+| `RutaEventPublisher` (app.repository) | publicarSolicitudRuta(UUID) | `RutaEventAdapter` |
+| `NovedadEventPublisher` | publicarNovedadRegistrada(UUID, UUID) | `NovedadEventAdapter` |
+| `NotificacionPort` | enviarSms, enviarEmail, enviar | `MockNotificacionAdapter` |
+| `ClasificacionEventPublisher` | publicarPaqueteListoParaClasificar(UUID) | (sin impl visible) |
+| `GeocodingService` (app.ports) | localizar(String) | `GoogleMapsAdapter` (también implementa este) |
+| `RutaEventPublisher` (app.ports) | publicarSolicitudRuta(UUID) | `RutaEventAdapter` |
+
+## Flujo Lógico Detallado por Use Case
+
+### UC-1: RegistrarAdmisionUseCase
+```
+1. Validar comando → construir objetos de dominio
+2. Geocodificar dirección destino (GoogleMapsAdapter)
+   └── Si coordenadasManuales presentes, úsalas directamente
+3. Verificar cobertura geográfica (CoverageAreaAdapter)
+   └── Si fuera de cobertura → InvalidCoverageException
+4. Crear Paquete con builder + prePersist()
+5. Asignar coordenadas al paquete
+6. Si incluye datos de pesaje (peso, dimensiones):
+   a. Crear Peso y Dimensiones (validación en VOs)
+   b. procesarPesaje() → cálculos volumen, peso volumétrico, facturable
+   c. Calcular distancia desde sede (DistanceService)
+   d. Calcular precio (PriceCalculationService)
+7. Guardar paquete (PaqueteRepository)
+8. Si incluye pesaje → publicarSolicitudRuta() (evento)
+9. Retornar UUID del paquete creado
+```
+
+### UC-2: ProcesarPesajeUseCase
+```
+1. Buscar paquete por ID → PaqueteNotFoundException si no existe
+2. paquete.procesarPesaje(peso, dimensiones, tipoMercancia, irregular)
+   └── Valida Peso y Dimensiones (VOs)
+   └── Calcula volumen, peso volumétrico, peso facturable, categoría carga
+   └── Verifica densidad atípica
+3. paquete.calcularPrecioEnvio(tarifas)
+4. Guardar paquete actualizado
+5. Disparar SolicitudRutaEvent → delegar a SolicitarRutaUseCase
+6. Construir y retornar PesajeResponse
+```
+
+### UC-3: ClasificarPaqueteUseCase
+```
+=== sugerirZonaParaPaquete() ===
+1. Buscar paquete por ID
+2. calculoZonaService.calcularZona(paquete)
+   └── Obtener coordenadas del paquete
+   └── findAllActivas() del ZonaDestinoRepository
+   └── Filtrar por contieneCoordenas()
+   └── ZonaDestinoNoEncontradaException si no hay match
+3. Retornar ClasificacionSugeridaResponse
+
+=== confirmarClasificacion() ===
+1. Buscar paquete y zona de destino
+2. Validar compatibilidad (zona.esAptaPara) → ZonaNoAptaException
+3. Validar capacidad (zona.tieneCapacidadDisponible) → ZonaDestinoSaturadaException
+4. paquete.asignarZonaDestino(zonaId) → estado LISTO_PARA_DESPACHO
+5. zona.incrementarContador()
+6. Guardar paquete y zona
+```
+
+### UC-4: PrepararAlmacenajeUseCase
+```
+1. Buscar paquete y zona de almacenaje
+2. Validar compatibilidad (zona.puedeAlbergar) → ZonaIncompatibleException
+3. Validar capacidad (zona.tieneCapacidadPara) → ZonaSaturadaException
+4. paquete.asignarZonaAlmacenamiento(zonaId) → estado EN_CLASIFICACION
+5. zona.agregarPaquete(paquete) → actualiza contadores y estado
+6. Guardar paquete y zona
+```
+
+### UC-5: SolicitarRutaUseCase
+```
+1. Buscar paquete por ID
+2. Construir SolicitudRutaPayload.from(paquete)
+3. rutaQueuePort.enviarSolicitud(payload) → RabbitMQ async
+```
+
+### UC-6: AsignarRutaUseCase
+```
+1. Buscar paquete por ID
+2. Si estado == "asignada" && rutaId != null:
+   └── paquete.asignarRuta(rutaId) → LISTO_PARA_DESPACHO
+   └── Guardar paquete
+3. Si no → log.warn (pendiente/timeout)
+```
+
+### UC-7: ConsultarPaqueteUseCase
+```
+1. Buscar paquete por ID
+2. Retornar Optional<Paquete>
+```
+
+### UC-8: ConsultarEstadoPaqueteUseCase
+```
+1. Buscar paquete por ID → PaqueteNotFoundException
+2. Validar que paquete pertenezca a la ruta especificada
+3. Obtener historial completo (HistorialEstadoRepository)
+4. Construir ConsultaPaqueteResponse (DTO para Finanzas)
+```
+
+### UC-9: ProcesarEventoRutaUseCase
+```
+1. Verificar idempotencia (EventoProcesadoRepository.yaFueProcesado)
+   └── EventoDuplicadoException si ya existe
+2. Buscar paquete por ID
+3. Procesar según tipo de evento:
+   └── EN_TRANSITO → transitarAEnRuta()
+   └── EN_PARADA_DE_ENTREGA → transitarAParadaDeEntrega()
+   └── ENTREGADO → entregarPaquete()
+   └── DEVOLUCION → registrarDevolucionEnRuta()
+   └── EXTRAVIADO → registrarExtraviadoEnRuta()
+   └── DAÑADO → registrarDañadoEnRuta()
+4. Guardar paquete actualizado
+5. Guardar historial de estado
+6. Marcar evento como procesado
+7. Enviar notificaciones (SMS a remitente, SMS+Email a destinatario)
+```
+
+### UC-10: RegistrarNovedadUseCase
+```
+1. Buscar paquete por ID
+2. Si hay evidencia → guardar en S3 (ArchivoStoragePort)
+3. paquete.registrarNovedad(tipo, observaciones, usuarioId, urlEvidencia)
+   └── Valida estados permitidos (RECIBIDO_EN_SEDE | EN_CLASIFICACION)
+   └── Valida evidencia obligatoria para DAÑADO
+   └── Retorna HistorialEstado
+4. Guardar paquete + historial
+5. Publicar evento novedad (NovedadEventPublisher → AWS SQS)
+6. Retornar RegistroNovedadResponse
+```
+
+## Diagrama de Dependencias entre Casos de Uso
+
+```mermaid
+graph TD
+    UC1[RegistrarAdmisionUseCase] -->|publicarSolicitudRuta| UC5[SolicitarRutaUseCase]
+    UC2[ProcesarPesajeUseCase] -->|handle SolicitudRutaEvent| UC5
+    UC5 -->|enviarSolicitud| RUTA_QUEUE[RabbitMQ: solicitudes_ruta_queue]
+    RUTA_RESP[RabbitMQ: respuestas_ruta_queue] -->|asignarRuta| UC6[AsignarRutaUseCase]
+    MOD2[Módulo Gestión Rutas] -->|eventos_ruta_queue| UC9[ProcesarEventoRutaUseCase]
+    UC4[PrepararAlmacenajeUseCase] -->|publica evento| UC3[ClasificarPaqueteUseCase]
+    UC10[RegistrarNovedadUseCase] -->|publica evento SQS| SQS[AWS SQS]
+```
+
+## Commands y DTOs de Aplicación
+
+| Command/Response | Atributos |
+|---|---|
+| `RegistroAdmisionCommand` | sedeId, direccionDestino, valorDeclarado, metodoPago, remitente, destinatario, tipoMercancia, indicadorFormaIrregular, peso, largo, ancho, alto, coordenadasManuales |
+| `PesajeCommand` | paqueteId, peso, dimensiones, tipoMercancia, formaIrregular, tarifaBase, tarifaPorKg, tarifaPorKm, recargoTipoMercancia, recargoCategoriaCarga |
+| `PesajeResponse` | paqueteId, peso, volumenM3, pesoVolumetrico, pesoFacturable, categoriaCarga, precioEnvio, alertaCargaEspecial, alertaDensidadAtipica |
+| `PrepararAlmacenajeCommand` | paqueteId, zonaAlmacenamientoId |
+| `RegistrarNovedadCommand` | paqueteId, tipoNovedad, observaciones, usuarioId, evidencia(MultipartFile) |
+| `RegistroNovedadResponse` | paqueteId, estadoActual, historialId |
+| `ClasificacionSugeridaResponse` | paqueteId, zonaDestinoId, nombreZona, codigoZona |
+| `ConsultaPaqueteResponse` | idRoute, idPaquete, estado, valorDeclarado, precioEnvio, metodoPago, fechaIngresoUtc, fechaEntregaUtc, urlEvidenciaEntrega, nombreFirmante, historialEstados |
+| `EventoRutaDto` | eventoId, paqueteId, rutaId, tipoEvento, observaciones, urlEvidencia, nombreFirmante, motivo |
+
+
+---
+
+## Anexo: Estado de Archivos Actual (application)
+*Generado automáticamente por sync-agent-docs.py el 2026-05-16 21:09:49 UTC*
+
+| Indicador | Valor |
+|---|---|
+| Clases | 17 |
+| Interfaces | 21 |
+| Enumeraciones | 1 |
+| Records | 2 |
+| Métodos públicos (significativos) | 12 |
+| Archivos analizados | 41 |
+
+### Tipos Detectados
+
+| Tipo | Nombre | Paquete | Métodos públicos |
+|---|---|---|---|
+| 🟩 Int | `ClasificacionEventPublisher` | `com.logistics.packages.application.ports` | `—` |
+| 🟩 Int | `EventoProcesadoRepository` | `com.logistics.packages.application.ports` | `—` |
+| 🟩 Int | `GeocodingService` | `com.logistics.packages.application.ports` | `—` |
+| 🟩 Int | `NotificacionPort` | `com.logistics.packages.application.ports` | `—` |
+| 🟩 Int | `RutaEventPublisher` | `com.logistics.packages.application.ports` | `—` |
+| 🟩 Int | `RutaQueuePort` | `com.logistics.packages.application.ports` | `—` |
+| 🟩 Int | `UsuarioRepository` | `com.logistics.packages.application.ports` | `—` |
+| 🟩 Int | `ZonaDestinoRepository` | `com.logistics.packages.application.ports` | `—` |
+| 🟩 Int | `ArchivoStoragePort` | `com.logistics.packages.application.repository` | `—` |
+| 🟩 Int | `ConsultarPaqueteIn` | `com.logistics.packages.application.repository` | `—` |
+| 🟩 Int | `CoverageService` | `com.logistics.packages.application.repository` | `—` |
+| 🟩 Int | `DistanceService` | `com.logistics.packages.application.repository` | `—` |
+| 🟩 Int | `GeocodingService` | `com.logistics.packages.application.repository` | `—` |
+| 🟩 Int | `HistorialEstadoRepository` | `com.logistics.packages.application.repository` | `—` |
+| 🟩 Int | `NovedadEventPublisher` | `com.logistics.packages.application.repository` | `—` |
+| 🟩 Int | `PaqueteRepository` | `com.logistics.packages.application.repository` | `—` |
+| 🟩 Int | `PrepararAlmacenajeIn` | `com.logistics.packages.application.repository` | `—` |
+| 🟩 Int | `PriceCalculationService` | `com.logistics.packages.application.repository` | `—` |
+| 🟦 Cls | `PriceCalculationServiceImpl` | `com.logistics.packages.application.repository` | `calculatePrice, calcularSubtotal` |
+| 🟩 Int | `RegistrarAdmisionIn` | `com.logistics.packages.application.repository` | `—` |
+| 🟩 Int | `RutaEventPublisher` | `com.logistics.packages.application.repository` | `—` |
+| 🟩 Int | `ZonaAlmacenajeRepository` | `com.logistics.packages.application.repository` | `—` |
+| 🟦 Cls | `AsignarRutaUseCase` | `com.logistics.packages.application.usecase` | `asignarRuta` |
+| 🟦 Cls | `ClasificacionSugeridaResponse` | `com.logistics.packages.application.usecase` | `—` |
+| 🟦 Cls | `ClasificarPaqueteUseCase` | `com.logistics.packages.application.usecase` | `sugerirZonaParaPaquete, confirmarClasificacion` |
+| 🟦 Cls | `ConsultarPaqueteUseCase` | `com.logistics.packages.application.usecase` | `—` |
+| 🟦 Cls | `ConsultaPaqueteResponse` | `com.logistics.packages.application.usecase.gestionnovedad` | `—` |
+| 🟦 Cls | `ConsultarEstadoPaqueteUseCase` | `com.logistics.packages.application.usecase.gestionnovedad` | `consultar` |
+| 🟨 Enm | `TipoEventoRuta` | `com.logistics.packages.application.usecase.gestionnovedad` | `—` |
+| 🟦 Cls | `ProcesarEventoRutaUseCase` | `com.logistics.packages.application.usecase.gestionnovedad` | `procesar` |
+| 🟦 Cls | `RegistrarNovedadCommand` | `com.logistics.packages.application.usecase.novedad` | `—` |
+| 🟦 Cls | `RegistrarNovedadUseCase` | `com.logistics.packages.application.usecase.novedad` | `registrarNovedad` |
+| 🟦 Cls | `RegistroNovedadResponse` | `com.logistics.packages.application.usecase.novedad` | `—` |
+| 🟦 Cls | `PesajeCommand` | `com.logistics.packages.application.usecase` | `—` |
+| 🟦 Cls | `PesajeResponse` | `com.logistics.packages.application.usecase` | `—` |
+| 🟪 Rec | `PrepararAlmacenajeCommand` | `com.logistics.packages.application.usecase` | `—` |
+| 🟦 Cls | `PrepararAlmacenajeUseCase` | `com.logistics.packages.application.usecase` | `prepararAlmacenaje` |
+| 🟦 Cls | `ProcesarPesajeUseCase` | `com.logistics.packages.application.usecase` | `procesarPesaje` |
+| 🟦 Cls | `RegistrarAdmisionUseCase` | `com.logistics.packages.application.usecase` | `registrarAdmision` |
+| 🟪 Rec | `RegistroAdmisionCommand` | `com.logistics.packages.application.usecase` | `—` |
+| 🟦 Cls | `SolicitarRutaUseCase` | `com.logistics.packages.application.usecase` | `handle` |
