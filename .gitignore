@@ -1,7 +1,6 @@
 # Ignorar la carpeta de configuración de VS Code
 .vscode/
 .idea/
-Comunicacion-Entre-Modulos/
-Dependencias-Spring-Boot.md
-Agent/
-frontend/src/
+
+# Logs y reportes dinámicos del Agente de IA
+Backend/Externo/Agent/.sync-status.json
