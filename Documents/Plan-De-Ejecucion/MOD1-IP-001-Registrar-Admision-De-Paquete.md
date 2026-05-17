@@ -7,7 +7,7 @@
 
 ## Summary
 
-Como Empleado de Envío y Recepción, necesito registrar los datos del remitente, destinatario y paquete para generar su identidad en el sistema y disparar la solicitud de ruta al completarse el pesaje. El sistema se gestionará mediante React y Spring Boot (Java 21) estructurados en una Arquitectura Hexagonal, garantizando validaciones de Geocoding rápidas (<5s), persistencia centralizada en PostgreSQL e integraciones asíncronas vía colas de mensajes (SQS/AMQP) para los disparadores hacia el módulo de rutas.
+Como Empleado de Envío y Recepción, necesito registrar los datos del remitente, destinatario y paquete para generar su identidad en el sistema y disparar la solicitud de ruta al completarse el pesaje. El sistema se gestionará mediante React y Spring Boot (Java 21) estructurados en una Arquitectura Hexagonal, garantizando validaciones de Geocoding rápidas (<5s), persistencia centralizada en PostgreSQL e integraciones asíncronas vía colas de mensajes (Amazon SQS) para los disparadores hacia el módulo de rutas.
 
 ---
 
@@ -16,7 +16,7 @@ Como Empleado de Envío y Recepción, necesito registrar los datos del remitente
 | Campo | Valor |
 |---|---|
 | **Language/Version** | Java 21 (Backend) / JavaScript (React para Frontend) |
-| **Primary Dependencies** | Spring Web, Spring Data JPA, Spring Security, Spring Validation, PostgreSQL, Google Maps Services, Spring Boot Starter AMQP / AWS SQS, Gradle |
+| **Primary Dependencies** | Spring Web, Spring Data JPA, Spring Security, Spring Validation, PostgreSQL, Google Maps Services, Spring Cloud AWS SQS, Gradle |
 | **Storage** | PostgreSQL (control transaccional del UUID e historial inmutable) |
 | **Testing** | JUnit 5, Mockito, Testcontainers (PostgreSQL) |
 | **Target Platform** | Servidor Linux para Backend API y Web browser para la UI |
@@ -77,7 +77,7 @@ backend/
     │       ├── external/
     │       │   └── GoogleMapsAdapter.java   [NUEVO — HTTP client con timeout 5s]
     │       └── messaging/
-    │           └── RutaEventAdapter.java    [NUEVO — EventPublisherPort para colas]
+    │           └── RutaEventAdapter.java    [NUEVO — EventPublisherPort para SQS]
     └── dto/
         ├── request/
         │   └── RegistroAdmisionRequest.java [NUEVO]
@@ -92,7 +92,7 @@ backend/
 > **Dependencia bloqueante:** Configuración inicial del repositorio de Gradle y empaquetado de React/Node.
 
 - [ ] T101 Verificar que `build.gradle` tenga las dependencias explícitas de Java 21, Spring Boot Web, Spring Data JPA, Driver PostgreSQL de manera correcta.
-- [ ] T102 Verificar disponibilidad del archivo `.env` o `application.yml` incluyendo la API Key de Google Maps y las credenciales de PostgreSQL / RabbitMQ / AWS.
+- [ ] T102 Verificar disponibilidad del archivo `.env` o `application.yml` incluyendo la API Key de Google Maps y las credenciales de PostgreSQL / AWS.
 - [ ] T103 Validar conectividad de Base de Datos local mediante Testcontainers y confirmar acceso del script `Flyway`/migración de creación de la tabla principal `paquetes`.
 
 ---

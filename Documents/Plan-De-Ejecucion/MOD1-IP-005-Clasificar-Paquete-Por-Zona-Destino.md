@@ -12,9 +12,9 @@ Como Almacenista, necesito que el sistema asigne a cada paquete su zona de desti
 | Campo | Valor |
 |---|---|
 | **Language/Version** | Java 21 (Backend) / JavaScript (React para Frontend) |
-| **Primary Dependencies** | Spring Boot Starter AMQP / AWS SQS, Spring Web, Spring Data JPA, Spring Validation |
+| **Primary Dependencies** | Spring Cloud AWS SQS, Spring Web, Spring Data JPA, Spring Validation |
 | **Storage** | PostgreSQL (actualización del `Paquete` con `zonaDestinoId`) |
-| **Testing** | JUnit 5, Mockito, Testcontainers (RabbitMQ/PostgreSQL) |
+| **Testing** | JUnit 5, Mockito, Testcontainers (LocalStack/PostgreSQL) |
 | **Target Platform** | Servidor Linux para Backend API y Web browser para la UI |
 | **Project Type** | Extensión de Single Web Application (Backend / Web) |
 | **Performance Goals** | Respuesta de cálculo de zona < 2s. |
@@ -58,7 +58,7 @@ backend/
     │   │   ├── web/
     │   │   │   └── ClasificacionController.java [NUEVO — Endpoint para confirmar]
     │   │   └── messaging/
-    │   │       └── PaqueteListoListener.java    [NUEVO — Listener para evento de UC-004]
+    │   │       └── PaqueteListoClasificacionSqsListener.java    [NUEVO — Listener SQS para evento de UC-004]
     │   └── out/
     │       └── persistence/
     │           ├── ZonaDestinoJpaAdapter.java   [NUEVO]
@@ -75,7 +75,7 @@ backend/
 ## Phase 1: Prerequisitos (verificación)
 
 - [ ] T501 Validar que la tabla `zonas_destino` (con límites geográficos o de CP) exista en la base de datos (vía Flyway).
-- [ ] T502 Confirmar que la cola de mensajes `paquete_listo_para_clasificar_queue` está configurada y enlazada.
+- [ ] T502 Confirmar que la cola SQS `paquete-listo-clasificar-queue` está configurada.
 
 ---
 
@@ -167,7 +167,7 @@ public class ClasificarPaqueteUseCase {
 
 ### Adaptadores de Mensajería y REST (Backend)
 
-- [ ] T511 [P] [US5] Implementar `PaqueteListoListener` que escuche la cola de `paquete_listo_para_clasificar_queue`.
+- [ ] T511 [P] [US5] Implementar `PaqueteListoClasificacionSqsListener` que escuche la cola SQS de `paquete-listo-clasificar-queue`.
     - Al recibir un mensaje, este listener podría invocar `sugerirZonaParaPaquete()` y notificar a la UI (vía WebSockets o simplemente la UI puede sondear).
 - [ ] T512 [P] [US5] Crear `ClasificacionController` con un endpoint `POST /api/clasificacion/confirmar` que reciba `ConfirmarZonaRequest` y llame a `confirmarClasificacion()`.
 - [ ] T513 [US5] Crear un endpoint `GET /api/clasificacion/sugerencia/{paqueteId}` que la UI pueda llamar para obtener la zona sugerida.

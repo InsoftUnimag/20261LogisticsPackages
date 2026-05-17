@@ -7,7 +7,7 @@
 
 ## Summary
 
-Como Almacenista, necesito modificar el estado de los paquetes cuando detecte que están dañados o extraviados en la bodega para mantener la trazabilidad actualizada y alertar al Controlador de Novedades. El sistema, basado en una Arquitectura Hexagonal con Spring Boot (Java 21) y React, registrará la transición de estado en un historial inmutable, asociará la evidencia fotográfica obligatoria para daños (almacenada en S3) y notificará al sistema de novedades de forma asíncrona vía AMQP/SQS.
+Como Almacenista, necesito modificar el estado de los paquetes cuando detecte que están dañados o extraviados en la bodega para mantener la trazabilidad actualizada y alertar al Controlador de Novedades. El sistema, basado en una Arquitectura Hexagonal con Spring Boot (Java 21) y React, registrará la transición de estado en un historial inmutable, asociará la evidencia fotográfica obligatoria para daños (almacenada en S3) y notificará al sistema de novedades de forma asíncrona vía Amazon SQS.
 
 ---
 
@@ -16,9 +16,9 @@ Como Almacenista, necesito modificar el estado de los paquetes cuando detecte qu
 | Campo | Valor |
 |---|---|
 | **Language/Version** | Java 21 (Backend) / JavaScript (React para Frontend) |
-| **Primary Dependencies** | Spring Web, Spring Data JPA, Spring Security, Spring Validation, PostgreSQL, Spring Boot Starter AMQP / AWS SQS, AWS S3 SDK, Gradle |
+| **Primary Dependencies** | Spring Web, Spring Data JPA, Spring Security, Spring Validation, PostgreSQL, Spring Cloud AWS SQS, AWS S3 SDK, Gradle |
 | **Storage** | PostgreSQL (para el paquete y su historial de estados) y AWS S3 (o similar) para la evidencia fotográfica. |
-| **Testing** | JUnit 5, Mockito, Testcontainers (PostgreSQL, RabbitMQ/Localstack) |
+| **Testing** | JUnit 5, Mockito, Testcontainers (PostgreSQL, Localstack) |
 | **Target Platform** | Servidor Linux para Backend API y Web browser para la UI |
 | **Project Type** | Extensión de Single Web Application (Backend / Web) |
 | **Performance Goals** | La actualización de estado debe ser una operación rápida (<500ms). La carga de archivos multimedia no debe bloquear la UI. |
@@ -85,7 +85,7 @@ backend/
 
 ## Phase 1: Prerequisitos (verificación)
 
-- [ ] T601 Verificar que `build.gradle` tenga las dependencias de Spring AMQP/SQS y AWS S3 SDK.
+- [ ] T601 Verificar que `build.gradle` tenga las dependencias de Spring Cloud AWS SQS y AWS S3 SDK.
 - [ ] T602 Validar que la migración de Flyway para la tabla `historial_estados` se ejecute correctamente.
 - [ ] T603 Confirmar la configuración de credenciales para AWS (S3 y SQS/SNS) y la base de datos.
 
@@ -207,7 +207,7 @@ public class RegistrarNovedadUseCase {
 ### Adaptadores de Infraestructura (Backend)
 
 - [ ] T615 [US6] Implementar `S3ArchivoStorageAdapter` que use el SDK de AWS S3 para subir el archivo y retornar su URL.
-- [ ] T616 [US6] Implementar `NovedadEventAdapter` usando `RabbitTemplate` para publicar el evento en la cola correspondiente.
+- [ ] T616 [US6] Implementar `NovedadEventAdapter` usando `SqsTemplate` para publicar el evento en la cola SQS correspondiente.
 - [ ] T617 [US6] Implementar `HistorialEstadoJpaAdapter` y su `JpaRepository`.
 
 ---
@@ -218,7 +218,7 @@ public class RegistrarNovedadUseCase {
 - **Orden**:
     1.  **Phase 2 (Dominio)**: Implementar la lógica de negocio y las entidades.
     2.  **Phase 3 (Servicio)**: Crear el caso de uso que orquesta el flujo.
-    3.  **Phase 4 (Adaptadores)**: Exponer la funcionalidad a través de la API REST y conectar con los servicios externos (S3, RabbitMQ).
+    3.  **Phase 4 (Adaptadores)**: Exponer la funcionalidad a través de la API REST y conectar con los servicios externos (S3, SQS).
 
 ## Notes
 

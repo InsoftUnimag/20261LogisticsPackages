@@ -77,7 +77,7 @@ backend/
 
 - [ ] T401 Verificar que `build.gradle` tenga las dependencias necesarias.
 - [ ] T402 Validar que la tabla `zonas_almacenamiento` exista en la base de datos (vía Flyway).
-- [ ] T403 Confirmar conectividad con la base de datos y el message broker.
+- [ ] T403 Confirmar conectividad con la base de datos y el sistema de colas SQS.
 
 ---
 

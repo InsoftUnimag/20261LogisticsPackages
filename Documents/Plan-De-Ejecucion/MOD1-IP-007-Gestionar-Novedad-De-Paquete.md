@@ -7,7 +7,7 @@
 
 ## Summary
 
-Como Controlador de Novedades, necesito recibir y procesar eventos del ciclo de vida del paquete (tanto de bodega como del Módulo de Rutas) para mantener la trazabilidad y exponer un estado consolidado al Módulo de Finanzas. Esta funcionalidad actuará como un centro neurálgico, consumiendo eventos asíncronos (AMQP/SQS) para actualizaciones de estado y exponiendo un endpoint REST síncrono (`GET /route/{idRoute}/package/{idPaquete}`) para consultas financieras, garantizando la integridad de los datos y la comunicación entre módulos.
+Como Controlador de Novedades, necesito recibir y procesar eventos del ciclo de vida del paquete (tanto de bodega como del Módulo de Rutas) para mantener la trazabilidad y exponer un estado consolidado al Módulo de Finanzas. Esta funcionalidad actuará como un centro neurálgico, consumiendo eventos asíncronos (Amazon SQS) para actualizaciones de estado y exponiendo un endpoint REST síncrono (`GET /route/{idRoute}/package/{idPaquete}`) para consultas financieras, garantizando la integridad de los datos y la comunicación entre módulos.
 
 ---
 
@@ -16,9 +16,9 @@ Como Controlador de Novedades, necesito recibir y procesar eventos del ciclo de 
 | Campo | Valor |
 |---|---|
 | **Language/Version** | Java 21 (Backend) / JavaScript (React para Frontend) |
-| **Primary Dependencies** | Spring Web, Spring Data JPA, Spring Security, Spring Validation, PostgreSQL, Spring Boot Starter AMQP / AWS SQS, Gradle |
+| **Primary Dependencies** | Spring Web, Spring Data JPA, Spring Security, Spring Validation, PostgreSQL, Spring Cloud AWS SQS, Gradle |
 | **Storage** | PostgreSQL (para el paquete y su historial de estados inmutable) |
-| **Testing** | JUnit 5, Mockito, Testcontainers (PostgreSQL, RabbitMQ/Localstack) |
+| **Testing** | JUnit 5, Mockito, Testcontainers (PostgreSQL, Localstack) |
 | **Target Platform** | Servidor Linux para Backend API y Web browser para la UI |
 | **Project Type** | Extensión de Single Web Application (Backend / Web) |
 | **Performance Goals** | Endpoint de consulta financiera < 500ms (p95). Procesamiento de eventos asíncronos < 10s. |
@@ -65,7 +65,7 @@ backend/
     │   │   ├── web/
     │   │   │   └── ConsultaFinancieraController.java [NUEVO — Endpoint síncrono para Finanzas]
     │   │   └── messaging/
-    │   │       └── RutaEventListener.java    [NUEVO — Listener para eventos del Módulo 2]
+    │   │       └── RutaEventSqsListener.java    [NUEVO — Listener SQS para eventos del Módulo 2]
     │   └── out/
     │       ├── notification/
     │       │   └── SnsEmailNotificationAdapter.java [NUEVO — Implementación para notificar]
@@ -80,7 +80,7 @@ backend/
 
 ## Phase 1: Prerequisitos (verificación)
 
-- [ ] T701 Verificar que `build.gradle` tenga las dependencias de Spring AMQP/SQS y, opcionalmente, SDKs para notificación (SNS, Twilio).
+- [ ] T701 Verificar que `build.gradle` tenga las dependencias de Spring Cloud AWS SQS y, opcionalmente, SDKs para notificación (SNS, Twilio).
 - [ ] T702 Validar que la migración de Flyway para la tabla `eventos_procesados` se ejecute correctamente.
 - [ ] T703 Confirmar la configuración de las colas de entrada para eventos de ruta.
 
@@ -137,7 +137,7 @@ backend/
 
 ### Adaptadores de Entrada (Backend)
 
-- [ ] T713 [P] [US7] Implementar `RutaEventListener` que escuche la cola de eventos del Módulo 2 y llame a `ProcesarEventoRutaUseCase`.
+- [ ] T713 [P] [US7] Implementar `RutaEventSqsListener` que escuche la cola SQS de eventos del Módulo 2 y llame a `ProcesarEventoRutaUseCase`.
 - [ ] T714 [P] [US7] Crear `ConsultaFinancieraController` con el endpoint `GET /route/{idRoute}/package/{idPaquete}` que llame a `ConsultarEstadoPaqueteUseCase`.
 - [ ] T715 [US7] Implementar un `ControllerAdvice` para que el endpoint de consulta devuelva 404 si el paquete no se encuentra y 500 si hay un error interno (FR-007, SC-005).
 
