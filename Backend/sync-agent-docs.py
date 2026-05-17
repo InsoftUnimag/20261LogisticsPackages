@@ -223,9 +223,54 @@ def find_undocumented_classes(scan: ScanResult, md_content: str) -> List[str]:
     undocumented = []
     for t in scan.types:
         if t.name not in md_content:
-            # Verificar si es enum con valores comunes omitibles
             undocumented.append(t.name)
     return undocumented
+
+
+def _extract_backtick_names(text: str) -> set:
+    """Extrae nombres PascalCase entre backticks, excluyendo cabeceras de tabla."""
+    names = set()
+    for match in re.finditer(r'`(\w+)`', text):
+        name = match.group(1)
+        if not name or not name[0].isupper():
+            continue
+        if name.isupper() and len(name) > 1:
+            continue  # Acrónimos
+        if name in {"Cls", "Int", "Enm", "Rec", "Abs", "Tipo",
+                     "Nombre", "Paquete", "Métodos", "Públicos",
+                     "Indicador", "Valor", "Tipos", "Detectados",
+                     "Archivos", "Analizados"}:
+            continue
+        names.add(name)
+    return names
+
+
+def find_orphaned_classes(scan: ScanResult, md_content: str) -> List[str]:
+    """Encuentra clases del proyecto que ya no existen en el código fuente.
+
+    Solo reporta clases que aparecen TANTO en el anexo (prueba de que fueron
+    tipos del proyecto) COMO en el cuerpo (aún referenciadas en la documentación).
+    Esto evita falsos positivos con clases de frameworks externos.
+    """
+    current_names = {t.name for t in scan.types}
+
+    appendix_marker = "## Anexo: Estado de Archivos Actual"
+    idx = md_content.find(appendix_marker)
+    if idx == -1:
+        return []
+
+    body = md_content[:idx]
+    appendix = md_content[idx:]
+
+    body_names = _extract_backtick_names(body)
+    appendix_names = _extract_backtick_names(appendix)
+
+    orphaned = []
+    for name in sorted(appendix_names & body_names):  # Intersección = proyecto propio
+        if name not in current_names:
+            orphaned.append(name)
+
+    return orphaned
 
 
 def save_appendix(filepath: Path, appendix: str) -> bool:
@@ -295,8 +340,16 @@ def main():
                 print(f"\n  ⚠️  CLASES NO DOCUMENTADAS en {md_file.name}:")
                 for cls in undocumented:
                     print(f"      - {cls}")
-            else:
-                print(f"  ✅ Todas las clases están documentadas en {md_file.name}")
+
+            orphaned = find_orphaned_classes(scan, md_content)
+            if orphaned:
+                all_ok = False
+                print(f"\n  ⚠️  CLASES ELIMINADAS aún referenciadas en {md_file.name}:")
+                for cls in orphaned:
+                    print(f"      - {cls}")
+
+            if not undocumented and not orphaned:
+                print(f"  ✅ Documentación alineada con el código en {md_file.name}")
         else:
             print(f"  ⚠️  Archivo de documentación no encontrado: {md_file}")
 
@@ -319,12 +372,12 @@ def main():
                 print(f"  ⚠️  No se pudo actualizar {md_file}")
 
     if args.check and not all_ok:
-        print("\n❌ Se detectaron clases sin documentación. Revise los reportes arriba.")
+        print("\n❌ Se detectaron problemas de documentación (clases sin documentar o huérfanas).")
         sys.exit(1)
     elif args.check and all_ok:
-        print("\n✅ Todas las clases están documentadas correctamente.")
+        print("\n✅ Documentación alineada con el código.")
     else:
-        print(f"\n{'⚠️  Hay clases sin documentar.' if not all_ok else '✅ Todo en orden.'}")
+        print(f"\n{'⚠️  Hay problemas de documentación.' if not all_ok else '✅ Todo en orden.'}")
 
     # ─── Generar reporte JSON de estado ──────────────────────────────
     report_path = BACKEND_DIR / "Externo" / "Agent" / ".sync-status.json"

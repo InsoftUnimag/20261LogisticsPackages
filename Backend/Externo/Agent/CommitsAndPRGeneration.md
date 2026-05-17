@@ -13,7 +13,7 @@ El mensaje de commit deberá estar en español, a excepcion del type y scope.
 
 # Pull Request prompt
 ```text
-Crea una descripcion en formato md para el merge del feature a develop.
+Crea una descripcion en formato md para el merge del feature a develop, dicha descripción la harás en un documento dentro de './Backend/Externo/'.
 Ten en cuenta el registro de commits que generaste para la realizacion de dicha tarea.
 Quiero que tengas en cuenta notaciones como .[!NOTE]. .[!IMPORTANT]. .[!TIP]. etc.
 Me gustaría que hicieras descripciones detalladas sobre desiciones arquitectonicas y de tecnologias utilizadas.
