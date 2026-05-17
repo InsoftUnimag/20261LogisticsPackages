@@ -25,12 +25,6 @@ spring:
       s3:
         endpoint: http://localhost:4566
 
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: user
-    password: password
-
   jpa:
     hibernate:
       ddl-auto: validate
