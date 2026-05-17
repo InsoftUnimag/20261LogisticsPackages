@@ -41,7 +41,7 @@ Como Empleado de Envío y Recepción, necesito que el sistema envíe al `Módulo
 - **FR-002**: Construir y enviar el payload JSON al `Módulo de Gestión de Rutas` con: UUID del paquete, peso, volumen, tipo de mercancía, dirección de destino, coordenadas GPS.
 - **FR-003**: El módulo de rutas devolverá un `ID de ruta` en formato JSON que debe ser almacenado en el paquete.
 - **FR-004**: Registrar cada intento con el payload, timestamp, resultado (asignada / pendiente) e ID de ruta recibido.
-- **FR-005**: Encolar el evento para reintento automático si M2 no responde, sin bloquear el flujo del paquete.
+- **FR-005**: Encolar el evento en Amazon SQS (con DLQ) para reintento automático si M2 no responde, sin bloquear el flujo del paquete.
 
 ### Key Entities
 

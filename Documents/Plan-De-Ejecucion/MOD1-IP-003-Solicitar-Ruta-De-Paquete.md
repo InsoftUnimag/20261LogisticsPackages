@@ -5,16 +5,16 @@
 
 ## Summary
 
-Como Empleado de Envío y Recepción, necesito que el sistema envíe automáticamente una solicitud de ruta al `Módulo de Gestión de Rutas` después de que un paquete haya sido admitido y pesado con éxito. Esto se logrará a través de una comunicación estrictamente asíncrona utilizando JSON sobre una cola de mensajes (AMQP/SQS). El sistema construirá un payload con los detalles del paquete, lo enviará y procesará la respuesta para almacenar un `ID de ruta`, manejando reintentos en caso de timeouts.
+Como Empleado de Envío y Recepción, necesito que el sistema envíe automáticamente una solicitud de ruta al `Módulo de Gestión de Rutas` después de que un paquete haya sido admitido y pesado con éxito. Esto se logrará a través de una comunicación estrictamente asíncrona utilizando JSON sobre una cola de mensajes (Amazon SQS). El sistema construirá un payload con los detalles del paquete, lo enviará y procesará la respuesta para almacenar un `ID de ruta`, manejando reintentos en caso de timeouts.
 
 ## Technical Context
 
 | Campo | Valor |
 |---|---|
 | **Language/Version** | Java 21 (Backend) |
-| **Primary Dependencies** | Spring Boot Starter AMQP / AWS SQS, Spring Web, Spring Data JPA |
+| **Primary Dependencies** | Spring Cloud AWS SQS, Spring Web, Spring Data JPA |
 | **Storage** | PostgreSQL (actualización del `Paquete` con `rutaId`) |
-| **Testing** | JUnit 5, Mockito, Testcontainers (RabbitMQ/LocalStack) |
+| **Testing** | JUnit 5, Mockito, Testcontainers (LocalStack) |
 | **Target Platform** | Servidor Linux (Backend) |
 | **Project Type** | Extensión de Single Web Application (Backend) |
 | **Performance Goals** | Envío de solicitud de ruta < 500ms tras evento. |
@@ -50,8 +50,8 @@ backend/
     │   │               └── infrastructure
     │   │                   ├── adapter
     │   │                   │   └── messaging
-    │   │                   │       ├── RutaAmqpAdapter.java     [NUEVO - Implementación AMQP/SQS]
-    │   │                   │       ├── RutaMessageListener.java [NUEVO - Listener para respuestas]
+    │   │                   │       ├── RutaSqsAdapter.java     [NUEVO - Implementación SQS]
+    │   │                   │       ├── RutaSqsListener.java [NUEVO - Listener SQS para respuestas]
     │   │                   ├── dto
     │   │                   │   ├── request
     │   │                   │   │   └── SolicitudRutaPayload.java  [NUEVO - Payload JSON]
@@ -179,65 +179,58 @@ public class AsignarRutaUseCase {
 
 ## Phase 3: Adaptadores de Mensajería (Infrastructure)
 
-**Purpose**: Implementar la comunicación real con el sistema de colas (RabbitMQ, SQS, etc.).
+**Purpose**: Implementar la comunicación real con el sistema de colas (Amazon SQS).
 
 ### Tests de los adaptadores
 
-- [ ] T308 [US3] Test de integración con `Testcontainers` para `RutaAmqpAdapter`:
-  - Verificar que un mensaje se envía correctamente a una cola de RabbitMQ.
-- [ ] T309 [US3] Test de integración para `RutaMessageListener`:
-  - Simular la recepción de un mensaje en la cola de respuesta y verificar que `AsignarRutaUseCase` es invocado.
+- [ ] T308 [US3] Test de integración con `Testcontainers` (LocalStack) para `RutaSqsAdapter`:
+  - Verificar que un mensaje se envía correctamente a una cola SQS.
+- [ ] T309 [US3] Test de integración para `RutaSqsListener`:
+  - Simular la recepción de un mensaje en la cola SQS de respuesta y verificar que `AsignarRutaUseCase` es invocado.
 
 ### Implementación de los adaptadores
 
-- [ ] T310 [P] [US3] Implementar `RutaAmqpAdapter` que implemente `RutaQueuePort`:
+- [ ] T310 [P] [US3] Implementar `RutaSqsAdapter` que implemente `RutaQueuePort`:
 ```java
-// backend/infrastructure/adapter/messaging/RutaAmqpAdapter.java
+// backend/infrastructure/adapter/messaging/RutaSqsAdapter.java
 @Component
-public class RutaAmqpAdapter implements RutaQueuePort {
+public class RutaSqsAdapter implements RutaQueuePort {
 
-    private final RabbitTemplate rabbitTemplate;
-    private final ObjectMapper objectMapper; // Para serializar a JSON
+    private final SqsTemplate sqsTemplate;
 
-    // ... constructor ...
+    @Value("${aws.sqs.ruta-request-queue:solicitudes-ruta-queue}")
+    private String queueName;
 
     @Override
     public void enviarSolicitud(SolicitudRutaPayload payload) {
         // FR-004: Registrar intento
         log.info("Enviando solicitud de ruta para paquete: {}", payload.getPaqueteId());
         try {
-            String jsonPayload = objectMapper.writeValueAsString(payload);
-            rabbitTemplate.convertAndSend("solicitudes_ruta_exchange", "solicitud.nueva", jsonPayload);
-        } catch (JsonProcessingException e) {
-            log.error("Error serializando payload", e);
+            sqsTemplate.send(to -> to.queue(queueName).payload(payload));
+        } catch (Exception e) {
+            log.error("Error enviando solicitud de ruta", e);
         }
     }
 }
 ```
-- [ ] T311 [P] [US3] Implementar `RutaMessageListener` para la cola de respuestas:
+- [ ] T311 [P] [US3] Implementar `RutaSqsListener` para la cola de respuestas:
 ```java
-// backend/infrastructure/adapter/messaging/RutaMessageListener.java
+// backend/infrastructure/adapter/messaging/RutaSqsListener.java
 @Component
-public class RutaMessageListener {
+public class RutaSqsListener {
 
     private final AsignarRutaUseCase asignarRutaUseCase;
-    private final ObjectMapper objectMapper;
 
-    // ... constructor ...
-
-    @RabbitListener(queues = "respuestas_ruta_queue")
-    public void recibirRespuesta(String message) {
-        try {
-            RespuestaRutaPayload payload = objectMapper.readValue(message, RespuestaRutaPayload.class);
-            asignarRutaUseCase.asignarRuta(payload);
-        } catch (JsonProcessingException e) {
-            log.error("Error deserializando respuesta de ruta", e);
-        }
+    @SqsListener("${aws.sqs.ruta-response-queue:respuestas-ruta-queue}")
+    public void recibirRespuesta(RespuestaRutaPayload payload) {
+        log.info("Mensaje recibido de la cola de respuestas de ruta: {} - Estado: {}",
+                payload.getPaqueteId(), payload.getEstado());
+        asignarRutaUseCase.asignarRuta(payload);
     }
 }
 ```
-- [ ] T312 [US3] Configurar colas, exchanges y bindings de RabbitMQ/SQS usando `@Bean` en una clase de configuración.
-- [ ] T313 [US3] Implementar la lógica de reintentos (FR-005) en caso de timeout, posiblemente usando un Dead Letter Queue (DLQ) en el broker de mensajería.
+- [ ] T312 [US3] Configurar las colas SQS y sus propiedades (URL, región) en `application.properties`.
+- [ ] T313 [US3] Implementar la lógica de reintentos (FR-005) en caso de timeout, posiblemente usando una Dead Letter Queue (DLQ) en Amazon SQS.
 
 ---
 
@@ -252,5 +245,5 @@ public class RutaMessageListener {
 ## Notes
 
 - La generación del evento que inicia este flujo (por ejemplo, `PaquetePesadoEvent`) debe ser implementada al final del `ProcesarPesajeUseCase` del plan `MOD1-IP-002`.
-- La gestión de timeouts y reintentos (FR-005) es crucial y debe ser robusta. El uso de un DLQ es la práctica recomendada para manejar fallos persistentes en la comunicación.
+- La gestión de timeouts y reintentos (FR-005) es crucial y debe ser robusta. El uso de una Dead Letter Queue (DLQ) en Amazon SQS es la práctica recomendada para manejar fallos persistentes en la comunicación.
 - Se debe definir un contrato claro (schema JSON) para los payloads de solicitud y respuesta para asegurar la compatibilidad con el `Módulo de Gestión de Rutas`.

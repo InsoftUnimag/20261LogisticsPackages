@@ -28,20 +28,6 @@ services:
       retries: 10
       start_period: 30s
 
-  rabbitmq:
-    image: rabbitmq:3.13-management-alpine
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER:-user}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS:-password}
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   backend:
     build: .
     container_name: backend
@@ -50,8 +36,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
       localstack:
         condition: service_healthy
     environment:
@@ -59,12 +43,6 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-logistics-packages}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-user}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
-      
-      # RabbitMQ connection
-      - SPRING_RABBITMQ_HOST=rabbitmq
-      - SPRING_RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER:-user}
-      - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS:-password}
-
       # AWS (Localstack) connection
       - SPRING_CLOUD_AWS_SQS_ENDPOINT=http://localstack:4566
       - SPRING_CLOUD_AWS_S3_ENDPOINT=http://localstack:4566
