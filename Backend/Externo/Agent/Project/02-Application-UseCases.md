@@ -209,17 +209,19 @@ graph TD
 
 ---
 
+---
+
 ## Anexo: Estado de Archivos Actual (application)
-*Generado automáticamente por sync-agent-docs.py el 2026-05-17 18:02:10 UTC*
+*Generado automáticamente por sync-agent-docs.py el 2026-05-18 04:40:37 UTC*
 
 | Indicador | Valor |
 |---|---|
 | Clases | 17 |
 | Interfaces | 21 |
 | Enumeraciones | 1 |
-| Records | 2 |
+| Records | 3 |
 | Métodos públicos (significativos) | 12 |
-| Archivos analizados | 41 |
+| Archivos analizados | 42 |
 
 ### Tipos Detectados
 
@@ -247,6 +249,7 @@ graph TD
 | 🟩 Int | `RegistrarAdmisionIn` | `com.logistics.packages.application.repository` | `—` |
 | 🟩 Int | `RutaEventPublisher` | `com.logistics.packages.application.repository` | `—` |
 | 🟩 Int | `ZonaAlmacenajeRepository` | `com.logistics.packages.application.repository` | `—` |
+| 🟪 Rec | `AsignarRutaCommand` | `com.logistics.packages.application.usecase` | `—` |
 | 🟦 Cls | `AsignarRutaUseCase` | `com.logistics.packages.application.usecase` | `asignarRuta` |
 | 🟦 Cls | `ClasificacionSugeridaResponse` | `com.logistics.packages.application.usecase` | `—` |
 | 🟦 Cls | `ClasificarPaqueteUseCase` | `com.logistics.packages.application.usecase` | `sugerirZonaParaPaquete, confirmarClasificacion` |

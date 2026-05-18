@@ -287,17 +287,19 @@ Config:
 
 ---
 
+---
+
 ## Anexo: Estado de Archivos Actual (infrastructure)
-*Generado automáticamente por sync-agent-docs.py el 2026-05-17 18:02:10 UTC*
+*Generado automáticamente por sync-agent-docs.py el 2026-05-18 04:40:37 UTC*
 
 | Indicador | Valor |
 |---|---|
-| Clases | 62 |
+| Clases | 69 |
 | Interfaces | 11 |
 | Enumeraciones | 0 |
 | Records | 0 |
-| Métodos públicos (significativos) | 38 |
-| Archivos analizados | 73 |
+| Métodos públicos (significativos) | 37 |
+| Archivos analizados | 81 |
 
 ### Tipos Detectados
 
@@ -306,10 +308,11 @@ Config:
 | 🟦 Cls | `CoverageAreaAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `—` |
 | 🟦 Cls | `DistanceCalculatorAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `calcularDistanciaKm, calcularDistanciaDesdeSede` |
 | 🟦 Cls | `GoogleMapsAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `verifyApiKey` |
+| 🟦 Cls | `EventoPaqueteM2Mapper` | `com.logistics.packages.infrastructure.adapter.messaging` | `—` |
 | 🟦 Cls | `NovedadEventAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarNovedadRegistrada` |
 | 🟦 Cls | `PaqueteListoClasificacionSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `procesarPaqueteListoParaClasificacion` |
 | 🟦 Cls | `RutaEventAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarSolicitudRuta` |
-| 🟦 Cls | `RutaEventSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `onEventoRuta` |
+| 🟦 Cls | `RutaEventSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `onEventoPaquete` |
 | 🟦 Cls | `RutaSqsAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `enviarSolicitud` |
 | 🟦 Cls | `RutaSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `recibirRespuesta` |
 | 🟦 Cls | `MockNotificacionAdapter` | `com.logistics.packages.infrastructure.adapter.notification` | `enviarSms, enviarEmail, enviar` |
@@ -351,6 +354,13 @@ Config:
 | 🟦 Cls | `NovedadController` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `PesajeController` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `ApiError` | `com.logistics.packages.infrastructure.dto` | `—` |
+| 🔷 Abs | `EventoPaqueteM2Dto` | `com.logistics.packages.infrastructure.dto.event` | `—` |
+| 🟦 Cls | `NovedadGraveEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
+| 🟦 Cls | `PaqueteEnTransitoEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
+| 🟦 Cls | `PaqueteEntregadoEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
+| 🟦 Cls | `PaqueteExcluidoDespachoEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
+| 🟦 Cls | `ParadaFallidaEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
+| 🟦 Cls | `ParadasSinGestionarEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
 | 🟦 Cls | `AsignarZonaRequest` | `com.logistics.packages.infrastructure.dto.request` | `tieneDiscrepancias` |
 | 🟦 Cls | `ConfirmarZonaRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
 | 🟦 Cls | `DatosFisicosDiscrepanciaDto` | `com.logistics.packages.infrastructure.dto.request` | `—` |
@@ -359,7 +369,7 @@ Config:
 | 🟦 Cls | `RegisterRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
 | 🟦 Cls | `RegistroAdmisionRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
 | 🟦 Cls | `RegistroNovedadRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
-| 🟦 Cls | `SolicitudRutaPayload` | `com.logistics.packages.infrastructure.dto.request` | `from` |
+| 🟦 Cls | `SolicitudRutaPayload` | `com.logistics.packages.infrastructure.dto.request` | `—` |
 | 🟦 Cls | `AsignacionZonaResponse` | `com.logistics.packages.infrastructure.dto.response` | `—` |
 | 🟦 Cls | `ClasificacionSugeridaResponseDTO` | `com.logistics.packages.infrastructure.dto.response` | `—` |
 | 🟦 Cls | `ConfirmacionClasificacionResponse` | `com.logistics.packages.infrastructure.dto.response` | `—` |
