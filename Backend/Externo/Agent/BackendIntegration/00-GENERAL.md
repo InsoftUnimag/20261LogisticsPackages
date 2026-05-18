@@ -21,8 +21,7 @@ Este documento es la guía maestra para conectar una aplicación frontend (React
         ├── SecurityFilterChain (JWT Validation)
         ├── Controladores REST (/api/paquetes, /route, /api/auth)
         ├── PostgreSQL (Persistencia)
-        ├── RabbitMQ (Mensajería asíncrona)
-        └── AWS S3/SQS (Almacenamiento y eventos)
+        └── AWS SQS/S3 (Mensajería asíncrona y almacenamiento)
 ```
 
 ## 2. Servicios Disponibles

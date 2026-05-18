@@ -12,9 +12,9 @@ sequenceDiagram
     participant DIST as DistanceCalculatorAdapter
     participant PRICE as PriceCalculationServiceImpl
     participant REPO as PaqueteJpaAdapter
-    participant EVT as RutaEventAdapter
+    participant EVT as RutaSqsAdapter
     participant DB as PostgreSQL
-    participant MQ as RabbitMQ
+    participant SQS as SQS (solicitar-ruta-queue)
 
     C->>CTRL: POST /api/paquetes/admision\n{RegistroAdmisionRequest}
     CTRL->>UC1: registrarAdmision(command)
@@ -53,8 +53,9 @@ sequenceDiagram
     REPO-->>UC1: Paquete
     
     alt incluye pesaje
-        UC1->>EVT: publicarSolicitudRuta(paqueteId)
-        EVT-->>UC1: void
+        UC1->>EVT: enviarSolicitud(paquete)
+        EVT->>SQS: SolicitudRutaPayload
+        Note over SQS: Cola: ${DEV_PREFIX}-solicitar-ruta-queue
     end
     
     UC1-->>CTRL: UUID paqueteId
@@ -70,8 +71,9 @@ sequenceDiagram
     participant UC2 as ProcesarPesajeUseCase
     participant REPO as PaqueteJpaAdapter
     participant UC5 as SolicitarRutaUseCase
-    participant MQ as RabbitMQ
-    participant LSN as RutaMessageListener
+    participant SQS_OUT as SQS (solicitar-ruta-queue)
+    participant SQS_IN as SQS (respuestas-ruta-queue)
+    participant LSN as RutaSqsListener
     participant UC6 as AsignarRutaUseCase
     participant DB as PostgreSQL
 
@@ -92,8 +94,8 @@ sequenceDiagram
     UC5->>REPO: findById(paqueteId)
     REPO-->>UC5: Paquete
     UC5->>UC5: SolicitudRutaPayload.from(paquete)
-    UC5->>MQ: enviarSolicitud(payload)
-    Note over MQ: Exchange: solicitudes_ruta_exchange\nRouting Key: solicitud.nueva
+    UC5->>SQS_OUT: enviarSolicitud(payload)
+    Note over SQS_OUT: Cola: ${DEV_PREFIX}-solicitar-ruta-queue
     
     UC2-->>CTRL: PesajeResponse
     
@@ -101,18 +103,17 @@ sequenceDiagram
         CTRL-->>C: 200 { PesajeResponseDto }
     end
     
-    Note over MQ,UC6: --- Flujo Asíncrono ---
-    MQ-->>LSN: Respuesta del Módulo Rutas
-    LSN->>UC6: asignarRuta(payload)
+    Note over SQS_IN,UC6: --- Flujo Asíncrono ---
+    SQS_IN-->>LSN: RespuestaRutaPayload (tipo_evento: RUTA_ASIGNADA)
+    Note over SQS_IN: Cola: ${DEV_PREFIX}-respuestas-ruta-queue
+    LSN->>LSN: Valida tipo_evento == "RUTA_ASIGNADA"\ny ruta_id != null
+    LSN->>LSN: Mapea RespuestaRutaPayload → AsignarRutaCommand
+    LSN->>UC6: asignarRuta(command)
     UC6->>REPO: findById(paqueteId)
-    alt estado == "asignada"
-        UC6->>UC6: paquete.asignarRuta(rutaId)
-        Note over UC6: Estado → LISTO_PARA_DESPACHO
-        UC6->>REPO: save(paquete)
-        REPO->>DB: UPDATE paquetes SET ruta_id, estado
-    else pendiente/timeout
-        UC6->>UC6: log.warn (no guarda cambios)
-    end
+    UC6->>UC6: paquete.asignarRuta(rutaId)
+    Note over UC6: Estado → LISTO_PARA_DESPACHO
+    UC6->>REPO: save(paquete)
+    REPO->>DB: UPDATE paquetes SET ruta_id, estado
 ```
 
 ## Flujo 3: Almacenaje + Clasificación por Zona de Destino (UC-4 + UC-3)
@@ -125,8 +126,8 @@ sequenceDiagram
     participant REPO as PaqueteJpaAdapter
     participant ZREPO as ZonaAlmacenajeJpaAdapter
     participant DB as PostgreSQL
-    participant MQ as RabbitMQ
-    participant CLAS_LSN as PaqueteListoClasificacionListener
+    participant SQS as AWS SQS
+    participant CLAS_LSN as PaqueteListoClasificacionSqsListener
     participant UC3 as ClasificarPaqueteUseCase
     participant ZDREPO as ZonaDestinoJpaAdapter
 
@@ -152,8 +153,8 @@ sequenceDiagram
         ALM_CTRL-->>C: 400 ZONA_INCOMPATIBLE / 409 ZONA_SATURADA
     end
 
-    Note over MQ,UC3: --- Flujo Asíncrono de Clasificación ---
-    MQ-->>CLAS_LSN: paquete_listo_para_clasificar_queue
+    Note over SQS,UC3: --- Flujo Asíncrono de Clasificación ---
+    SQS-->>CLAS_LSN: paquete-listo-clasificar-queue
     CLAS_LSN->>UC3: sugerirZonaParaPaquete(paqueteId)
     UC3->>REPO: findById(paqueteId)
     UC3->>UC3: calculoZonaService.calcularZona(paquete)
@@ -222,8 +223,8 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant MQ as RabbitMQ\n(eventos_ruta_queue)
-    participant LSN as RutaEventListener
+    participant SQS as Amazon SQS\n(eventos-ruta-queue)
+    participant LSN as RutaEventSqsListener
     participant UC9 as ProcesarEventoRutaUseCase
     participant EPR as EventoProcesadoJpaAdapter
     participant REPO as PaqueteJpaAdapter
@@ -231,7 +232,7 @@ sequenceDiagram
     participant NOTIF as MockNotificacionAdapter
     participant DB as PostgreSQL
 
-    MQ->>LSN: EventoRutaDto (JSON)
+    SQS->>LSN: EventoRutaDto (JSON)
     LSN->>UC9: procesar(eventoDto)
 
     UC9->>EPR: yaFueProcesado(eventoId)
@@ -360,15 +361,14 @@ flowchart TD
 
     subgraph INFRA[Infrastructure]
         JPA[JPA Adapters\nPostgreSQL]
-        MQ[RabbitMQ]
-        S3[AWS S3]
         SQS[AWS SQS]
+        S3[AWS S3]
         EXT[APIs Externas\nGoogle Maps]
     end
 
     subgraph OUTPUT[Salida]
         R1[200 JSON Responses]
-        R2[RabbitMQ Out]
+        R2[SQS Out]
         R3[S3 URLs]
     end
 
@@ -396,15 +396,13 @@ flowchart TD
     UC10 --> JPA & S3
     UC9 --> JPA
 
-    UC1 --> MQ
-    UC5 --> MQ
-    UC6 --> MQ
-    UC9 --> MQ
-
-    UC10 --> SQS
+    UC1 --> SQS
+    UC5 --> SQS
+    UC6 --> SQS
+    UC9 --> SQS
 
     JPA --> R1
-    MQ --> R2
+    SQS --> R2
     S3 --> R3
     R1 --> UI[Frontend / Clientes API]
 ```
