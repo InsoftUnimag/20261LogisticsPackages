@@ -12,14 +12,14 @@ Como Empleado de Envío y Recepción, necesito que el sistema envíe al `Módulo
 
 **Importante**: La comunicación con el `Módulo de Gestión de Rutas` es estrictamente **asíncrona** mediante payloads en formato JSON. Las solicitudes de ruta para un paquete se generan **una sola vez** y no se pueden re-emitir.
 
-**Independent Test**: Completar admisión y pesaje, y verificar en logs que el payload llegó al `Módulo de Gestión de Rutas`, se recibió una respuesta con identificador de ruta.
+**Independent Test**: Completar admisión y pesaje; verificar en logs que el payload se encoló en SQS (`solicitar-ruta-queue`) y que, posteriormente, el listener `RutaSqsListener` consume la respuesta `RUTA_ASIGNADA` desde `respuestas-ruta-queue` con el `ruta_id` asignado.
 
 **Acceptance Scenarios**:
 
 1. **Solicitud exitosa con asignación de ruta**
    - **Given** el paquete está en `Recibido en Sede` con todos los datos completos.
    - **When** el caso de uso es invocado automáticamente tras [Registrar Admisión de Paquete (MOD1-UC-001)](./MOD1-UC-001-Registrar-Admision-De-Paquete.md) + [Procesar Pesaje y Dimensiones (MOD1-UC-002)](./MOD1-UC-002-Procesar-Pesaje-Y-Dimensiones.md).
-   - **Then** el sistema envía el payload JSON de forma asíncrona, recibe un `ID de ruta` en formato JSON del módulo de rutas y lo almacena en el paquete.
+   - **Then** el sistema envía el payload `SOLICITAR_RUTA` de forma asíncrona por SQS hacia M2. Cuando M2 responde, publica un mensaje `RUTA_ASIGNADA` en la cola `respuestas-ruta-queue`. El listener `RutaSqsListener` consume ese mensaje, lo transforma a `AsignarRutaCommand` (capa de aplicación), invoca `AsignarRutaUseCase` y el `ruta_id` se persiste en el paquete.
 
 2. **M2 no responde**
    - **Given** el `Módulo de Gestión de Rutas` no responde dentro del tiempo configurado.
@@ -49,13 +49,13 @@ Como Empleado de Envío y Recepción, necesito que el sistema envíe al `Módulo
   - `fecha_limite_entrega`: ISO8601 (`fechaIngresoUtc + 7 días`)
   - `tipo_mercancia`: `ESTANDAR | FRAGIL | PELIGROSO`
   - `metodo_pago`: `PREPAGO | CONTRA_ENTREGA`
-- **FR-003**: El módulo de rutas devolverá un `ID de ruta` en formato JSON que debe ser almacenado en el paquete.
-- **FR-004**: Registrar cada intento con el payload, timestamp, resultado (asignada / pendiente) e ID de ruta recibido.
+- **FR-003**: El módulo de rutas devolverá un `ruta_id` en formato JSON a través de la cola `respuestas-ruta-queue`, evento `RUTA_ASIGNADA`. M1 consume este mensaje de forma asíncrona mediante `RutaSqsListener` y almacena el `ruta_id` en el paquete.
+- **FR-004**: Registrar cada intento con el payload, timestamp, resultado (recibido vía `tipo_evento: RUTA_ASIGNADA`) e ID de ruta recibido.
 - **FR-005**: Encolar el evento en Amazon SQS (con DLQ) para reintento automático si M2 no responde, sin bloquear el flujo del paquete.
 
 ### Key Entities
 
-- **Solicitud de Ruta**: payload JSON enviado, timestamp, resultado de la respuesta (asignada / pendiente), ID de ruta recibido del módulo de rutas, número de intento.
+- **Solicitud de Ruta**: payload JSON enviado, timestamp, resultado de la respuesta (`RUTA_ASIGNADA`), ID de ruta recibido del módulo de rutas, número de intento.
 
 ---
 
@@ -63,5 +63,5 @@ Como Empleado de Envío y Recepción, necesito que el sistema envíe al `Módulo
 
 - **SC-001**: El 100% de los paquetes con admisión exitosa generan un intento de solicitud asíncrona de forma inmediata.
 - **SC-002**: El 0% de las solicitudes se envían con campos faltantes en el payload JSON.
-- **SC-003**: El 100% de las solicitudes exitosas reciben un `ID de ruta` del módulo de rutas y lo almacenan en el paquete.
+- **SC-003**: El 100% de las solicitudes exitosas reciben un `ruta_id` del módulo de rutas (vía cola `respuestas-ruta-queue`) y lo almacenan en el paquete.
 - **SC-004**: El 100% de los clientes (remitentes) son informados del tiempo de entrega de 7 días hábiles cuando la ruta es asignada exitosamente.
