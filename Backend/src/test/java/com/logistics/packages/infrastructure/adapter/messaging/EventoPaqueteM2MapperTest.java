@@ -2,6 +2,10 @@ package com.logistics.packages.infrastructure.adapter.messaging;
 
 import com.logistics.packages.application.usecase.gestionnovedad.EventoRutaDto;
 import com.logistics.packages.application.usecase.gestionnovedad.EventoRutaDto.TipoEventoRuta;
+import com.logistics.packages.infrastructure.dto.event.*;
+import com.logistics.packages.infrastructure.dto.event.NovedadGraveEvento;
+import com.logistics.packages.infrastructure.dto.event.ParadaFallidaEvento;
+import com.logistics.packages.infrastructure.dto.event.ParadasSinGestionarEvento.PaqueteEnRutaDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -78,7 +82,7 @@ class EventoPaqueteM2MapperTest {
     @DisplayName("PARADA_FALLIDA con motivo → DEVOLUCION con motivo mapeado")
     void testParadaFallida() {
         var evento = new com.logistics.packages.infrastructure.dto.event.ParadaFallidaEvento(
-                "PARADA_FALLIDA", paqueteId, rutaId, fecha, "CLIENTE_AUSENTE");
+                "PARADA_FALLIDA", paqueteId, rutaId, fecha, ParadaFallidaEvento.MotivoParadaFallida.CLIENTE_AUSENTE);
 
         List<EventoRutaDto> resultado = mapper.mapToEventoRuta(evento);
 
@@ -92,7 +96,7 @@ class EventoPaqueteM2MapperTest {
     @DisplayName("NOVEDAD_GRAVE tipo DAÑADO_EN_RUTA → DAÑADO")
     void testNovedadGraveDanado() {
         var evento = new com.logistics.packages.infrastructure.dto.event.NovedadGraveEvento(
-                "NOVEDAD_GRAVE", paqueteId, rutaId, fecha, "DAÑADO_EN_RUTA");
+                "NOVEDAD_GRAVE", paqueteId, rutaId, fecha, NovedadGraveEvento.TipoNovedadGrave.DAÑADO_EN_RUTA);
 
         List<EventoRutaDto> resultado = mapper.mapToEventoRuta(evento);
 
@@ -104,7 +108,7 @@ class EventoPaqueteM2MapperTest {
     @DisplayName("NOVEDAD_GRAVE tipo EXTRAVIADO → EXTRAVIADO")
     void testNovedadGraveExtraviado() {
         var evento = new com.logistics.packages.infrastructure.dto.event.NovedadGraveEvento(
-                "NOVEDAD_GRAVE", paqueteId, rutaId, fecha, "EXTRAVIADO");
+                "NOVEDAD_GRAVE", paqueteId, rutaId, fecha, NovedadGraveEvento.TipoNovedadGrave.EXTRAVIADO);
 
         List<EventoRutaDto> resultado = mapper.mapToEventoRuta(evento);
 
@@ -116,7 +120,7 @@ class EventoPaqueteM2MapperTest {
     @DisplayName("NOVEDAD_GRAVE tipo DEVOLUCION → DEVOLUCION")
     void testNovedadGraveDevolucion() {
         var evento = new com.logistics.packages.infrastructure.dto.event.NovedadGraveEvento(
-                "NOVEDAD_GRAVE", paqueteId, rutaId, fecha, "DEVOLUCION");
+                "NOVEDAD_GRAVE", paqueteId, rutaId, fecha, NovedadGraveEvento.TipoNovedadGrave.DEVOLUCION);
 
         List<EventoRutaDto> resultado = mapper.mapToEventoRuta(evento);
 
@@ -125,10 +129,10 @@ class EventoPaqueteM2MapperTest {
     }
 
     @Test
-    @DisplayName("NOVEDAD_GRAVE tipo desconocido → lista vacía (no mapea)")
-    void testNovedadGraveTipoDesconocido() {
+    @DisplayName("NOVEDAD_GRAVE con tipoNovedad null → lista vacía (null safe)")
+    void testNovedadGraveTipoNulo() {
         var evento = new com.logistics.packages.infrastructure.dto.event.NovedadGraveEvento(
-                "NOVEDAD_GRAVE", paqueteId, rutaId, fecha, "TIPO_INVALIDO");
+                "NOVEDAD_GRAVE", paqueteId, rutaId, fecha, null);
 
         List<EventoRutaDto> resultado = mapper.mapToEventoRuta(evento);
 
@@ -194,8 +198,8 @@ class EventoPaqueteM2MapperTest {
         assertEquals(esperado, resultado.getFirst().getEventoId());
     }
 
-    private com.logistics.packages.infrastructure.dto.event.ParadasSinGestionarEvento.PaqueteEnRutaDto crearPaqueteEnRuta(UUID id) {
-        var dto = new com.logistics.packages.infrastructure.dto.event.ParadasSinGestionarEvento.PaqueteEnRutaDto();
+    private PaqueteEnRutaDto crearPaqueteEnRuta(UUID id) {
+        var dto = new PaqueteEnRutaDto();
         dto.setPaqueteId(id);
         return dto;
     }

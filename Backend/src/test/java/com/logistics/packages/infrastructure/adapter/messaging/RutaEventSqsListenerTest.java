@@ -7,6 +7,7 @@ import com.logistics.packages.infrastructure.dto.event.EventoPaqueteM2Dto;
 import com.logistics.packages.infrastructure.dto.event.PaqueteEnTransitoEvento;
 import com.logistics.packages.infrastructure.dto.event.PaqueteEntregadoEvento;
 import com.logistics.packages.infrastructure.dto.event.NovedadGraveEvento;
+import com.logistics.packages.infrastructure.dto.event.NovedadGraveEvento.TipoNovedadGrave;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,7 +71,7 @@ class RutaEventSqsListenerTest {
     @DisplayName("NOVEDAD_GRAVE (DAÑADO): mapea y procesa correctamente")
     void testListenerProcesaNovedadGraveDanado() {
         EventoPaqueteM2Dto m2Evento = new NovedadGraveEvento(
-                "NOVEDAD_GRAVE", paqueteId, rutaId, fecha, "DAÑADO_EN_RUTA");
+                "NOVEDAD_GRAVE", paqueteId, rutaId, fecha, TipoNovedadGrave.DAÑADO_EN_RUTA);
 
         EventoRutaDto comando = EventoRutaDto.builder()
                 .eventoId("M2:DAÑADO:" + paqueteId + ":" + fecha)

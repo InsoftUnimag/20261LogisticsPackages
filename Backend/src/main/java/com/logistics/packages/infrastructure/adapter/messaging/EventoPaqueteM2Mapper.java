@@ -3,6 +3,7 @@ package com.logistics.packages.infrastructure.adapter.messaging;
 import com.logistics.packages.application.usecase.gestionnovedad.EventoRutaDto;
 import com.logistics.packages.application.usecase.gestionnovedad.EventoRutaDto.TipoEventoRuta;
 import com.logistics.packages.infrastructure.dto.event.NovedadGraveEvento;
+import com.logistics.packages.infrastructure.dto.event.NovedadGraveEvento.TipoNovedadGrave;
 import com.logistics.packages.infrastructure.dto.event.PaqueteEntregadoEvento;
 import com.logistics.packages.infrastructure.dto.event.PaqueteExcluidoDespachoEvento;
 import com.logistics.packages.infrastructure.dto.event.ParadaFallidaEvento;
@@ -38,8 +39,9 @@ public class EventoPaqueteM2Mapper {
             }
             case "PARADA_FALLIDA" -> {
                 ParadaFallidaEvento evento = (ParadaFallidaEvento) m2Dto;
+                String motivo = evento.getMotivo() != null ? evento.getMotivo().name() : null;
                 resultados.add(construirDto(evento.getPaqueteId(), evento.getRutaId(),
-                        evento.getFechaHoraEvento(), TipoEventoRuta.DEVOLUCION, evento.getMotivo(), null, null, null));
+                        evento.getFechaHoraEvento(), TipoEventoRuta.DEVOLUCION, motivo, null, null, null));
             }
             case "NOVEDAD_GRAVE" -> {
                 NovedadGraveEvento evento = (NovedadGraveEvento) m2Dto;
@@ -87,16 +89,12 @@ public class EventoPaqueteM2Mapper {
                 .build();
     }
 
-    private TipoEventoRuta mapTipoNovedad(String tipoNovedad) {
+    private TipoEventoRuta mapTipoNovedad(TipoNovedadGrave tipoNovedad) {
         if (tipoNovedad == null) return null;
         return switch (tipoNovedad) {
-            case "DAÑADO_EN_RUTA" -> TipoEventoRuta.DAÑADO;
-            case "EXTRAVIADO" -> TipoEventoRuta.EXTRAVIADO;
-            case "DEVOLUCION" -> TipoEventoRuta.DEVOLUCION;
-            default -> {
-                log.warn("Tipo de novedad grave desconocido: {}", tipoNovedad);
-                yield null;
-            }
+            case DAÑADO_EN_RUTA -> TipoEventoRuta.DAÑADO;
+            case EXTRAVIADO -> TipoEventoRuta.EXTRAVIADO;
+            case DEVOLUCION -> TipoEventoRuta.DEVOLUCION;
         };
     }
 }

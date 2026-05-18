@@ -211,8 +211,12 @@ graph TD
 
 ---
 
+---
+
+---
+
 ## Anexo: Estado de Archivos Actual (application)
-*Generado automáticamente por sync-agent-docs.py el 2026-05-18 04:40:37 UTC*
+*Generado automáticamente por sync-agent-docs.py el 2026-05-18 07:01:05 UTC*
 
 | Indicador | Valor |
 |---|---|

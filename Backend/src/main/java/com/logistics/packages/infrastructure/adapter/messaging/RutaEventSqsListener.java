@@ -4,6 +4,7 @@ import com.logistics.packages.application.usecase.gestionnovedad.EventoRutaDto;
 import com.logistics.packages.application.usecase.gestionnovedad.ProcesarEventoRutaUseCase;
 import com.logistics.packages.domain.exception.EventoDuplicadoException;
 import com.logistics.packages.infrastructure.dto.event.EventoPaqueteM2Dto;
+import com.logistics.packages.infrastructure.exception.SqsCommunicationException;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +38,7 @@ public class RutaEventSqsListener {
             }
         } catch (Exception e) {
             log.error("Error al procesar evento M2 {}: {}", m2Dto.getTipoEvento(), e.getMessage(), e);
-            throw new RuntimeException("Error al procesar evento de paquete M2", e);
+            throw new SqsCommunicationException("Error al procesar evento de paquete M2", e);
         }
     }
 }
