@@ -75,12 +75,14 @@ El evento `solicitar_ruta` al `Módulo de Gestión de Rutas` se emite **durante 
     │                       └──[solicitar_ruta emitido a M2]──► (ver ramificaciones M2)
     │
     └──[Pesaje exitoso + GPS resuelto + Confirmación]──► Recibido en Sede
-            └──[solicitar_ruta emitido automáticamente a M2]
+            └──[solicitar_ruta emitido automáticamente a M2 vía SQS]
                     ├──[M2 rechaza: cobertura o campo inválido]──► Excepción de Ruta
                     │       └──[Supervisor corrige dato + Reintento autorizado]──► (re-emite solicitar_ruta)
-                    ├──[M2 no responde]──► Evento encolado; Recibido en Sede se mantiene
-                    └──[M2 responde ruta_asignada]──► id_ruta + id_transportador + fecha_estimada persistidos
-                                                        ──► fecha_estimada mostrada al cliente
+                    ├──[M2 no responde]──► Evento encolado en SQS; Recibido en Sede se mantiene
+                    └──[M2 responde RUTA_ASIGNADA]──► El listener RutaSqsListener consume el mensaje desde
+                                                        la cola `respuestas-ruta-queue`, invoca
+                                                        AsignarRutaUseCase y persiste ruta_id.
+                                                        ──► fecha_hora_evento registrada y disponible
                                                                │
                                                                ▼
                                                            [ETAPA 2]
@@ -224,7 +226,7 @@ El paquete ingresa cuando el empleado abre el formulario de registro. Se genera 
 
 Obligatoriamente se ejecuta MOD1-UC-002, que captura los **atributos físicos**: `peso_kg`, `largo_cm`, `ancho_cm`, `alto_cm`, `volumen_m3`, `peso_volumetrico_kg`, `tipo_mercancia` (`Estándar` | `Frágil` | `Peligroso`), `categoria_carga` (`Normal` | `Carga Especial`) y calcula el `precio_envio_calculado` con la fórmula de tarificación.
 
-Una vez confirmado el registro y completado el pesaje exitosamente, si `gps_estado = Resuelto`, el sistema invoca MOD1-UC-003 e emite el evento `solicitar_ruta` al `Módulo de Gestión de Rutas`. La respuesta `ruta_asignada` incluye `id_ruta`, `id_transportador` y `fecha_estimada_entrega`, que se muestran al cliente y se persisten.
+Una vez confirmado el registro y completado el pesaje exitosamente, si `gps_estado = Resuelto`, el sistema invoca MOD1-UC-003 y emite el evento `solicitar_ruta` al `Módulo de Gestión de Rutas` vía SQS. La respuesta llega de forma asíncrona a través de la cola `respuestas-ruta-queue` con el payload `RUTA_ASIGNADA`. El adaptador `RutaSqsListener` la consume, transforma el DTO técnico en `AsignarRutaCommand` (capa de aplicación) e invoca `AsignarRutaUseCase`, que persiste el `ruta_id` y la `fecha_hora_evento` en el paquete.
 
 **Casos de esta etapa:**
 
@@ -236,7 +238,7 @@ Una vez confirmado el registro y completado el pesaje exitosamente, si `gps_esta
 | Método de pago no soportado | Bloqueado; se muestra lista de métodos válidos |
 | Pesaje no completado | Bloqueado; no se puede confirmar el registro |
 | M2 rechaza solicitud de ruta | `Excepción de Ruta`; Supervisor corrige y reintenta |
-| M2 no responde | Evento encolado; `Recibido en Sede` se mantiene |
+| M2 no responde | Evento encolado en SQS (DLQ); `Recibido en Sede` se mantiene |
 
 ---
 

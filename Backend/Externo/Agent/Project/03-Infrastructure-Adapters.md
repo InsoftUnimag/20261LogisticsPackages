@@ -223,25 +223,27 @@ Todos los UUIDs referenciados en los endpoints corresponden a datos semilla carg
 | `CustomUserDetailsService` | Implementa `UserDetailsService`, busca usuario por username en `UsuarioRepository`. |
 | `DataInitializer` | `CommandLineRunner`: crea usuario `admin` (ADMIN) y `operador` (OPERADOR_BODEGA) con passwords por defecto. |
 
-### RabbitMQ Messaging
+### AWS SQS Messaging
 
-| Componente | Exchange | Queue | Routing Key | Propósito |
-|---|---|---|---|---|
-| `RutaAmqpAdapter` (productor) | `solicitudes_ruta_exchange` (Topic) | `solicitudes_ruta_queue` | `solicitud.nueva` | Envía solicitud de ruta al Módulo Gestión Rutas |
-| `RutaMessageListener` (consumidor) | — | `respuestas_ruta_queue` | — | Recibe respuesta de asignación de ruta |
-| `RutaEventListener` (consumidor) | — | `eventos_ruta_queue` | — | Recibe eventos de ruta (transición estados) |
-| `PaqueteListoClasificacionListener` (consumidor) | — | `paquete_listo_para_clasificar_queue` | — | Recibe eventos de paquete listo para clasificar |
-| Dead Letter | `solicitudes_ruta_dlx` (Direct) | `solicitudes_ruta_dlq` | `solicitud.failed` | Reintentos de mensajes fallidos |
+| Adaptador | Cola | Propósito |
+|---|---|---|
+| `RutaSqsAdapter` (productor) | `${DEV_PREFIX}-solicitar-ruta-queue` | Envía solicitud `SOLICITAR_RUTA` al Módulo Gestión Rutas |
+| `RutaSqsListener` (consumidor) | `${DEV_PREFIX}-respuestas-ruta-queue` | Recibe respuesta `RUTA_ASIGNADA` y asigna ruta al paquete |
+| `RutaEventSqsListener` (consumidor) | `eventos-ruta-queue` | Recibe eventos de ruta (transición estados: EN_TRANSITO, ENTREGADO, etc.) |
+| `PaqueteListoClasificacionSqsListener` (consumidor) | `paquete-listo-clasificar-queue` | Recibe eventos de paquete listo para clasificar |
+| `NovedadEventAdapter` (productor) | `novedad-registrada-queue` | Publica evento de novedad registrada |
 
 Config:
-- `SimpleRabbitListenerContainerFactory` con `defaultRequeueRejected=false` (usa DLX)
-- `Jackson2JsonMessageConverter` con `JavaTimeModule`
+- Spring Cloud AWS SQS con `DefaultCredentialsProviderChain`
+- Colas con prefijo dinámico `${DEV_PREFIX}` para aislar entornos de desarrollo
+- Jackson `ObjectMapper` con `JavaTimeModule` para serialización de fechas ISO8601
 
-### AWS (S3 + SQS)
+### AWS (S3 + SQS - complemento)
 
 | Servicio | Adaptador | Propósito |
 |---|---|---|
 | `S3Template` (Spring Cloud AWS) | `S3ArchivoStorageAdapter` | Guardar evidencia fotográfica de novedades |
+| `SqsTemplate` (Spring Cloud AWS) | `RutaSqsAdapter` | Enviar solicitud de ruta `SOLICITAR_RUTA` |
 | `SqsTemplate` (Spring Cloud AWS) | `NovedadEventAdapter` | Publicar evento de novedad registrada |
 | `S3Client` (AWS SDK) | `S3Service` | Listar buckets (verificación de conectividad) |
 

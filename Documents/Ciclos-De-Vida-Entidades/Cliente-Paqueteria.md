@@ -12,7 +12,7 @@
 |---|---|
 | **Identidad única del envío** | Se genera un UUID irrepetible por paquete. El cliente recibe una etiqueta digital en el sistema con código QR y código de barras. |
 | **Precio transparente** | El precio de envío se muestra al cliente antes de confirmar el registro, con su desglose completo. Una vez confirmado, es inmutable. |
-| **Tiempo estimado de entrega** | Al completar la admisión se solicita ruta al `Módulo de Gestión de Rutas`. Si hay respuesta antes de que el cliente se retire, la fecha estimada queda registrada. Si está pendiente, se indica explícitamente. |
+| **Tiempo estimado de entrega** | Al completar la admisión se solicita ruta al `Módulo de Gestión de Rutas` de forma asíncrona (SQS). El sistema consume la respuesta de la cola `respuestas-ruta-queue`. Si la respuesta `RUTA_ASIGNADA` llega antes de que el cliente se retire, la fecha estimada queda registrada. Si está pendiente, se indica explícitamente. |
 | **Protección de datos personales** | Los datos de remitente y destinatario se usan exclusivamente para la gestión del envío. |
 
 ### Durante el procesamiento en bodega
