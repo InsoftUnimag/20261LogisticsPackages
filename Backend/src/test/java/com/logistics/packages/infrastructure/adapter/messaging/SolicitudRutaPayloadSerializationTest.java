@@ -3,11 +3,14 @@ package com.logistics.packages.infrastructure.adapter.messaging;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.logistics.packages.domain.valueobject.MetodoPago;
+import com.logistics.packages.domain.valueobject.TipoMercancia;
 import com.logistics.packages.infrastructure.dto.request.SolicitudRutaPayload;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,9 +41,9 @@ class SolicitudRutaPayloadSerializationTest {
                         .build())
                 .latitud(4.7110)
                 .longitud(-74.0721)
-                .fechaLimiteEntrega("2026-05-24T18:54:32Z")
-                .tipoMercancia("ESTANDAR")
-                .metodoPago("PREPAGO")
+                .fechaLimiteEntrega(OffsetDateTime.parse("2026-05-24T18:54:32Z"))
+                .tipoMercancia(TipoMercancia.ESTANDAR)
+                .metodoPago(MetodoPago.PREPAGO)
                 .build();
 
         String json = objectMapper.writeValueAsString(payload);
@@ -85,13 +88,13 @@ class SolicitudRutaPayloadSerializationTest {
     }
 
     @Test
-    @DisplayName("TipoMercancia y MetodoPago deben usar valores exactos del enum en string")
+    @DisplayName("TipoMercancia y MetodoPago deben serializar con los valores exactos del enum")
     void debeUsarValoresDeEnumEnString() throws JsonProcessingException {
         SolicitudRutaPayload payload = SolicitudRutaPayload.builder()
                 .tipoEvento("SOLICITAR_RUTA")
                 .paqueteId(UUID.randomUUID())
-                .tipoMercancia("PELIGROSO")
-                .metodoPago("CONTRA_ENTREGA")
+                .tipoMercancia(TipoMercancia.PELIGROSO)
+                .metodoPago(MetodoPago.CONTRA_ENTREGA)
                 .build();
 
         String json = objectMapper.writeValueAsString(payload);

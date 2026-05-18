@@ -4,12 +4,14 @@ import com.logistics.packages.application.ports.RutaQueuePort;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.Direccion;
 import com.logistics.packages.infrastructure.dto.request.SolicitudRutaPayload;
+import com.logistics.packages.infrastructure.exception.SqsCommunicationException;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
 @Slf4j
@@ -32,7 +34,7 @@ public class RutaSqsAdapter implements RutaQueuePort {
         } catch (Exception e) {
             log.error("Error enviando solicitud de ruta para paquete {}: {}",
                     paquete.getId(), e.getMessage(), e);
-            throw new RuntimeException("Error al enviar solicitud de ruta", e);
+            throw new SqsCommunicationException("Error al enviar solicitud de ruta", e);
         }
     }
 
@@ -45,9 +47,9 @@ public class RutaSqsAdapter implements RutaQueuePort {
                 .direccion(mapDireccion(paquete.getDireccionDestino()))
                 .latitud(paquete.getCoordenadas() != null ? paquete.getCoordenadas().latitud() : null)
                 .longitud(paquete.getCoordenadas() != null ? paquete.getCoordenadas().longitud() : null)
-                .fechaLimiteEntrega(formatFechaLimite(paquete.getFechaIngresoUtc()))
-                .tipoMercancia(paquete.getTipoMercancia() != null ? paquete.getTipoMercancia().name() : null)
-                .metodoPago(paquete.getMetodoPago() != null ? paquete.getMetodoPago().name() : null)
+                .fechaLimiteEntrega(calcularFechaLimite(paquete.getFechaIngresoUtc()))
+                .tipoMercancia(paquete.getTipoMercancia())
+                .metodoPago(paquete.getMetodoPago())
                 .build();
     }
 
@@ -60,8 +62,8 @@ public class RutaSqsAdapter implements RutaQueuePort {
                 .build();
     }
 
-    private String formatFechaLimite(java.time.LocalDateTime fechaIngresoUtc) {
+    private OffsetDateTime calcularFechaLimite(java.time.LocalDateTime fechaIngresoUtc) {
         if (fechaIngresoUtc == null) return null;
-        return fechaIngresoUtc.plusDays(7).atOffset(ZoneOffset.UTC).toString();
+        return fechaIngresoUtc.plusDays(7).atOffset(ZoneOffset.UTC);
     }
 }
