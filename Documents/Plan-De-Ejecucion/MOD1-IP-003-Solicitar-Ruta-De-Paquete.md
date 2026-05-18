@@ -113,10 +113,10 @@ public class Paquete {
 
 ### Tests de los casos de uso (TDD)
 
-- [ ] T304 [P] [US3] `SolicitarRutaUseCaseTest`:
+- [x] T304 [P] [US3] `SolicitarRutaUseCaseTest`:
   - Dado: Un `Paquete` completo (admitido y pesado).
   - Cuando: Se ejecuta `solicitarRuta()`.
-  - Entonces: Se construye el `SolicitudRutaPayload` y se llama a `RutaQueuePort.enviarSolicitud()`.
+  - Entonces: Se pasa el `Paquete` al puerto `RutaQueuePort.enviarSolicitud(Paquete)` (el mapeo a DTO ocurre en el adaptador).
 - [ ] T305 [P] [US3] `AsignarRutaUseCaseTest`:
   - Dado: Un `RespuestaRutaPayload` con un `paqueteId` y `rutaId`.
   - Cuando: Se ejecuta `asignarRuta()`.
@@ -124,7 +124,7 @@ public class Paquete {
 
 ### Implementación de los casos de uso
 
-- [ ] T306 [P] [US3] Implementar `SolicitarRutaUseCase` que es invocado por un evento tras el pesaje:
+- [x] T306 [P] [US3] Implementar `SolicitarRutaUseCase` que es invocado por un evento tras el pesaje:
 ```java
 // backend/application/usecase/SolicitarRutaUseCase.java
 @Service
@@ -133,20 +133,12 @@ public class SolicitarRutaUseCase {
     private final PaqueteRepository paqueteRepository;
     private final RutaQueuePort rutaQueuePort;
 
-    public SolicitarRutaUseCase(PaqueteRepository paqueteRepository, RutaQueuePort rutaQueuePort) {
-        this.paqueteRepository = paqueteRepository;
-        this.rutaQueuePort = rutaQueuePort;
-    }
-
     public void handle(SolicitudRutaEvent event) {
         Paquete paquete = paqueteRepository.findById(event.getPaqueteId())
             .orElseThrow(() -> new PaqueteNotFoundException(event.getPaqueteId()));
 
-        // FR-002: Construir el payload JSON
-        SolicitudRutaPayload payload = SolicitudRutaPayload.from(paquete);
-        
-        // FR-001: Enviar de forma asíncrona
-        rutaQueuePort.enviarSolicitud(payload);
+        // FR-001 + FR-002: Pasa el dominio al puerto; el adaptador mapea a DTO
+        rutaQueuePort.enviarSolicitud(paquete);
     }
 }
 ```
@@ -190,7 +182,7 @@ public class AsignarRutaUseCase {
 
 ### Implementación de los adaptadores
 
-- [ ] T310 [P] [US3] Implementar `RutaSqsAdapter` que implemente `RutaQueuePort`:
+- [x] T310 [P] [US3] Implementar `RutaSqsAdapter` que implemente `RutaQueuePort`:
 ```java
 // backend/infrastructure/adapter/messaging/RutaSqsAdapter.java
 @Component
@@ -198,18 +190,36 @@ public class RutaSqsAdapter implements RutaQueuePort {
 
     private final SqsTemplate sqsTemplate;
 
-    @Value("${aws.sqs.ruta-request-queue:solicitudes-ruta-queue}")
+    @Value("${aws.sqs.ruta-request-queue:${DEV_PREFIX:carlos}-solicitar-ruta-queue}")
     private String queueName;
 
     @Override
-    public void enviarSolicitud(SolicitudRutaPayload payload) {
-        // FR-004: Registrar intento
-        log.info("Enviando solicitud de ruta para paquete: {}", payload.getPaqueteId());
+    public void enviarSolicitud(Paquete paquete) {
+        // El mapeo de dominio a DTO ocurre dentro del adaptador (hexagonal)
+        SolicitudRutaPayload payload = mapToPayload(paquete);
         try {
             sqsTemplate.send(to -> to.queue(queueName).payload(payload));
         } catch (Exception e) {
             log.error("Error enviando solicitud de ruta", e);
         }
+    }
+
+    private SolicitudRutaPayload mapToPayload(Paquete paquete) {
+        return SolicitudRutaPayload.builder()
+            .tipoEvento("SOLICITAR_RUTA")
+            .paqueteId(paquete.getId())
+            .pesoKg(paquete.getPeso().getKilogramos())
+            .volumenM3(paquete.getVolumenM3())
+            .direccion(new DireccionDto(paquete.getDireccionDestino().getDireccion(),
+                                         paquete.getDireccionDestino().getCiudad(),
+                                         paquete.getDireccionDestino().getPais()))
+            .latitud(paquete.getCoordenadas().latitud())
+            .longitud(paquete.getCoordenadas().longitud())
+            .fechaLimiteEntrega(paquete.getFechaIngresoUtc().plusDays(7)
+                                .atOffset(ZoneOffset.UTC).toString())
+            .tipoMercancia(paquete.getTipoMercancia().name())
+            .metodoPago(paquete.getMetodoPago().name())
+            .build();
     }
 }
 ```
@@ -229,7 +239,7 @@ public class RutaSqsListener {
     }
 }
 ```
-- [ ] T312 [US3] Configurar las colas SQS y sus propiedades (URL, región) en `application.properties`.
+- [x] T312 [US3] Configurar las colas SQS y sus propiedades (URL, región) en `application.properties`, `application.yml` y `application-local.yml`. El nombre de la cola de solicitudes usa prefijo dinámico: `${DEV_PREFIX:carlos}-solicitar-ruta-queue`.
 - [ ] T313 [US3] Implementar la lógica de reintentos (FR-005) en caso de timeout, posiblemente usando una Dead Letter Queue (DLQ) en Amazon SQS.
 
 ---

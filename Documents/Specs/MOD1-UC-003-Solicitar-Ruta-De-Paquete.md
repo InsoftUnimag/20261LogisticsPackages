@@ -38,7 +38,17 @@ Como Empleado de Envío y Recepción, necesito que el sistema envíe al `Módulo
 ### Functional Requirements
 
 - **FR-001**: La comunicación con el `Módulo de Gestión de Rutas` debe ser estrictamente **asíncrona** mediante payloads en formato JSON.
-- **FR-002**: Construir y enviar el payload JSON al `Módulo de Gestión de Rutas` con: UUID del paquete, peso, volumen, tipo de mercancía, dirección de destino, coordenadas GPS.
+- **FR-002**: Construir y enviar el payload JSON al `Módulo de Gestión de Rutas` con los siguientes campos (contrato M2, snake_case):
+  - `tipo_evento`: `"SOLICITAR_RUTA"`
+  - `paquete_id`: UUID del paquete
+  - `peso_kg`: peso del paquete en kg
+  - `volumen_m3`: volumen del paquete en m³
+  - `direccion`: objeto JSON con `direccion`, `ciudad`, `pais`
+  - `latitud`: coordenada de destino
+  - `longitud`: coordenada de destino
+  - `fecha_limite_entrega`: ISO8601 (`fechaIngresoUtc + 7 días`)
+  - `tipo_mercancia`: `ESTANDAR | FRAGIL | PELIGROSO`
+  - `metodo_pago`: `PREPAGO | CONTRA_ENTREGA`
 - **FR-003**: El módulo de rutas devolverá un `ID de ruta` en formato JSON que debe ser almacenado en el paquete.
 - **FR-004**: Registrar cada intento con el payload, timestamp, resultado (asignada / pendiente) e ID de ruta recibido.
 - **FR-005**: Encolar el evento en Amazon SQS (con DLQ) para reintento automático si M2 no responde, sin bloquear el flujo del paquete.
