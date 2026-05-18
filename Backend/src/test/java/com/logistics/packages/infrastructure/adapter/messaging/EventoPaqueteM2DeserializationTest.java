@@ -70,8 +70,7 @@ class EventoPaqueteM2DeserializationTest {
     @Test
     @DisplayName("PARADA_FALLIDA con cada motivo posible")
     void testDeserializarParadaFallida() throws Exception {
-        for (String motivo : new String[]{"CLIENTE_AUSENTE", "DIRECCION_INCORRECTA",
-                "RECHAZADO_POR_CLIENTE", "ZONA_DIFICIL_ACCESO"}) {
+        for (ParadaFallidaEvento.MotivoParadaFallida motivo : ParadaFallidaEvento.MotivoParadaFallida.values()) {
             String json = String.format("""
                     {
                         "tipo_evento": "PARADA_FALLIDA",
@@ -80,7 +79,7 @@ class EventoPaqueteM2DeserializationTest {
                         "fecha_hora_evento": "2026-03-08T12:00:00Z",
                         "motivo": "%s"
                     }
-                    """, motivo);
+                    """, motivo.name());
 
             EventoPaqueteM2Dto dto = objectMapper.readValue(json, EventoPaqueteM2Dto.class);
 
@@ -105,7 +104,7 @@ class EventoPaqueteM2DeserializationTest {
         EventoPaqueteM2Dto dto = objectMapper.readValue(json, EventoPaqueteM2Dto.class);
 
         assertInstanceOf(NovedadGraveEvento.class, dto);
-        assertEquals("DAÑADO_EN_RUTA", ((NovedadGraveEvento) dto).getTipoNovedad());
+        assertEquals(NovedadGraveEvento.TipoNovedadGrave.DAÑADO_EN_RUTA, ((NovedadGraveEvento) dto).getTipoNovedad());
     }
 
     @Test

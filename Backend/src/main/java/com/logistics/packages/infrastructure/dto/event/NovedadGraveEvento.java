@@ -13,10 +13,16 @@ import java.util.UUID;
 @NoArgsConstructor
 public class NovedadGraveEvento extends EventoPaqueteM2Dto {
 
-    @JsonProperty("tipo_novedad")
-    private String tipoNovedad;
+    public enum TipoNovedadGrave {
+        DAÑADO_EN_RUTA,
+        EXTRAVIADO,
+        DEVOLUCION
+    }
 
-    public NovedadGraveEvento(String tipoEvento, UUID paqueteId, UUID rutaId, OffsetDateTime fechaHoraEvento, String tipoNovedad) {
+    @JsonProperty("tipo_novedad")
+    private TipoNovedadGrave tipoNovedad;
+
+    public NovedadGraveEvento(String tipoEvento, UUID paqueteId, UUID rutaId, OffsetDateTime fechaHoraEvento, TipoNovedadGrave tipoNovedad) {
         super(tipoEvento, paqueteId, rutaId, fechaHoraEvento);
         this.tipoNovedad = tipoNovedad;
     }
