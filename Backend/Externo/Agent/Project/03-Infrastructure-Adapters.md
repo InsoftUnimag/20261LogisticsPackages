@@ -289,17 +289,21 @@ Config:
 
 ---
 
+---
+
+---
+
 ## Anexo: Estado de Archivos Actual (infrastructure)
-*Generado automáticamente por sync-agent-docs.py el 2026-05-18 04:40:37 UTC*
+*Generado automáticamente por sync-agent-docs.py el 2026-05-18 07:01:05 UTC*
 
 | Indicador | Valor |
 |---|---|
-| Clases | 69 |
+| Clases | 68 |
 | Interfaces | 11 |
-| Enumeraciones | 0 |
+| Enumeraciones | 2 |
 | Records | 0 |
-| Métodos públicos (significativos) | 37 |
-| Archivos analizados | 81 |
+| Métodos públicos (significativos) | 39 |
+| Archivos analizados | 82 |
 
 ### Tipos Detectados
 
@@ -355,11 +359,11 @@ Config:
 | 🟦 Cls | `PesajeController` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `ApiError` | `com.logistics.packages.infrastructure.dto` | `—` |
 | 🔷 Abs | `EventoPaqueteM2Dto` | `com.logistics.packages.infrastructure.dto.event` | `—` |
-| 🟦 Cls | `NovedadGraveEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
+| 🟨 Enm | `TipoNovedadGrave` | `com.logistics.packages.infrastructure.dto.event` | `NovedadGraveEvento` |
 | 🟦 Cls | `PaqueteEnTransitoEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
 | 🟦 Cls | `PaqueteEntregadoEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
 | 🟦 Cls | `PaqueteExcluidoDespachoEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
-| 🟦 Cls | `ParadaFallidaEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
+| 🟨 Enm | `MotivoParadaFallida` | `com.logistics.packages.infrastructure.dto.event` | `ParadaFallidaEvento` |
 | 🟦 Cls | `ParadasSinGestionarEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
 | 🟦 Cls | `AsignarZonaRequest` | `com.logistics.packages.infrastructure.dto.request` | `tieneDiscrepancias` |
 | 🟦 Cls | `ConfirmarZonaRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
@@ -380,6 +384,7 @@ Config:
 | 🟦 Cls | `RegistroAdmisionResponse` | `com.logistics.packages.infrastructure.dto.response` | `—` |
 | 🟦 Cls | `RegistroNovedadResponseDto` | `com.logistics.packages.infrastructure.dto.response` | `—` |
 | 🟦 Cls | `RespuestaRutaPayload` | `com.logistics.packages.infrastructure.dto.response` | `—` |
+| 🟦 Cls | `SqsCommunicationException` | `com.logistics.packages.infrastructure.exception` | `—` |
 | 🟦 Cls | `CustomUserDetailsService` | `com.logistics.packages.infrastructure.security` | `loadUserByUsername` |
 | 🟦 Cls | `DataInitializer` | `com.logistics.packages.infrastructure.security` | `run` |
 | 🟦 Cls | `JwtAuthenticationFilter` | `com.logistics.packages.infrastructure.security` | `—` |
