@@ -1,6 +1,7 @@
 package com.logistics.packages.application.usecase;
 
 import com.logistics.packages.application.repository.*;
+import com.logistics.packages.domain.event.SolicitudRutaEvent;
 import com.logistics.packages.domain.exception.InvalidCoverageException;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.*;
@@ -19,7 +20,7 @@ public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
 
     private final PaqueteRepository paqueteRepository;
     private final GeocodingService geocodingService;
-    private final RutaEventPublisher eventPublisher;
+    private final SolicitarRutaUseCase solicitarRutaUseCase;
     private final CoverageService coverageService;
     private final PriceCalculationService priceCalculationService;
     private final DistanceService distanceService;
@@ -64,7 +65,8 @@ public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
             Paquete saved = paqueteRepository.save(paquete);
 
             if (haEjecutadoPesaje(command)) {
-                eventPublisher.publicarSolicitudRuta(saved.getId());
+                SolicitudRutaEvent evento = SolicitudRutaEvent.of(saved.getId());
+                solicitarRutaUseCase.handle(evento);
             }
 
             return saved.getId();
