@@ -11,6 +11,8 @@ spring:
         access-key: test-access-key
         secret-key: test-secret-key
       endpoint: http://localhost:4566
+      sqs:
+        ruta-request-queue: ${DEV_PREFIX:carlos}-solicitar-ruta-queue
 
 app:
   cors:

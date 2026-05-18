@@ -6,7 +6,6 @@ import com.logistics.packages.domain.event.SolicitudRutaEvent;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.*;
-import com.logistics.packages.infrastructure.dto.request.SolicitudRutaPayload;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,17 +15,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * T304 [P] [US3] - Tests unitarios para SolicitarRutaUseCase
- * MOD1-IP-003 - Phase 2
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Solicitar Ruta Use Case")
 class SolicitarRutaUseCaseTest {
@@ -46,8 +40,7 @@ class SolicitarRutaUseCaseTest {
     @BeforeEach
     void setUp() {
         paqueteId = UUID.randomUUID();
-        
-        // Given: Un paquete completo (admitido y pesado)
+
         paqueteCompleto = Paquete.builder()
                 .id(paqueteId)
                 .estado(EstadoPaquete.RECIBIDO_EN_SEDE)
@@ -58,8 +51,7 @@ class SolicitarRutaUseCaseTest {
                 .coordenadas(new Coordenadas(4.7110, -74.0721))
                 .categoriaCarga(CategoriaCarga.NORMAL)
                 .build();
-        
-        // Simular cálculos del pesaje
+
         paqueteCompleto.procesarPesaje(
                 paqueteCompleto.getPeso(),
                 paqueteCompleto.getDimensiones(),
@@ -69,72 +61,61 @@ class SolicitarRutaUseCaseTest {
     }
 
     @Test
-    @DisplayName("Debe construir el payload y enviar solicitud cuando el paquete existe")
-    void debeEnviarSolicitudConPayloadCompleto() {
-        // Given: El paquete existe en el repositorio
+    @DisplayName("Debe enviar el paquete al puerto cuando existe")
+    void debeEnviarSolicitudConPaqueteCompleto() {
         when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.of(paqueteCompleto));
-        
-        SolicitudRutaEvent event = SolicitudRutaEvent.of(paqueteId);
 
-        // When: Se ejecuta el caso de uso
+        SolicitudRutaEvent event = SolicitudRutaEvent.of(paqueteId);
         solicitarRutaUseCase.handle(event);
 
-        // Then: Se construye el payload y se envía a la cola
         verify(paqueteRepository).findById(paqueteId);
-        
-        ArgumentCaptor<SolicitudRutaPayload> payloadCaptor = ArgumentCaptor.forClass(SolicitudRutaPayload.class);
-        verify(rutaQueuePort).enviarSolicitud(payloadCaptor.capture());
-        
-        SolicitudRutaPayload payload = payloadCaptor.getValue();
-        assertEquals(paqueteId, payload.getPaqueteId());
-        assertEquals(25.5, payload.getPesoKg());
-        assertNotNull(payload.getVolumenM3());
-        assertEquals(TipoMercancia.ESTANDAR, payload.getTipoMercancia());
-        assertNotNull(payload.getDireccionDestino());
-        assertEquals(4.7110, payload.getLatitud());
-        assertEquals(-74.0721, payload.getLongitud());
+
+        ArgumentCaptor<Paquete> paqueteCaptor = ArgumentCaptor.forClass(Paquete.class);
+        verify(rutaQueuePort).enviarSolicitud(paqueteCaptor.capture());
+
+        Paquete enviado = paqueteCaptor.getValue();
+        assertEquals(paqueteId, enviado.getId());
+        assertEquals(25.5, enviado.getPeso().getKilogramos());
+        assertNotNull(enviado.getVolumenM3());
+        assertEquals(TipoMercancia.ESTANDAR, enviado.getTipoMercancia());
+        assertNotNull(enviado.getDireccionDestino());
+        assertEquals(4.7110, enviado.getCoordenadas().latitud());
+        assertEquals(-74.0721, enviado.getCoordenadas().longitud());
     }
 
     @Test
     @DisplayName("Debe lanzar excepción cuando el paquete no existe")
     void debeLanzarExcepcionCuandoPaqueteNoExiste() {
-        // Given: El paquete no existe
         UUID paqueteInexistente = UUID.randomUUID();
         when(paqueteRepository.findById(paqueteInexistente)).thenReturn(Optional.empty());
-        
+
         SolicitudRutaEvent event = SolicitudRutaEvent.of(paqueteInexistente);
 
-        // When & Then: Debe lanzar excepción
         assertThrows(PaqueteNotFoundException.class, () -> solicitarRutaUseCase.handle(event));
-        
+
         verify(paqueteRepository).findById(paqueteInexistente);
         verify(rutaQueuePort, never()).enviarSolicitud(any());
     }
 
     @Test
-    @DisplayName("Debe enviar payload incluso con datos opcionales nulos")
-    void debeEnviarPayloadConDatosOpcionalesNulos() {
-        // Given: Un paquete con datos mínimos
+    @DisplayName("Debe enviar paquete incluso con datos opcionales nulos")
+    void debeEnviarPaqueteConDatosOpcionalesNulos() {
         Paquete paqueteMinimo = Paquete.builder()
                 .id(paqueteId)
                 .estado(EstadoPaquete.RECIBIDO_EN_SEDE)
                 .build();
-        
-        when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.of(paqueteMinimo));
-        
-        SolicitudRutaEvent event = SolicitudRutaEvent.of(paqueteId);
 
-        // When: Se ejecuta el caso de uso
+        when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.of(paqueteMinimo));
+
+        SolicitudRutaEvent event = SolicitudRutaEvent.of(paqueteId);
         solicitarRutaUseCase.handle(event);
 
-        // Then: Se construye y envía el payload
-        ArgumentCaptor<SolicitudRutaPayload> payloadCaptor = ArgumentCaptor.forClass(SolicitudRutaPayload.class);
-        verify(rutaQueuePort).enviarSolicitud(payloadCaptor.capture());
-        
-        SolicitudRutaPayload payload = payloadCaptor.getValue();
-        assertEquals(paqueteId, payload.getPaqueteId());
-        // Los campos opcionales son nulos, pero el payload se envía
-        assertNull(payload.getPesoKg());
-        assertNull(payload.getLatitud());
+        ArgumentCaptor<Paquete> paqueteCaptor = ArgumentCaptor.forClass(Paquete.class);
+        verify(rutaQueuePort).enviarSolicitud(paqueteCaptor.capture());
+
+        Paquete enviado = paqueteCaptor.getValue();
+        assertEquals(paqueteId, enviado.getId());
+        assertNull(enviado.getPeso());
+        assertNull(enviado.getCoordenadas());
     }
 }
