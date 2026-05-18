@@ -134,6 +134,18 @@
 ```
 
 ### UC-9: ProcesarEventoRutaUseCase
+
+**Entrada asíncrona:** El `RutaEventSqsListener` recibe un `EventoPaqueteM2Dto` desde la cola `eventos-paquete-queue`. Jackson deserializa polimórficamente según el discriminador `tipo_evento` (`@JsonTypeInfo`). `EventoPaqueteM2Mapper` traduce los 6 tipos M2 a comandos `EventoRutaDto`:
+
+| `tipo_evento` M2 | Mapper → `TipoEventoRuta` | Notas |
+|---|---|---|
+| `PAQUETE_EN_TRANSITO` | `EN_TRANSITO` | — |
+| `PAQUETE_ENTREGADO` | `ENTREGADO` | `urlEvidencia` ← `evidencia.url_foto` |
+| `PARADA_FALLIDA` | `DEVOLUCION` | `motivo` propagado al dominio |
+| `NOVEDAD_GRAVE` | `DAÑADO` / `EXTRAVIADO` / `DEVOLUCION` | Según `tipo_novedad` |
+| `PARADAS_SIN_GESTIONAR` | `DEVOLUCION` (N×, uno por paquete) | Itera lista interna |
+| `PAQUETE_EXCLUIDO_DESPACHO` | `DEVOLUCION` | — |
+
 ```
 1. Verificar idempotencia (EventoProcesadoRepository.yaFueProcesado)
    └── EventoDuplicadoException si ya existe
@@ -172,7 +184,8 @@ graph TD
     UC2[ProcesarPesajeUseCase] -->|handle SolicitudRutaEvent| UC5
     UC5 -->|enviarSolicitud| SQS_OUT[Amazon SQS: solicitar-ruta-queue]
     SQS_IN[Amazon SQS: respuestas-ruta-queue] -->|asignarRuta| UC6[AsignarRutaUseCase]
-    MOD2[Módulo Gestión Rutas] -->|eventos-ruta-queue| UC9[ProcesarEventoRutaUseCase]
+    MOD2[Módulo Gestión Rutas] -->|eventos-paquete-queue| LSN2[RutaEventSqsListener]
+    LSN2 -->|EventoPaqueteM2Mapper| UC9[ProcesarEventoRutaUseCase]
     UC4[PrepararAlmacenajeUseCase] -->|publica evento| UC3[ClasificarPaqueteUseCase]
     UC10[RegistrarNovedadUseCase] -->|publica evento SQS| SQS[AWS SQS]
 ```

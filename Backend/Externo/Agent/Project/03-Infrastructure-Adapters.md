@@ -229,7 +229,8 @@ Todos los UUIDs referenciados en los endpoints corresponden a datos semilla carg
 |---|---|---|
 | `RutaSqsAdapter` (productor) | `${DEV_PREFIX}-solicitar-ruta-queue` | Envía solicitud `SOLICITAR_RUTA` al Módulo Gestión Rutas |
 | `RutaSqsListener` (consumidor) | `${DEV_PREFIX}-respuestas-ruta-queue` | Recibe respuesta `RUTA_ASIGNADA` y asigna ruta al paquete |
-| `RutaEventSqsListener` (consumidor) | `eventos-ruta-queue` | Recibe eventos de ruta (transición estados: EN_TRANSITO, ENTREGADO, etc.) |
+| `RutaEventSqsListener` (consumidor) | `eventos-paquete-queue` | Recibe eventos de estado de paquete desde M2 vía el DTO polimórfico `EventoPaqueteM2Dto` (Jackson `@JsonTypeInfo`). Enruta por `tipo_evento`, mapea a `EventoRutaDto` mediante `EventoPaqueteM2Mapper` e invoca `ProcesarEventoRutaUseCase`. |
+| `EventoPaqueteM2Mapper` (componente) | — | Traduce los 6 tipos M2 (`PAQUETE_EN_TRANSITO`, `PAQUETE_ENTREGADO`, `PARADA_FALLIDA`, `NOVEDAD_GRAVE`, `PARADAS_SIN_GESTIONAR`, `PAQUETE_EXCLUIDO_DESPACHO`) a comandos `EventoRutaDto` de la capa de aplicación. |
 | `PaqueteListoClasificacionSqsListener` (consumidor) | `paquete-listo-clasificar-queue` | Recibe eventos de paquete listo para clasificar |
 | `NovedadEventAdapter` (productor) | `novedad-registrada-queue` | Publica evento de novedad registrada |
 
