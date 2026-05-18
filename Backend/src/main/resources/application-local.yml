@@ -23,6 +23,7 @@ spring:
       sqs:
         endpoint: http://localhost:4566
         ruta-request-queue: ${DEV_PREFIX:carlos}-solicitar-ruta-queue
+        ruta-response-queue: ${DEV_PREFIX:carlos}-respuestas-ruta-queue
       s3:
         endpoint: http://localhost:4566
 
