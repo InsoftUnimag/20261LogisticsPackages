@@ -3,10 +3,13 @@ package com.logistics.packages.infrastructure.adapter.messaging;
 import com.logistics.packages.application.usecase.gestionnovedad.EventoRutaDto;
 import com.logistics.packages.application.usecase.gestionnovedad.ProcesarEventoRutaUseCase;
 import com.logistics.packages.domain.exception.EventoDuplicadoException;
+import com.logistics.packages.infrastructure.dto.event.EventoPaqueteM2Dto;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Slf4j
 @Component
@@ -14,21 +17,27 @@ import org.springframework.stereotype.Component;
 public class RutaEventSqsListener {
 
     private final ProcesarEventoRutaUseCase procesarEventoRutaUseCase;
+    private final EventoPaqueteM2Mapper eventoMapper;
 
-    @SqsListener("${aws.sqs.eventos-ruta-queue:eventos-ruta-queue}")
-    public void onEventoRuta(EventoRutaDto eventoDto) {
-        log.info("Evento de ruta recibido: {} para paquete: {}",
-                eventoDto.getEventoId(), eventoDto.getPaqueteId());
+    @SqsListener("${app.sqs.eventos-paquete-queue:eventos-paquete-queue}")
+    public void onEventoPaquete(EventoPaqueteM2Dto m2Dto) {
+        log.info("Evento de paquete M2 recibido: {} para paquete: {}",
+                m2Dto.getTipoEvento(), m2Dto.getPaqueteId());
 
         try {
-            procesarEventoRutaUseCase.procesar(eventoDto);
-            log.info("Evento de ruta procesado exitosamente: {}", eventoDto.getEventoId());
-        } catch (EventoDuplicadoException e) {
-            log.warn("Evento duplicado detectado y descartado: {}", e.getEventoId());
+            List<EventoRutaDto> comandos = eventoMapper.mapToEventoRuta(m2Dto);
+
+            for (EventoRutaDto comando : comandos) {
+                try {
+                    procesarEventoRutaUseCase.procesar(comando);
+                    log.info("Evento procesado exitosamente: {}", comando.getEventoId());
+                } catch (EventoDuplicadoException e) {
+                    log.warn("Evento duplicado detectado y descartado: {}", e.getEventoId());
+                }
+            }
         } catch (Exception e) {
-            log.error("Error al procesar evento de ruta {}: {}",
-                    eventoDto.getEventoId(), e.getMessage(), e);
-            throw new RuntimeException("Error al procesar evento de ruta", e);
+            log.error("Error al procesar evento M2 {}: {}", m2Dto.getTipoEvento(), e.getMessage(), e);
+            throw new RuntimeException("Error al procesar evento de paquete M2", e);
         }
     }
 }

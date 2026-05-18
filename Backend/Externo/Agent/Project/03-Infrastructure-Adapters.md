@@ -229,7 +229,8 @@ Todos los UUIDs referenciados en los endpoints corresponden a datos semilla carg
 |---|---|---|
 | `RutaSqsAdapter` (productor) | `${DEV_PREFIX}-solicitar-ruta-queue` | Envía solicitud `SOLICITAR_RUTA` al Módulo Gestión Rutas |
 | `RutaSqsListener` (consumidor) | `${DEV_PREFIX}-respuestas-ruta-queue` | Recibe respuesta `RUTA_ASIGNADA` y asigna ruta al paquete |
-| `RutaEventSqsListener` (consumidor) | `eventos-ruta-queue` | Recibe eventos de ruta (transición estados: EN_TRANSITO, ENTREGADO, etc.) |
+| `RutaEventSqsListener` (consumidor) | `eventos-paquete-queue` | Recibe eventos de estado de paquete desde M2 vía el DTO polimórfico `EventoPaqueteM2Dto` (Jackson `@JsonTypeInfo`). Enruta por `tipo_evento`, mapea a `EventoRutaDto` mediante `EventoPaqueteM2Mapper` e invoca `ProcesarEventoRutaUseCase`. |
+| `EventoPaqueteM2Mapper` (componente) | — | Traduce los 6 tipos M2 (`PAQUETE_EN_TRANSITO`, `PAQUETE_ENTREGADO`, `PARADA_FALLIDA`, `NOVEDAD_GRAVE`, `PARADAS_SIN_GESTIONAR`, `PAQUETE_EXCLUIDO_DESPACHO`) a comandos `EventoRutaDto` de la capa de aplicación. |
 | `PaqueteListoClasificacionSqsListener` (consumidor) | `paquete-listo-clasificar-queue` | Recibe eventos de paquete listo para clasificar |
 | `NovedadEventAdapter` (productor) | `novedad-registrada-queue` | Publica evento de novedad registrada |
 
@@ -286,17 +287,19 @@ Config:
 
 ---
 
+---
+
 ## Anexo: Estado de Archivos Actual (infrastructure)
-*Generado automáticamente por sync-agent-docs.py el 2026-05-17 18:02:10 UTC*
+*Generado automáticamente por sync-agent-docs.py el 2026-05-18 04:40:37 UTC*
 
 | Indicador | Valor |
 |---|---|
-| Clases | 62 |
+| Clases | 69 |
 | Interfaces | 11 |
 | Enumeraciones | 0 |
 | Records | 0 |
-| Métodos públicos (significativos) | 38 |
-| Archivos analizados | 73 |
+| Métodos públicos (significativos) | 37 |
+| Archivos analizados | 81 |
 
 ### Tipos Detectados
 
@@ -305,10 +308,11 @@ Config:
 | 🟦 Cls | `CoverageAreaAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `—` |
 | 🟦 Cls | `DistanceCalculatorAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `calcularDistanciaKm, calcularDistanciaDesdeSede` |
 | 🟦 Cls | `GoogleMapsAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `verifyApiKey` |
+| 🟦 Cls | `EventoPaqueteM2Mapper` | `com.logistics.packages.infrastructure.adapter.messaging` | `—` |
 | 🟦 Cls | `NovedadEventAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarNovedadRegistrada` |
 | 🟦 Cls | `PaqueteListoClasificacionSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `procesarPaqueteListoParaClasificacion` |
 | 🟦 Cls | `RutaEventAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarSolicitudRuta` |
-| 🟦 Cls | `RutaEventSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `onEventoRuta` |
+| 🟦 Cls | `RutaEventSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `onEventoPaquete` |
 | 🟦 Cls | `RutaSqsAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `enviarSolicitud` |
 | 🟦 Cls | `RutaSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `recibirRespuesta` |
 | 🟦 Cls | `MockNotificacionAdapter` | `com.logistics.packages.infrastructure.adapter.notification` | `enviarSms, enviarEmail, enviar` |
@@ -350,6 +354,13 @@ Config:
 | 🟦 Cls | `NovedadController` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `PesajeController` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `ApiError` | `com.logistics.packages.infrastructure.dto` | `—` |
+| 🔷 Abs | `EventoPaqueteM2Dto` | `com.logistics.packages.infrastructure.dto.event` | `—` |
+| 🟦 Cls | `NovedadGraveEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
+| 🟦 Cls | `PaqueteEnTransitoEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
+| 🟦 Cls | `PaqueteEntregadoEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
+| 🟦 Cls | `PaqueteExcluidoDespachoEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
+| 🟦 Cls | `ParadaFallidaEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
+| 🟦 Cls | `ParadasSinGestionarEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
 | 🟦 Cls | `AsignarZonaRequest` | `com.logistics.packages.infrastructure.dto.request` | `tieneDiscrepancias` |
 | 🟦 Cls | `ConfirmarZonaRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
 | 🟦 Cls | `DatosFisicosDiscrepanciaDto` | `com.logistics.packages.infrastructure.dto.request` | `—` |
@@ -358,7 +369,7 @@ Config:
 | 🟦 Cls | `RegisterRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
 | 🟦 Cls | `RegistroAdmisionRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
 | 🟦 Cls | `RegistroNovedadRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
-| 🟦 Cls | `SolicitudRutaPayload` | `com.logistics.packages.infrastructure.dto.request` | `from` |
+| 🟦 Cls | `SolicitudRutaPayload` | `com.logistics.packages.infrastructure.dto.request` | `—` |
 | 🟦 Cls | `AsignacionZonaResponse` | `com.logistics.packages.infrastructure.dto.response` | `—` |
 | 🟦 Cls | `ClasificacionSugeridaResponseDTO` | `com.logistics.packages.infrastructure.dto.response` | `—` |
 | 🟦 Cls | `ConfirmacionClasificacionResponse` | `com.logistics.packages.infrastructure.dto.response` | `—` |

@@ -70,12 +70,13 @@ DAÑADO_EN_RUTA ← EN_TRANSITO | EN_PARADA_DE_ENTREGA
 | `RECIBIDO_EN_SEDE` | `NOVEDAD_EN_BODEGA` | Registrar novedad | POST `/api/paquetes/{id}/novedades` |
 | `EN_CLASIFICACION` | `LISTO_PARA_DESPACHO` | Confirmar clasificación | POST `/api/paquetes/clasificacion/confirmar` |
 | `EN_CLASIFICACION` | `NOVEDAD_EN_BODEGA` | Registrar novedad | POST `/api/paquetes/{id}/novedades` |
-| `LISTO_PARA_DESPACHO` | `EN_TRANSITO` | Iniciar ruta (Módulo Rutas) | — |
-| `EN_TRANSITO` | `EN_PARADA_DE_ENTREGA` | Llegar a destino | — |
-| `EN_PARADA_DE_ENTREGA` | `ENTREGADO` | Entrega exitosa | — |
-| `EN_PARADA_DE_ENTREGA` | `DEVOLUCION_EN_RUTA` | Devolución | — |
-| `EN_TRANSITO` | `EXTRAVIADO_EN_RUTA` | Extravío reportado | — |
-| `EN_TRANSITO` | `DAÑADO_EN_RUTA` | Daño reportado | — |
+| `LISTO_PARA_DESPACHO` | `EN_TRANSITO` | M2 vía `eventos-paquete-queue`: `PAQUETE_EN_TRANSITO` | — |
+| `EN_TRANSITO` | `EN_PARADA_DE_ENTREGA` | M2 vía `eventos-paquete-queue`: `PARADA_FALLIDA` (con reintento) | — |
+| `EN_TRANSITO` | `DEVOLUCION_EN_RUTA` | M2 vía `eventos-paquete-queue`: `PARADA_FALLIDA` / `PARADAS_SIN_GESTIONAR` / `PAQUETE_EXCLUIDO_DESPACHO` | — |
+| `EN_TRANSITO` | `EXTRAVIADO_EN_RUTA` | M2 vía `eventos-paquete-queue`: `NOVEDAD_GRAVE` (`tipo_novedad: EXTRAVIADO`) | — |
+| `EN_TRANSITO` | `DAÑADO_EN_RUTA` | M2 vía `eventos-paquete-queue`: `NOVEDAD_GRAVE` (`tipo_novedad: DAÑADO_EN_RUTA`) | — |
+| `EN_PARADA_DE_ENTREGA` | `ENTREGADO` | M2 vía `eventos-paquete-queue`: `PAQUETE_ENTREGADO` | — |
+| `EN_PARADA_DE_ENTREGA` | `DEVOLUCION_EN_RUTA` | M2 vía `eventos-paquete-queue`: `NOVEDAD_GRAVE` (`tipo_novedad: DEVOLUCION`) | — |
 
 ### Reglas de Novedades en Bodega
 
@@ -199,8 +200,10 @@ DAÑADO_EN_RUTA ← EN_TRANSITO | EN_PARADA_DE_ENTREGA
 
 ---
 
+---
+
 ## Anexo: Estado de Archivos Actual (domain)
-*Generado automáticamente por sync-agent-docs.py el 2026-05-17 18:02:10 UTC*
+*Generado automáticamente por sync-agent-docs.py el 2026-05-18 04:40:37 UTC*
 
 | Indicador | Valor |
 |---|---|

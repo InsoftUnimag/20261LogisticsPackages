@@ -219,12 +219,13 @@ sequenceDiagram
     CTRL-->>C: 201 { paqueteId, estadoActual, historialId }
 ```
 
-## Flujo 5: Procesamiento de Eventos de Ruta con Idempotencia (UC-9)
+## Flujo 5: Procesamiento de Eventos de Estado de Paquete (UC-9)
 
 ```mermaid
 sequenceDiagram
-    participant SQS as Amazon SQS\n(eventos-ruta-queue)
+    participant SQS as Amazon SQS\n(eventos-paquete-queue)
     participant LSN as RutaEventSqsListener
+    participant MAPPER as EventoPaqueteM2Mapper
     participant UC9 as ProcesarEventoRutaUseCase
     participant EPR as EventoProcesadoJpaAdapter
     participant REPO as PaqueteJpaAdapter
@@ -232,58 +233,65 @@ sequenceDiagram
     participant NOTIF as MockNotificacionAdapter
     participant DB as PostgreSQL
 
-    SQS->>LSN: EventoRutaDto (JSON)
-    LSN->>UC9: procesar(eventoDto)
+    SQS->>LSN: EventoPaqueteM2Dto (JSON polimórfico)\nsegún "tipo_evento"
+    Note over LSN: Jackson @JsonTypeInfo deserializa\nal subtipo concreto
+    LSN->>MAPPER: mapToEventoRuta(m2Dto)
+    Note over MAPPER: Traduce los 6 tipo_evento M2 a\nList<EventoRutaDto> (aplicación)
+    MAPPER-->>LSN: List<EventoRutaDto>
 
-    UC9->>EPR: yaFueProcesado(eventoId)
-    alt evento duplicado
-        EPR-->>UC9: true
-        UC9-->>LSN: EventoDuplicadoException
-        LSN->>LSN: log.warn (descarta)
-    else evento nuevo
-        EPR-->>UC9: false
-        
-        UC9->>REPO: findById(paqueteId)
-        
-        alt tipoEvento == EN_TRANSITO
-            UC9->>UC9: paquete.transitarAEnRuta()
-            Note over UC9: Estado: LISTO_PARA_DESPACHO → EN_TRANSITO
-        else tipoEvento == EN_PARADA_DE_ENTREGA
-            UC9->>UC9: paquete.transitarAParadaDeEntrega()
-            Note over UC9: Estado: EN_TRANSITO → EN_PARADA_DE_ENTREGA
-        else tipoEvento == ENTREGADO
-            UC9->>UC9: paquete.entregarPaquete()
-            Note over UC9: Estado: EN_PARADA_DE_ENTREGA → ENTREGADO
-            Note over UC9: Requiere urlEvidencia y nombreFirmante
-        else tipoEvento == DEVOLUCION
-            UC9->>UC9: paquete.registrarDevolucionEnRuta()
-            Note over UC9: Estado: EN_TRANSITO|PARADA → DEVOLUCION_EN_RUTA
-        else tipoEvento == EXTRAVIADO
-            UC9->>UC9: paquete.registrarExtraviadoEnRuta()
-            Note over UC9: Estado: EN_TRANSITO|PARADA → EXTRAVIADO_EN_RUTA
-        else tipoEvento == DAÑADO
-            UC9->>UC9: paquete.registrarDañadoEnRuta()
-            Note over UC9: Estado: EN_TRANSITO|PARADA → DAÑADO_EN_RUTA
-            Note over UC9: Requiere urlEvidencia
+    loop por cada EventoRutaDto
+        LSN->>UC9: procesar(eventoDto)
+
+        UC9->>EPR: yaFueProcesado(eventoId)
+        alt evento duplicado
+            EPR-->>UC9: true
+            UC9-->>LSN: EventoDuplicadoException
+            LSN->>LSN: log.warn (descarta)
+        else evento nuevo
+            EPR-->>UC9: false
+            
+            UC9->>REPO: findById(paqueteId)
+            
+            alt tipoEvento == EN_TRANSITO
+                UC9->>UC9: paquete.transitarAEnRuta()
+                Note over UC9: Estado: LISTO_PARA_DESPACHO → EN_TRANSITO
+            else tipoEvento == EN_PARADA_DE_ENTREGA
+                UC9->>UC9: paquete.transitarAParadaDeEntrega()
+                Note over UC9: Estado: EN_TRANSITO → EN_PARADA_DE_ENTREGA
+            else tipoEvento == ENTREGADO
+                UC9->>UC9: paquete.entregarPaquete()
+                Note over UC9: Estado: EN_PARADA_DE_ENTREGA → ENTREGADO
+                Note over UC9: Requiere urlEvidencia
+            else tipoEvento == DEVOLUCION
+                UC9->>UC9: paquete.registrarDevolucionEnRuta()
+                Note over UC9: Estado: EN_TRANSITO|PARADA → DEVOLUCION_EN_RUTA
+            else tipoEvento == EXTRAVIADO
+                UC9->>UC9: paquete.registrarExtraviadoEnRuta()
+                Note over UC9: Estado: EN_TRANSITO|PARADA → EXTRAVIADO_EN_RUTA
+            else tipoEvento == DAÑADO
+                UC9->>UC9: paquete.registrarDañadoEnRuta()
+                Note over UC9: Estado: EN_TRANSITO|PARADA → DAÑADO_EN_RUTA
+                Note over UC9: Requiere urlEvidencia
+            end
+            
+            UC9->>REPO: save(paquete)
+            DB-->>REPO: OK
+            
+            alt devolvió HistorialEstado
+                UC9->>HIST: guardar(historial)
+                DB-->>HIST: OK
+            end
+            
+            UC9->>EPR: guardar(EventoProcesado)
+            DB-->>EPR: OK
+            
+            UC9->>NOTIF: enviarSms(remitente.teléfono, mensaje)
+            UC9->>NOTIF: enviarSms(destinatario.teléfono, mensaje)
+            UC9->>NOTIF: enviarEmail(destinatario.email, asunto, mensaje)
+            
+            UC9-->>LSN: OK
+            LSN->>LSN: log.info
         end
-        
-        UC9->>REPO: save(paquete)
-        DB-->>REPO: OK
-        
-        alt devolvió HistorialEstado
-            UC9->>HIST: guardar(historial)
-            DB-->>HIST: OK
-        end
-        
-        UC9->>EPR: guardar(EventoProcesado)
-        DB-->>EPR: OK
-        
-        UC9->>NOTIF: enviarSms(remitente.teléfono, mensaje)
-        UC9->>NOTIF: enviarSms(destinatario.teléfono, mensaje)
-        UC9->>NOTIF: enviarEmail(destinatario.email, asunto, mensaje)
-        
-        UC9-->>LSN: OK
-        LSN->>LSN: log.info
     end
 ```
 
