@@ -25,7 +25,11 @@ public class PaqueteJpaAdapter implements PaqueteRepository {
     public Paquete save(Paquete paquete) {
         PaqueteDbo dbo = paqueteMapper.toDbo(paquete);
         PaqueteDbo savedDbo = paqueteJpaRepository.save(dbo);
-        return paqueteMapper.toDomain(savedDbo);
+        // Retornamos el paquete domain original (que está en memoria y completamente válido)
+        // Evitamos pasar por toDomain que falla cuando peso/dimensiones son null
+        // El id ya fue asignado por prePersist(), pero por seguridad lo sincronizamos con el DBO
+        paquete.setId(savedDbo.getId());
+        return paquete;
     }
 
     @Override
