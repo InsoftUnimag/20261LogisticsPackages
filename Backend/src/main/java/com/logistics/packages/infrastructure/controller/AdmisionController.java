@@ -6,6 +6,7 @@ import com.logistics.packages.application.repository.RegistrarAdmisionIn;
 import com.logistics.packages.application.usecase.RegistroAdmisionCommand;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.EstadoPaquete;
+import com.logistics.packages.infrastructure.dto.request.CoordenadasUpdateRequest;
 import com.logistics.packages.infrastructure.dto.request.RegistroAdmisionRequest;
 import com.logistics.packages.infrastructure.dto.response.ConsultaPaqueteResponse;
 import com.logistics.packages.infrastructure.dto.response.PaqueteListadoResponse;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -58,8 +60,23 @@ public class AdmisionController {
                 .build();
 
         UUID paqueteId = registrarAdmisionIn.registrarAdmision(command);
+        
+        // BE-4: Obtener el paquete guardado para enriquecer la respuesta
+        Optional<Paquete> paqueteOpt = paqueteRepository.findById(paqueteId);
+        
+        if (paqueteOpt.isPresent()) {
+            Paquete paquete = paqueteOpt.get();
+            return ResponseEntity.ok(RegistroAdmisionResponse.builder()
+                    .paqueteId(paquete.getId())
+                    .etiquetaDigital(paquete.getEtiquetaDigital())
+                    .estadoGps(paquete.getEstadoGps().toString())
+                    .estado(paquete.getEstado().toString())
+                    .build());
+        }
 
-        return ResponseEntity.ok(new RegistroAdmisionResponse(paqueteId));
+        return ResponseEntity.ok(RegistroAdmisionResponse.builder()
+                .paqueteId(paqueteId)
+                .build());
     }
 
     @Operation(summary = "Listar paquetes con paginación y filtros", description = "Obtiene una lista paginada de paquetes con filtros opcionales por estado y rango de fechas de ingreso. Los resultados se ordenan por fecha de ingreso descendente.")
@@ -91,5 +108,38 @@ public class AdmisionController {
                         paquete.getId(),
                         paquete.getEstado())))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Actualizar coordenadas de un paquete", description = "Permite actualizar manualmente las coordenadas de un paquete cuando el GPS está en estado PENDIENTE. FE-5: Contingencia GPS")
+    @ApiResponse(responseCode = "200", description = "Coordenadas actualizadas exitosamente")
+    @ApiResponse(responseCode = "404", description = "Paquete no encontrado")
+    @ApiResponse(responseCode = "400", description = "Datos de coordenadas inválidos")
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    @PatchMapping("/{paqueteId}/coordenadas")
+    public ResponseEntity<?> actualizarCoordenadas(
+            @PathVariable UUID paqueteId,
+            @Valid @RequestBody CoordenadasUpdateRequest request) {
+        
+        Paquete paquete = paqueteRepository.findById(paqueteId)
+                .orElseThrow(() -> new com.logistics.packages.domain.exception.PaqueteNotFoundException(paqueteId));
+        
+        // Crear y asignar las nuevas coordenadas (validaciones del VO se aplican automáticamente)
+        com.logistics.packages.domain.valueobject.Coordenadas nuevasCoordenadas = 
+                new com.logistics.packages.domain.valueobject.Coordenadas(
+                        request.getLatitud(), 
+                        request.getLongitud());
+        
+        paquete.asignarCoordenadas(nuevasCoordenadas);
+        paqueteRepository.save(paquete);
+        
+        return ResponseEntity.ok(Map.of(
+                "mensaje", "Coordenadas actualizadas correctamente",
+                "paqueteId", paquete.getId().toString(),
+                "estadoGps", paquete.getEstadoGps().toString(),
+                "coordenadas", Map.of(
+                        "latitud", nuevasCoordenadas.latitud(),
+                        "longitud", nuevasCoordenadas.longitud()
+                )
+        ));
     }
 }

@@ -31,11 +31,9 @@ public class RegistroAdmisionRequest {
     @NotNull
     @Schema(description = "Datos del destinatario")
     private Persona destinatario;
-    @NotNull
-    @Schema(description = "Tipo de mercancía (ESTANDAR | FRAGIL | PELIGROSO)")
+    @Schema(description = "Tipo de mercancía (ESTANDAR | FRAGIL | PELIGROSO) - Opcional en admisión, se asigna en pesaje")
     private TipoMercancia tipoMercancia;
-    @NotNull
-    @Schema(description = "Indica si el paquete tiene forma irregular")
+    @Schema(description = "Indica si el paquete tiene forma irregular - Opcional en admisión, se asigna en pesaje")
     private Boolean indicadorFormaIrregular;
     @Schema(description = "Peso del paquete en kg (opcional, se procesa en pesaje)")
     private Double peso;

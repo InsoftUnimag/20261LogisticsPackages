@@ -5,6 +5,8 @@ import com.logistics.packages.application.usecase.PesajeResponse;
 import com.logistics.packages.application.usecase.ProcesarPesajeUseCase;
 import com.logistics.packages.domain.valueobject.Dimensiones;
 import com.logistics.packages.domain.valueobject.Peso;
+import com.logistics.packages.domain.valueobject.TipoMercancia;
+import com.logistics.packages.infrastructure.config.TarifasConfigProperties;
 import com.logistics.packages.infrastructure.dto.request.PesajeRequest;
 import com.logistics.packages.infrastructure.dto.response.PesajeResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +22,8 @@ import org.springframework.web.bind.annotation.*;
 /**
  * Controlador REST para el procesamiento de pesaje de paquetes (MOD1-UC-002)
  * T208: Expone el endpoint POST /api/paquetes/pesaje
+ * 
+ * BE-3: Las tarifas se leen desde TarifasConfigProperties, no del cliente
  */
 @Tag(name = "Pesaje", description = "Procesamiento de pesaje y dimensiones de paquetes")
 @Slf4j
@@ -29,6 +33,7 @@ import org.springframework.web.bind.annotation.*;
 public class PesajeController {
 
     private final ProcesarPesajeUseCase procesarPesajeUseCase;
+    private final TarifasConfigProperties tarifasConfig;
 
     /**
      * Procesa el pesaje de un paquete existente.
@@ -53,18 +58,18 @@ public class PesajeController {
                     request.getAltoCm()
             );
             
-            // Crear el comando
-            PesajeCommand command = PesajeCommand.builder()
+            // Crear el comando con tarifas desde la configuración (BE-3)
+             PesajeCommand command = PesajeCommand.builder()
                     .paqueteId(request.getPaqueteId())
                     .peso(peso)
                     .dimensiones(dimensiones)
-                    .tipoMercancia(request.getTipoMercancia())
-                    .formaIrregular(request.getFormaIrregular())
-                    .tarifaBase(request.getTarifaBase())
-                    .tarifaPorKg(request.getTarifaPorKg())
-                    .tarifaPorKm(request.getTarifaPorKm())
-                    .recargoTipoMercancia(request.getRecargoTipoMercancia())
-                    .recargoCategoriaCarga(request.getRecargoCategoriaCarga())
+                    .tipoMercancia(request.getTipoMercancia() != null ? request.getTipoMercancia() : TipoMercancia.ESTANDAR)
+                    .formaIrregular(request.getFormaIrregular() != null ? request.getFormaIrregular() : false)
+                    .tarifaBase(tarifasConfig.getBase())
+                    .tarifaPorKg(tarifasConfig.getPorKg())
+                    .tarifaPorKm(tarifasConfig.getPorKm())
+                    .recargoTipoMercancia(tarifasConfig.getRecargoFragil())  // Se usa según tipo de mercancía
+                    .recargoCategoriaCarga(tarifasConfig.getRecargoCargaEspecial())
                     .build();
             
             // Ejecutar el caso de uso

@@ -1,8 +1,10 @@
 package com.logistics.packages.application.usecase;
 
+import com.logistics.packages.application.ports.EventoProcesadoRepository;
 import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.domain.event.SolicitudRutaEvent;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
+import com.logistics.packages.domain.model.EventoProcesado;
 import com.logistics.packages.domain.model.Paquete;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
  * Caso de uso para procesar el pesaje de un paquete (MOD1-UC-002)
  * T205, T206: Orquesta la actualización del paquete con los datos del pesaje.
  * Integración MOD1-IP-003: Después del pesaje exitoso, se dispara la solicitud de ruta
+ * 
+ * BE-1: Incluye guardia de idempotencia para evitar duplicados de SQS
  */
 @Slf4j
 @Service
@@ -22,6 +26,7 @@ public class ProcesarPesajeUseCase {
 
     private final PaqueteRepository paqueteRepository;
     private final SolicitarRutaUseCase solicitarRutaUseCase;
+    private final EventoProcesadoRepository eventoProcesadoRepository;
 
     /**
      * Procesa el pesaje de un paquete existente.
@@ -55,14 +60,28 @@ public class ProcesarPesajeUseCase {
         // Persistir los cambios
         paqueteRepository.save(paquete);
 
-        // MOD1-IP-003: Después del pesaje exitoso, disparar solicitud de ruta
-        log.info("Pesaje completado exitosamente para paquete {}. Disparando solicitud de ruta", paquete.getId());
-        try {
-            SolicitudRutaEvent evento = SolicitudRutaEvent.of(paquete.getId());
-            solicitarRutaUseCase.handle(evento);
-        } catch (Exception e) {
-            log.error("Error al solicitar ruta para paquete {}: {}", paquete.getId(), e.getMessage(), e);
-            // No fallar el pesaje si la solicitud de ruta falla
+        // MOD1-IP-003: Después del pesaje exitoso, disparar solicitud de ruta (CON GUARDIA DE IDEMPOTENCIA - BE-1)
+        log.info("Pesaje completado exitosamente para paquete {}. Verificando idempotencia antes de disparar solicitud de ruta", paquete.getId());
+        
+        String eventoIdSolicitud = "SOLICITUD_RUTA_" + paquete.getId();
+        
+        // Verificar si ya fue procesado este evento
+        if (eventoProcesadoRepository.yaFueProcesado(eventoIdSolicitud)) {
+            log.info("Evento de solicitud de ruta ya fue procesado para paquete {}. Omitiendo segundo disparo.", paquete.getId());
+        } else {
+            try {
+                SolicitudRutaEvent evento = SolicitudRutaEvent.of(paquete.getId());
+                solicitarRutaUseCase.handle(evento);
+                
+                // Registrar el evento como procesado para garantizar idempotencia
+                EventoProcesado eventoProcesado = new EventoProcesado(eventoIdSolicitud, paquete.getId(), "SOLICITUD_RUTA");
+                eventoProcesadoRepository.guardar(eventoProcesado);
+                
+                log.info("Solicitud de ruta emitida y registrada como procesada para paquete {}", paquete.getId());
+            } catch (Exception e) {
+                log.error("Error al solicitar ruta para paquete {}: {}", paquete.getId(), e.getMessage(), e);
+                // No fallar el pesaje si la solicitud de ruta falla
+            }
         }
 
         // Construir la respuesta con el precio y las alertas

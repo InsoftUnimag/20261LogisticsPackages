@@ -53,29 +53,4 @@ public class PesajeRequest {
     @NotNull(message = "El indicador de forma irregular es requerido")
     @Schema(description = "Indica si el paquete tiene forma irregular")
     private Boolean formaIrregular;
-    
-    @NotNull(message = "La tarifa base es requerida")
-    @DecimalMin(value = "0.0", message = "La tarifa base debe ser mayor o igual a 0")
-    @Schema(description = "Tarifa base para el cálculo del precio")
-    private BigDecimal tarifaBase;
-    
-    @NotNull(message = "La tarifa por kg es requerida")
-    @DecimalMin(value = "0.0", message = "La tarifa por kg debe ser mayor o igual a 0")
-    @Schema(description = "Tarifa por kilogramo para el cálculo del precio")
-    private BigDecimal tarifaPorKg;
-    
-    @NotNull(message = "La tarifa por km es requerida")
-    @DecimalMin(value = "0.0", message = "La tarifa por km debe ser mayor o igual a 0")
-    @Schema(description = "Tarifa por kilómetro para el cálculo del precio")
-    private BigDecimal tarifaPorKm;
-    
-    @NotNull(message = "El recargo por tipo de mercancía es requerido")
-    @DecimalMin(value = "0.0", message = "El recargo por tipo de mercancía debe ser mayor o igual a 0")
-    @Schema(description = "Recargo aplicado según el tipo de mercancía")
-    private BigDecimal recargoTipoMercancia;
-    
-    @NotNull(message = "El recargo por categoría de carga es requerido")
-    @DecimalMin(value = "0.0", message = "El recargo por categoría de carga debe ser mayor o igual a 0")
-    @Schema(description = "Recargo aplicado según la categoría de carga")
-    private BigDecimal recargoCategoriaCarga;
 }
