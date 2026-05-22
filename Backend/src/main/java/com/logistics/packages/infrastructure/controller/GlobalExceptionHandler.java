@@ -100,6 +100,12 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "ZONA_NO_APTA", ex.getMessage());
     }
 
+    @ExceptionHandler(ZonaIncompatibleException.class)
+    public ResponseEntity<ApiError> handleZonaIncompatible(ZonaIncompatibleException ex) {
+        log.warn("Zona incompatible: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "ZONA_NO_APTA", ex.getMessage());
+    }
+
     @ExceptionHandler(ZonaSaturadaException.class)
     public ResponseEntity<ApiError> handleZonaSaturada(ZonaSaturadaException ex) {
         log.warn("Zona saturada: {}", ex.getMessage());
