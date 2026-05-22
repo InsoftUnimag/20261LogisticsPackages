@@ -2,6 +2,7 @@ package com.logistics.packages.infrastructure.controller;
 
 import com.logistics.packages.application.repository.PrepararAlmacenajeIn;
 import com.logistics.packages.application.usecase.PrepararAlmacenajeCommand;
+import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.model.ZonaAlmacenaje;
 import com.logistics.packages.infrastructure.dto.request.AsignarZonaRequest;
@@ -16,8 +17,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -103,42 +106,36 @@ public class AlmacenajeController {
             return ResponseEntity.badRequest().build();
         }
         
-        Paquete paquete = paqueteRepository.findById(paqueteId)
-                .orElseThrow(() -> new IllegalArgumentException("Paquete no encontrado: " + paqueteId));
+        // Obtener usuarioId del contexto de seguridad
+         String username = SecurityContextHolder.getContext().getAuthentication().getName();
+         // En un caso de producción, buscaríamos el usuarioId por username desde el repositorio
+         // Por ahora usamos el username como identificador único
+         UUID usuarioId = UUID.nameUUIDFromBytes(username.getBytes());
+         
+         // Delegar toda la lógica de negocio al UseCase
+         PrepararAlmacenajeCommand command = new PrepararAlmacenajeCommand(
+                 paqueteId,
+                 request.getZonaId(),
+                 usuarioId,
+                 request.tieneDiscrepancias() ? Optional.of(request.getDatosDiscrepancia()) : Optional.empty()
+         );
         
+        prepararAlmacenajeIn.prepararAlmacenaje(command);
+        
+        // Cargar la zona asignada para la respuesta
         ZonaAlmacenaje zona = zonaAlmacenajeRepository.findById(request.getZonaId())
                 .orElseThrow(() -> new IllegalArgumentException("Zona no encontrada: " + request.getZonaId()));
         
-        if (!zona.puedeAlbergar(paquete)) {
-            throw new IllegalArgumentException("La zona no es apta para el tipo de mercancía: " + paquete.getTipoMercancia());
-        }
-        
-        if (!zona.tieneCapacidadPara(paquete)) {
-            throw new IllegalArgumentException("La zona ha alcanzado su capacidad máxima");
-        }
-        
-        boolean datosActualizados = false;
-        if (request.tieneDiscrepancias()) {
-            var datos = request.getDatosDiscrepancia();
-            paquete.actualizarDatosFisicos(
-                    new com.logistics.packages.domain.valueobject.Peso(datos.getPesoKg()),
-                    new com.logistics.packages.domain.valueobject.Dimensiones(
-                            datos.getLargoCm(),
-                            datos.getAnchoCm(),
-                            datos.getAltoCm())
-            );
-            datosActualizados = true;
-            log.info("Datos físicos actualizados por discrepancia para paquete: {}", paqueteId);
-        }
-        
-        PrepararAlmacenajeCommand command = new PrepararAlmacenajeCommand(paqueteId, request.getZonaId());
-        prepararAlmacenajeIn.prepararAlmacenaje(command);
+        // Cargar el paquete actualizado para obtener su estado actual
+        Paquete paqueteActualizado = paqueteRepository.findById(paqueteId)
+                .orElseThrow(() -> new IllegalArgumentException("Paquete no encontrado: " + paqueteId));
         
         AsignacionZonaResponse response = AsignacionZonaResponse.builder()
                 .paqueteId(paqueteId)
                 .zonaId(zona.getId())
                 .nombreZona(zona.getNombre())
-                .datosActualizados(datosActualizados)
+                .estadoPaquete(paqueteActualizado.getEstado())
+                .datosActualizados(request.tieneDiscrepancias())
                 .mensaje("Paquete asignado a zona de almacenamiento y estado actualizado a En Clasificación")
                 .build();
         

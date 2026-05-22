@@ -24,6 +24,9 @@ repositories {
 dependencyManagement {
     imports {
         mavenBom "io.awspring.cloud:spring-cloud-aws-dependencies:3.1.1"
+        // Testcontainers 1.20.4+ soporta Docker Desktop 29.x en Windows con WSL2
+        // Sobrescribe la versión 1.19.7 que trae Spring Boot 3.2.5
+        mavenBom "org.testcontainers:testcontainers-bom:1.20.4"
     }
 }
 
@@ -57,4 +60,24 @@ dependencies {
 tasks.named('test') {
     jvmArgs("-XX:+EnableDynamicAgentLoading")
     useJUnitPlatform()
+
+    // ── Configuración de Docker para Testcontainers en Windows ────────────────
+    // TCP en localhost:2375 es la única forma confiable de comunicación en Windows
+    // con Docker Desktop backend WSL2. Las estrategias de Named Pipe fallan con
+    // status 400 porque docker-java no soporta el protocolo relay de Docker Desktop.
+    // En CI/CD (Linux/Mac), DOCKER_HOST ya viene seteado o Testcontainers lo detecta solo.
+    def envDockerHost = System.getenv("DOCKER_HOST") ?: ""
+    if (envDockerHost.isEmpty()) {
+        def osName = System.properties["os.name"]?.toLowerCase() ?: ""
+        if (osName.contains("windows")) {
+            // TCP a localhost:2375 (requiere "Expose daemon on tcp://localhost:2375" en Docker Desktop Settings)
+            def dockerTcp = "tcp://localhost:2375"
+            environment "DOCKER_HOST", dockerTcp
+            systemProperty "docker.host", dockerTcp
+        }
+    } else {
+        environment "DOCKER_HOST", envDockerHost
+        systemProperty "docker.host", envDockerHost
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 }

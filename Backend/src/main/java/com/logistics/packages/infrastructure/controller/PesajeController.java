@@ -59,16 +59,26 @@ public class PesajeController {
             );
             
             // Crear el comando con tarifas desde la configuración (BE-3)
-             PesajeCommand command = PesajeCommand.builder()
+            TipoMercancia tipoMercancia = request.getTipoMercancia() != null ? request.getTipoMercancia() : TipoMercancia.ESTANDAR;
+            
+            // BE-3: Seleccionar el recargo según el tipo de mercancía
+            java.math.BigDecimal recargoMercancia;
+            switch (tipoMercancia) {
+                case FRAGIL -> recargoMercancia = tarifasConfig.getRecargoFragil();
+                case PELIGROSO -> recargoMercancia = tarifasConfig.getRecargoPeligroso();
+                default -> recargoMercancia = java.math.BigDecimal.ZERO;
+            }
+            
+            PesajeCommand command = PesajeCommand.builder()
                     .paqueteId(request.getPaqueteId())
                     .peso(peso)
                     .dimensiones(dimensiones)
-                    .tipoMercancia(request.getTipoMercancia() != null ? request.getTipoMercancia() : TipoMercancia.ESTANDAR)
+                    .tipoMercancia(tipoMercancia)
                     .formaIrregular(request.getFormaIrregular() != null ? request.getFormaIrregular() : false)
                     .tarifaBase(tarifasConfig.getBase())
                     .tarifaPorKg(tarifasConfig.getPorKg())
                     .tarifaPorKm(tarifasConfig.getPorKm())
-                    .recargoTipoMercancia(tarifasConfig.getRecargoFragil())  // Se usa según tipo de mercancía
+                    .recargoTipoMercancia(recargoMercancia)
                     .recargoCategoriaCarga(tarifasConfig.getRecargoCargaEspecial())
                     .build();
             

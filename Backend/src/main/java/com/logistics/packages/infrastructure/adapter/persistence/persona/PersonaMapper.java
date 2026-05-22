@@ -10,32 +10,13 @@ import org.mapstruct.Named;
 @Mapper(componentModel = "spring")
 public interface PersonaMapper {
 
+    /**
+     * FIX Bug 6: Mapea Persona domain a PersonaDbo.
+     * Se elimina la conversión innecesaria de TipoDocumento a String ya que PersonaDbo.tipoDocumento
+     * también es de tipo TipoDocumento enum. MapStruct puede hacer el mapeo directo enum→enum.
+     */
     @Mapping(target = "id", ignore = true)
-    @Mapping(source = "tipoDocumento", target = "tipoDocumento", qualifiedByName = "tipoDocumentoToString")
-    @Mapping(source = "direccion", target = "direccion", qualifiedByName = "direccionToDto")
     PersonaDbo toDbo(Persona domain);
 
-    @Mapping(source = "tipoDocumento", target = "tipoDocumento", qualifiedByName = "stringToTipoDocumento")
-    @Mapping(source = "direccion", target = "direccion", qualifiedByName = "dtoToDireccion")
     Persona toDomain(PersonaDbo dbo);
-
-    @Named("tipoDocumentoToString")
-    default String tipoDocumentoToString(TipoDocumento tipoDocumento) {
-        return tipoDocumento != null ? tipoDocumento.name() : null;
-    }
-
-    @Named("stringToTipoDocumento")
-    default TipoDocumento stringToTipoDocumento(String tipoDocumento) {
-        return tipoDocumento != null ? TipoDocumento.valueOf(tipoDocumento) : null;
-    }
-
-    @Named("direccionToDto")
-    default com.logistics.packages.domain.valueobject.Direccion mapToDto(com.logistics.packages.domain.valueobject.Direccion direccion) {
-        return direccion;
-    }
-
-    @Named("dtoToDireccion")
-    default com.logistics.packages.domain.valueobject.Direccion mapFromDto(com.logistics.packages.domain.valueobject.Direccion direccion) {
-        return direccion;
-    }
 }

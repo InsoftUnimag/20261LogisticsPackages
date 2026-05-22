@@ -11,6 +11,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * @deprecated Este adaptador implementa un patrón de eventos obsoleto.
+ * MOD1-IP-003: El flujo correcto para solicitar rutas es:
+ * 1. ProcesarPesajeUseCase dispara SolicitudRutaEvent
+ * 2. SolicitarRutaUseCase maneja el evento
+ * 3. RutaSqsAdapter (implementa RutaQueuePort) envía a SQS
+ * 
+ * Este adaptador NO participa en el flujo de UC-003 y publica un payload
+ * camelCase que no cumple el contrato snake_case de M2.
+ */
+@Deprecated(since = "2026-05-21", forRemoval = true)
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -22,6 +33,7 @@ public class RutaEventAdapter implements RutaEventPublisher {
     private String queueName;
 
     @Override
+    @Deprecated(since = "2026-05-21", forRemoval = true)
     public void publicarSolicitudRuta(UUID paqueteId) {
         try {
             Map<String, Object> evento = new HashMap<>();

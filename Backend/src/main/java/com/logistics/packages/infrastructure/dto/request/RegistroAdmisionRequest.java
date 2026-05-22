@@ -1,6 +1,5 @@
 package com.logistics.packages.infrastructure.dto.request;
 
-import com.logistics.packages.domain.model.Persona;
 import com.logistics.packages.domain.valueobject.Direccion;
 import com.logistics.packages.domain.valueobject.MetodoPago;
 import com.logistics.packages.domain.valueobject.TipoMercancia;
@@ -11,6 +10,10 @@ import lombok.Getter;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+/**
+ * FIX Bug 7: Usa PersonaRequest en lugar de Persona directamente.
+ * Permite que Jackson deserialice correctamente los datos HTTP.
+ */
 @Getter
 public class RegistroAdmisionRequest {
     @NotNull
@@ -27,10 +30,10 @@ public class RegistroAdmisionRequest {
     private MetodoPago metodoPago;
     @NotNull
     @Schema(description = "Datos del remitente")
-    private Persona remitente;
+    private PersonaRequest remitente;
     @NotNull
     @Schema(description = "Datos del destinatario")
-    private Persona destinatario;
+    private PersonaRequest destinatario;
     @Schema(description = "Tipo de mercancía (ESTANDAR | FRAGIL | PELIGROSO) - Opcional en admisión, se asigna en pesaje")
     private TipoMercancia tipoMercancia;
     @Schema(description = "Indica si el paquete tiene forma irregular - Opcional en admisión, se asigna en pesaje")

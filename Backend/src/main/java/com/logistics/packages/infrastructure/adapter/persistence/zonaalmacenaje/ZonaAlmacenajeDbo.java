@@ -11,6 +11,10 @@ import org.hibernate.type.SqlTypes;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+/**
+ * Entidad JPA para ZonaAlmacenaje.
+ * MOD1-IP-004: B1 - Incluye @Version para bloqueo optimista (FIFO)
+ */
 @Entity
 @Table(name = "zonas_almacenaje")
 @Getter
@@ -64,4 +68,12 @@ public class ZonaAlmacenajeDbo {
     @Column(name = "zona_contingencia_id")
     @JdbcTypeCode(SqlTypes.UUID)
     private UUID zonaContingenciaId;
+
+    /**
+     * Versión para bloqueo optimista.
+     * Previene que dos almacenistas actualicen la misma zona simultáneamente (FIFO).
+     */
+    @Version
+    @Column(name = "version")
+    private Long version;
 }

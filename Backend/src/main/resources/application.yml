@@ -13,6 +13,8 @@ spring:
       endpoint: http://localhost:4566
       sqs:
         ruta-request-queue: ${DEV_PREFIX:carlos}-solicitar-ruta-queue
+        ruta-response-queue: ${DEV_PREFIX:carlos}-respuestas-ruta-queue
+        clasificacion-queue: ${DEV_PREFIX:carlos}-paquete-listo-clasificar-queue
 
 app:
   cors:

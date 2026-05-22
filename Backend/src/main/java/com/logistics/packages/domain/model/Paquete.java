@@ -172,7 +172,9 @@ public class Paquete {
     public void calcularPrecioEnvio(BigDecimal tarifaBase, BigDecimal tarifaPorKg, BigDecimal tarifaPorKm, BigDecimal recargoTipoMercancia, BigDecimal recargoCategoriaCarga) {
         BigDecimal precio = tarifaBase;
         precio = precio.add(new BigDecimal(this.pesoFacturable).multiply(tarifaPorKg));
-        precio = precio.add(new BigDecimal(this.distanciaEstimadaKm).multiply(tarifaPorKm));
+        // La distancia se asignará cuando se solicite la ruta; por ahora se inicializa en 0.0
+        double distancia = this.distanciaEstimadaKm != null ? this.distanciaEstimadaKm : 0.0;
+        precio = precio.add(new BigDecimal(distancia).multiply(tarifaPorKm));
         precio = precio.add(recargoTipoMercancia);
         precio = precio.add(recargoCategoriaCarga);
         this.precioEnvio = new PrecioEnvio(precio);

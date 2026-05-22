@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests unitarios para las transiciones de estado de ruta en Paquete.
  * MOD1-UC-007: T704 [P] - Test del dominio para transiciones de estado de ruta.
+ * MOD1-IP-003: T301 [P] - Tests de asignación de ruta (dominio puro).
  */
 @DisplayName("Paquete - Transiciones de Estado de Ruta")
 class PaqueteRutaTest {
@@ -30,6 +31,60 @@ class PaqueteRutaTest {
         
         moduloId = UUID.randomUUID();
     }
+    
+    // ============================================================
+    // MOD1-IP-003: T301 - Tests de Asignación de Ruta (Dominio)
+    // ============================================================
+    
+    @Test
+    @DisplayName("T301: asignarRuta() asigna el rutaId y cambia el estado a LISTO_PARA_DESPACHO")
+    void testAsignarRutaConIdValido() {
+        // Given
+        UUID rutaId = UUID.randomUUID();
+        paquete.setEstado(EstadoPaquete.RECIBIDO_EN_SEDE);
+        assertNull(paquete.getRutaId(), "El paquete no debe tener ruta asignada inicialmente");
+        
+        // When
+        paquete.asignarRuta(rutaId);
+        
+        // Then
+        assertEquals(rutaId, paquete.getRutaId());
+        assertEquals(EstadoPaquete.LISTO_PARA_DESPACHO, paquete.getEstado());
+    }
+    
+    @Test
+    @DisplayName("T301: asignarRuta() lanza IllegalStateException si ya tiene ruta asignada")
+    void testAsignarRutaNoPermiteLaDobleAsignacion() {
+        // Given
+        UUID primeraRuta = UUID.randomUUID();
+        UUID segundaRuta = UUID.randomUUID();
+        
+        paquete.asignarRuta(primeraRuta);
+        assertEquals(primeraRuta, paquete.getRutaId());
+        
+        // When & Then
+        assertThrows(IllegalStateException.class, () -> paquete.asignarRuta(segundaRuta),
+                "Debe lanzar IllegalStateException al intentar asignar una segunda ruta");
+        
+        // Verificar que la primera ruta se mantiene
+        assertEquals(primeraRuta, paquete.getRutaId());
+    }
+    
+    @Test
+    @DisplayName("T301: asignarRuta() lanza IllegalArgumentException si el rutaId es null")
+    void testAsignarRutaNoPermiteIdNulo() {
+        // When & Then
+        assertThrows(IllegalArgumentException.class, () -> paquete.asignarRuta(null),
+                "Debe lanzar IllegalArgumentException si se intenta asignar un rutaId nulo");
+        
+        // Verificar que el estado no cambió
+        assertNull(paquete.getRutaId());
+        assertEquals(EstadoPaquete.LISTO_PARA_DESPACHO, paquete.getEstado());
+    }
+    
+    // ============================================================
+    // MOD1-UC-007: Transiciones de ruta posteriores
+    // ============================================================
     
     @Test
     @DisplayName("transitarAEnRuta() cambia el estado a EN_TRANSITO y genera un HistorialEstado")

@@ -44,13 +44,36 @@ public class AdmisionController {
     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     @PostMapping("/admision")
     public ResponseEntity<RegistroAdmisionResponse> registrarAdmision(@Valid @RequestBody RegistroAdmisionRequest request) {
+        // FIX Bug 7: Mapear explícitamente PersonaRequest → Persona
+        com.logistics.packages.domain.model.Persona remitente = request.getRemitente() != null ?
+                com.logistics.packages.domain.model.Persona.builder()
+                        .tipoDocumento(request.getRemitente().getTipoDocumento())
+                        .numeroDocumento(request.getRemitente().getNumeroDocumento())
+                        .nombreCompleto(request.getRemitente().getNombreCompleto())
+                        .telefono(request.getRemitente().getTelefono())
+                        .correoElectronico(request.getRemitente().getCorreoElectronico())
+                        .build()
+                : null;
+
+        // FIX Bug 8: Asignar direccionDestino como dirección del destinatario
+        com.logistics.packages.domain.model.Persona destinatario = request.getDestinatario() != null ?
+                com.logistics.packages.domain.model.Persona.builder()
+                        .tipoDocumento(request.getDestinatario().getTipoDocumento())
+                        .numeroDocumento(request.getDestinatario().getNumeroDocumento())
+                        .nombreCompleto(request.getDestinatario().getNombreCompleto())
+                        .telefono(request.getDestinatario().getTelefono())
+                        .correoElectronico(request.getDestinatario().getCorreoElectronico())
+                        .direccion(request.getDireccionDestino())
+                        .build()
+                : null;
+
         RegistroAdmisionCommand command = RegistroAdmisionCommand.builder()
                 .sedeId(request.getSedeId())
                 .direccionDestino(request.getDireccionDestino())
                 .valorDeclarado(request.getValorDeclarado())
                 .metodoPago(request.getMetodoPago())
-                .remitente(request.getRemitente())
-                .destinatario(request.getDestinatario())
+                .remitente(remitente)
+                .destinatario(destinatario)
                 .tipoMercancia(request.getTipoMercancia())
                 .indicadorFormaIrregular(request.getIndicadorFormaIrregular())
                 .peso(request.getPeso())

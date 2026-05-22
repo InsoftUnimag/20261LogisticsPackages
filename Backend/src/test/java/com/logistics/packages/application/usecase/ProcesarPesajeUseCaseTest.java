@@ -1,8 +1,10 @@
 package com.logistics.packages.application.usecase;
 
+import com.logistics.packages.application.ports.EventoProcesadoRepository;
 import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.domain.event.SolicitudRutaEvent;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
+import com.logistics.packages.domain.model.EventoProcesado;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +21,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -36,6 +38,9 @@ class ProcesarPesajeUseCaseTest {
     @Mock
     private SolicitarRutaUseCase solicitarRutaUseCase;
 
+    @Mock
+    private EventoProcesadoRepository eventoProcesadoRepository;
+
     @InjectMocks
     private ProcesarPesajeUseCase procesarPesajeUseCase;
 
@@ -50,6 +55,12 @@ class ProcesarPesajeUseCaseTest {
                 .sedeId(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"))
                 .distanciaEstimadaKm(50.0)
                 .build();
+
+        // Configurar el mock de EventoProcesadoRepository para garantizar idempotencia
+        // Usar lenient() para evitar UnnecessaryStubbingException en tests que lanzan excepciones antes de invocar estos stubs
+        lenient().when(eventoProcesadoRepository.yaFueProcesado(anyString())).thenReturn(false);
+        lenient().when(eventoProcesadoRepository.guardar(any(EventoProcesado.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     // T205 - Pesaje exitoso

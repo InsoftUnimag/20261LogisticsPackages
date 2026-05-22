@@ -1,5 +1,7 @@
 package com.logistics.packages.domain.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.logistics.packages.domain.valueobject.Direccion;
 import com.logistics.packages.domain.valueobject.TipoDocumento;
 import jakarta.persistence.Embeddable;
@@ -13,6 +15,7 @@ import lombok.NoArgsConstructor;
 @Embeddable
 @AllArgsConstructor
 @NoArgsConstructor(force = true)
+@JsonDeserialize(builder = Persona.PersonaBuilder.class)
 public class Persona {
     private final TipoDocumento tipoDocumento;
     private final String numeroDocumento;
@@ -20,4 +23,8 @@ public class Persona {
     private final String telefono;
     private final String correoElectronico;
     private final Direccion direccion;
+
+    @JsonPOJOBuilder(withPrefix = "")
+    public static class PersonaBuilder {
+    }
 }
