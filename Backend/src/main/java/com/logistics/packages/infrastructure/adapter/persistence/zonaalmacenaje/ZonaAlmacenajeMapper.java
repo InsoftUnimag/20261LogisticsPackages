@@ -12,7 +12,6 @@ public interface ZonaAlmacenajeMapper {
 
     @Mapping(source = "categoria", target = "categoria", qualifiedByName = "categoriaZonaToString")
     @Mapping(source = "estado", target = "estado", qualifiedByName = "estadoZonaToString")
-    @Mapping(target = "version", ignore = true)
     ZonaAlmacenajeDbo toDbo(ZonaAlmacenaje domain);
 
     @Mapping(source = "categoria", target = "categoria", qualifiedByName = "stringToCategoriaZona")

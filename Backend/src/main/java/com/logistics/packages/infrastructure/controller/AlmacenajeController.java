@@ -70,10 +70,21 @@ public class AlmacenajeController {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No hay zona disponible para el paquete: " + paqueteId));
         
+        boolean saturada = !zonaSugerida.tieneCapacidadPara(paquete);
+        
         AsignacionZonaResponse response = AsignacionZonaResponse.builder()
                 .paqueteId(paqueteId)
                 .zonaId(zonaSugerida.getId())
                 .nombreZona(zonaSugerida.getNombre())
+                .categoria(zonaSugerida.getCategoria())
+                .tipoMercancia(paquete.getTipoMercancia())
+                .pesoActualKg(zonaSugerida.getPesoActualKg() != null ? zonaSugerida.getPesoActualKg().doubleValue() : 0.0)
+                .capacidadMaxKg(zonaSugerida.getCapacidadMaxKg() != null ? zonaSugerida.getCapacidadMaxKg().doubleValue() : 0.0)
+                .volumenActualM3(zonaSugerida.getVolumenActualM3() != null ? zonaSugerida.getVolumenActualM3().doubleValue() : 0.0)
+                .capacidadMaxM3(zonaSugerida.getCapacidadMaxM3() != null ? zonaSugerida.getCapacidadMaxM3().doubleValue() : 0.0)
+                .contadorPaquetes(zonaSugerida.getContadorPaquetes() != null ? zonaSugerida.getContadorPaquetes() : 0)
+                .capacidadMaxPaquetes(zonaSugerida.getCapacidadMaxPaquetes() != null ? zonaSugerida.getCapacidadMaxPaquetes() : 0)
+                .zonaSaturada(saturada)
                 .datosActualizados(false)
                 .mensaje("Zona sugerida correctamente")
                 .build();
