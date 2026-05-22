@@ -2,6 +2,7 @@ package com.logistics.packages.infrastructure.controller;
 
 import com.logistics.packages.application.usecase.ClasificarPaqueteUseCase;
 import com.logistics.packages.application.usecase.ClasificacionSugeridaResponse;
+import com.logistics.packages.application.ports.ZonaDestinoRepository;
 import com.logistics.packages.infrastructure.dto.request.ConfirmarZonaRequest;
 import com.logistics.packages.infrastructure.dto.response.ClasificacionSugeridaResponseDTO;
 import com.logistics.packages.infrastructure.dto.response.ConfirmacionClasificacionResponse;
@@ -33,6 +34,7 @@ import java.util.UUID;
 public class ClasificacionController {
 
     private final ClasificarPaqueteUseCase clasificarPaqueteUseCase;
+    private final ZonaDestinoRepository zonaDestinoRepository;
 
     /**
      * Obtiene la sugerencia de zona de destino para un paquete.
@@ -99,10 +101,15 @@ public class ClasificacionController {
                     request.getZonaDestinoId()
             );
             
+            // Obtener el nombre real de la zona desde el repositorio
+            String nombreZona = zonaDestinoRepository.findById(request.getZonaDestinoId())
+                    .map(zona -> zona.getNombre())
+                    .orElse("Zona de destino");
+            
             ConfirmacionClasificacionResponse response = ConfirmacionClasificacionResponse.builder()
                     .paqueteId(request.getPaqueteId())
                     .zonaDestinoId(request.getZonaDestinoId())
-                    .nombreZona("Zona asignada") // Se podría obtener del repositorio si es necesario
+                    .nombreZona(nombreZona)
                     .estadoPaquete("LISTO_PARA_DESPACHO")
                     .mensaje("Paquete clasificado exitosamente y listo para despacho")
                     .build();

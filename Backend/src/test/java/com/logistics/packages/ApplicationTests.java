@@ -6,10 +6,12 @@ import com.logistics.packages.application.usecase.RegistrarAdmisionUseCase;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-@ActiveProfiles("local")
+@Import(TestcontainersConfiguration.class)
+@ActiveProfiles("test")
 class ApplicationTests {
 
     @MockBean

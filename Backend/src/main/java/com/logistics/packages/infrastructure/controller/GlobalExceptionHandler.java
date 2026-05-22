@@ -11,6 +11,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
@@ -68,6 +69,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiError(HttpStatus.BAD_REQUEST.value(), "ERROR_VALIDACION",
                         "Errores de validación en los datos de entrada", errores));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        log.warn("Error de tipo de argumento: {} no es un tipo válido para el parámetro '{}'", 
+                 ex.getValue(), ex.getName());
+        String mensaje = String.format("El parámetro '%s' debe ser del tipo %s (valor recibido: %s)", 
+                ex.getName(), 
+                ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "desconocido", 
+                ex.getValue());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "TIPO_PARAMETRO_INVALIDO", mensaje);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

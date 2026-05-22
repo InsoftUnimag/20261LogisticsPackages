@@ -122,10 +122,10 @@ public class PaqueteDbo {
     private LocalDateTime fechaEntregaUtc;
 
     @Column(name = "alerta_carga_especial")
-    private Boolean alertaCargaEspecial;
+    private boolean alertaCargaEspecial = false;
 
     @Column(name = "alerta_densidad_atipica")
-    private Boolean alertaDensidadAtipica;
+    private boolean alertaDensidadAtipica = false;
 
     @Column(name = "etiqueta_digital")
     private String etiquetaDigital;
