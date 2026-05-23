@@ -1,6 +1,5 @@
 package com.logistics.packages.infrastructure.dto.event;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -9,7 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @JsonTypeInfo(
@@ -41,6 +40,5 @@ public abstract class EventoPaqueteM2Dto {
     private UUID rutaId;
 
     @JsonProperty("fecha_hora_evento")
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "UTC")
-    private OffsetDateTime fechaHoraEvento;
+    private Instant fechaHoraEvento;
 }
