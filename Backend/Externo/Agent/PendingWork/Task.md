@@ -7,10 +7,10 @@ Aquí está tu nueva hoja de ruta. La procesaremos estrictamente en este orden:
 * *Objetivo:* Definir la estrategia de ramas de GitFlow y mapear los DTOs técnicos basados en la SPEC de integración de M2.
 
 
-* **Tarea 3: Implementación secuencial de las 3 colas de M2.**
+* **Tarea 3: Implementación secuencial de las 3 colas de M2.** `[COMPLETADA]`
 * *Cola 1 (M1 escribe):* Solicitud de Ruta (`SOLICITAR_RUTA`).
-* *Cola 2 (M1 lee):* Asignación de Ruta (`respuestas-ruta-queue`).
-* *Cola 3 (M1 lee):* Eventos de Estado de Parada (`PAQUETE_EN_TRANSITO`, `NOVEDAD_GRAVE`, etc.).
+* *Cola 2 (M1 lee):* Asignación de Ruta (`respuestas-ruta-queue`). *Pendiente: producer de M2 no implementado.*
+* *Cola 3 (M1 lee):* Eventos de Estado de Parada (`PAQUETE_EN_TRANSITO`, `NOVEDAD_GRAVE`, etc.). ✅ Resuelto en PR7.
 
 
 * **Tarea 4: Actualización de UC e IP 007 (Gestión de Novedades — Síncrono a Asíncrono).**

@@ -1,7 +1,7 @@
 # Reporte de Estado del Proyecto — Auditoría vs Task.md
 
 **Fecha:** 2026-05-23  
-**Última actualización:** 2026-05-23 (post PR6: bugfix/m2-outbound-contracts)  
+**Última actualización:** 2026-05-23 (post PR7: bugfix/m2-inbound-contracts)  
 **Auditor:** Agente de Revisión Arquitectónica  
 **Documento fuente:** `Backend/Externo/Agent/PendingWork/Task.md`
 
@@ -13,7 +13,7 @@
 |-------|--------|:------------------:|
 | **1.** Migración RabbitMQ → Amazon SQS | ✅ **Completada** | 100% |
 | **2.** Definición/Diseño flujo M2 (Contratos e Infraestructura) | ✅ **Completada** | 100% |
-| **3.** Implementación secuencial de las 3 colas de M2 | ⚠️ **Completada con riesgos** | ~95% |
+| **3.** Implementación secuencial de las 3 colas de M2 | ✅ **Completada** | ~100% |
 | **4.** Actualización UC/IP 007 (Gestión Novedades — Síncrono a Asíncrono) | ⚠️ **Completada con observaciones** | ~85% |
 | **5.** Verificación y Pruebas de Humo en AWS Real | ❌ **No iniciada** | 0% |
 | **6.** Contextualización sobre Módulo Profesor | ❌ **No iniciada** | 0% |
@@ -29,6 +29,7 @@
 | PR4 | Alineación infraestructura SQS: eliminar DEV_PREFIX, crear perfil aws, añadir @Profile a listeners | `feature/sqs-infrastructure-alignment` | ✅ Commiteado |
 | PR5 | Corrección nombre cola logistics-eventos-paquete según ARN de M2 | `fix/m2-queue-name-arn` | ✅ Commiteado |
 | PR6 | Alinear contratos de salida M1→M2: Instant + String en SolicitudRutaPayload | `bugfix/m2-outbound-contracts` | ✅ Commiteado |
+| PR7 | Alinear contratos de entrada M2→M1: Instant en DTOs, fallback enums, fechaHoraEvento en mapper | `bugfix/m2-inbound-contracts` | ✅ Commiteado |
 
 ---
 
@@ -99,15 +100,15 @@
 
 **Solución:** Se cambió el tipo a `String` en el DTO y se agregó `.name()` en `RutaSqsAdapter.mapToPayload()`. Commits `3932d8f` + `3b52285`.
 
-#### 🔴 CRÍTICO — `fecha_hora_evento`: OffsetDateTime vs Instant
+#### ✅ RESUELTO — `fecha_hora_evento`: OffsetDateTime → Instant (INBOUND)
 
-| Lado | Tipo | Afecta |
-|------|------|--------|
-| **M1** (actual) | `OffsetDateTime` + `@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")` | 6 DTOs de eventos M2 |
-| **M2** (real) | `Instant` | `PaqueteEnTransitoEvento`, `PaqueteEntregadoEvento`, `ParadaFallidaEvento`, `NovedadGraveEvento`, `ParadasSinGestionarEvento`, `PaqueteExcluidoDespachoEvento` |
-| **Archivo base** | `infrastructure/dto/event/EventoPaqueteM2Dto.java:44-45` | Clase abstracta padre |
+| Lado | Tipo | Archivo |
+|------|------|---------|
+| **M1** (antes) | `OffsetDateTime` + `@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")` | `EventoPaqueteM2Dto.java:44-45` |
+| **M1** (después) | `Instant` | `EventoPaqueteM2Dto.java:42-43` |
+| **M2** (real) | `Instant` | `PaqueteEnTransitoEvent`, `PaqueteEntregadoEvent`, etc. |
 
-**Recomendación:** Cambiar el tipo en los DTOs de infraestructura a `Instant` y convertir a `OffsetDateTime` en `EventoPaqueteM2Mapper`.
+**Solución:** Se cambió el tipo a `Instant` en los 7 DTOs y se eliminó `@JsonFormat`. El mapper convierte `Instant.atOffset(ZoneOffset.UTC)` a `OffsetDateTime` y lo asigna a `EventoRutaDto.fechaHoraEvento`. PR7.
 
 #### ⚠️ ALTA 3 — Flujo `RUTA_ASIGNADA` no implementado en M2
 
@@ -124,8 +125,8 @@
 |----------|---------|---------|
 | `volumen_m3` | M1 lo envía, M2 no lo espera | `SolicitudRutaPayload.java` |
 | ~~Enums M1 vs Strings M2~~ | ~~`TipoMercancia`, `MetodoPago` (enums M1) vs `String` (M2)~~ | ~~**Resuelto en PR6**~~ |
-| `MotivoParadaFallida` (enum M1) vs `String` (M2) | Posible error de deserialización | `ParadaFallidaEvento.java` |
-| `TipoNovedadGrave` (enum M1) vs `String` (M2) | Posible error de deserialización | `NovedadGraveEvento.java` |
+| ~~`MotivoParadaFallida` (enum M1) vs `String` (M2)~~ | ~~Posible error de deserialización~~ | ~~**Resuelto en PR7** — Campo `String` + fallback `mapMotivo()`~~ |
+| ~~`TipoNovedadGrave` (enum M1) vs `String` (M2)~~ | ~~Posible error de deserialización~~ | ~~**Resuelto en PR7** — Campo `String` + fallback `mapTipoNovedad()`~~ |
 
 ---
 
@@ -153,8 +154,9 @@
 |---------|--------|
 | Consumer M1 | ✅ `RutaEventSqsListener` escucha `logistics-eventos-paquete` (ARN M2) |
 | Deserialización polimórfica | ✅ `@JsonTypeInfo` + `@JsonSubTypes` (6 subtipos) |
-| Mapper | ✅ `EventoPaqueteM2Mapper` — cubre los 6 tipos de eventos |
-| ⚠️ Riesgo | `OffsetDateTime` vs `Instant` puede causar `DateTimeParseException` en runtime |
+| Mapper | ✅ `EventoPaqueteM2Mapper` — cubre los 6 tipos de eventos, con fallback para enums |
+| Contrato de fecha | ✅ `Instant` en DTOs, conversión nativa Jackson, mapper convierte a `OffsetDateTime` |
+| Enums | ✅ Campos como `String` con validación + fallback en mapper |
 
 ### Mapa de interacciones actual
 
@@ -200,7 +202,7 @@ M1 (Packages)                              M2 (Routes)
 |---|----------|-----------|---------|--------|
 | 1 | **`@Setter` a nivel de clase en `Paquete.java`** | 🔴 **ALTA** | Viola el principio de inmutabilidad del dominio. Cualquier código puede mutar el estado sin pasar por métodos de negocio. Documentado en `ConsideracionesAgentes.md` | ❌ Pendiente |
 | 2 | **`EN_PARADA_DE_ENTREGA` sin evento M2 correspondiente** | ⚠️ MEDIA | El `ProcesarEventoRutaUseCase` lo maneja, pero M2 no tiene evento equivalente. El mapper nunca generará este tipo. | ❌ Pendiente |
-| 3 | **Mapper no recibe `fechaHoraEvento`** | ⚠️ MEDIA | En `EventoPaqueteM2Mapper.construirDto()`, `fechaHoraEvento` no se usa para construir el `EventoRutaDto` (línea 74-90), solo para generar el `eventoId` | ❌ Pendiente |
+| 3 | **Mapper no recibía `fechaHoraEvento`** | ⚠️ MEDIA | ~~En `EventoPaqueteM2Mapper.construirDto()`, `fechaHoraEvento` no se usaba para construir el `EventoRutaDto` (línea 74-90), solo para generar el `eventoId`~~ | ✅ **Resuelto en PR7** — Ahora se asigna `fechaHoraEvento` al DTO |
 | 4 | **`registrarNovedad()` usa `NOVEDAD_EN_BODEGA` fijo** | ⚠️ MEDIA | `Paquete.registrarNovedad()` cambia siempre a `NOVEDAD_EN_BODEGA` sin distinguir subtipos de novedad | ❌ Pendiente |
 
 ---
@@ -254,10 +256,10 @@ M1 (Packages)                              M2 (Routes)
 
 | Severidad | Cantidad | Descripción |
 |-----------|:--------:|-------------|
-| 🔴 CRÍTICO | 1 | `@Setter` en dominio (fecha outbound resuelta en PR6) |
+| 🔴 CRÍTICO | 1 | `@Setter` en dominio (fecha outbound + fecha inbound + enums resueltos) |
 | ⚠️ ALTA | 2 | RUTA_ASIGNADA no implementado en M2, `jakarta.validation` en dominio |
-| ⚠️ MEDIA | 5 | `volumen_m3` extra, mapper incompleto, unique constraint, transición fija, `Direccion` aplanada |
-| ✅ Resuelto | 5 | H6 (PR3), H8 (PR4), Dirección (M2 acepta objeto), fecha_limite_entrega (PR6), Enums a String (PR6) |
+| ⚠️ MEDIA | 4 | `volumen_m3` extra, unique constraint, transición fija, `Direccion` aplanada |
+| ✅ Resuelto | 8 | H6 (PR3), H8 (PR4), Dirección (compatible), fecha_limite_entrega (PR6), Enums TipoMercancia/MetodoPago (PR6), **fecha_hora_evento inbound (PR7)**, **MotivoParadaFallida/TipoNovedadGrave (PR7)**, **mapper fechaHoraEvento (PR7)** |
 | ✅ Sin novedad | ~30+ | Campos UUID, nombres de eventos, estructura de SQS, polimorfismo, notificaciones, historial, endpoints |
 
 > [!IMPORTANT]
@@ -268,7 +270,7 @@ M1 (Packages)                              M2 (Routes)
 ## Recomendaciones Prioritarias
 
 ### Inmediatas (Bloqueantes)
-1. 🔴 **Cambiar `OffsetDateTime` → `Instant`** en los 6 DTOs de eventos M2 (inbound) y convertir en `EventoPaqueteM2Mapper`
+1. ~~🔴 **Cambiar `OffsetDateTime` → `Instant`** en los 6 DTOs de eventos M2 (inbound) y convertir en `EventoPaqueteM2Mapper`~~ — **Resuelto en PR7**
 2. 🔴 **Eliminar `@Setter` de `Paquete.java`** e implementar métodos de negocio explícitos
 
 ### Corto plazo
@@ -286,8 +288,13 @@ M1 (Packages)                              M2 (Routes)
 - 🔴 `fecha_limite_entrega`: `OffsetDateTime` → `Instant` en outbound M1→M2
 - ⚠️ Enums `TipoMercancia` y `MetodoPago` → `String` en payload de salida
 
+### ✅ Resueltas en PR7 (`bugfix/m2-inbound-contracts`)
+- 🔴 `fecha_hora_evento` inbound: `OffsetDateTime` → `Instant` en 7 DTOs de eventos M2
+- ⚠️ `MotivoParadaFallida` y `TipoNovedadGrave`: de enum a `String` + try-catch con log.warn y fallback
+- ⚠️ `EventoPaqueteM2Mapper`: ahora asigna `fechaHoraEvento` a `EventoRutaDto` (antes solo se usaba para ID)
+
 ---
 
 *Documento generado automáticamente por el Agente de Revisión Arquitectónica — 2026-05-23*
-*Actualizado post PR6 (bugfix/m2-outbound-contracts)*
+*Actualizado post PR7 (bugfix/m2-inbound-contracts)*
 *Fuente: `Task.md`, código fuente en `src/`, documentación en `Backend/Externo/`*

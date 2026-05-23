@@ -1,7 +1,7 @@
 ### Plan de Acción: Integración SQS M1 ↔ M2
 
 > **Última actualización:** 2026-05-23  
-> **PRs ejecutados:** PR1 (`@Builder` en controller), PR2 (renombre + docs), PR3 (eliminación componentes deprecados), PR4+PR5 (alineación infraestructura SQS), PR6 (`bugfix/m2-outbound-contracts`)
+> **PRs ejecutados:** PR1 (`@Builder` en controller), PR2 (renombre + docs), PR3 (eliminación componentes deprecados), PR4+PR5 (alineación infraestructura SQS), PR6 (`bugfix/m2-outbound-contracts`), PR7 (`bugfix/m2-inbound-contracts`)
 
 ---
 
@@ -48,17 +48,18 @@
 
 | Estado | Prioridad |
 |--------|-----------|
-| ❌ **No iniciado** | 🔴 **Crítica** |
+| ✅ **Completado** | 🔴 **Crítica** |
 
-* **Rama propuesta:** `fix/m2-inbound-contracts`
+* **Rama:** `bugfix/m2-inbound-contracts`
+* **Commits:** `1320045` (DTOs), `e5d7295` (mapper), `49fd62c` (tests), `54d0b84` (fallback motivos)
 * **Objetivo:** Evitar fallos de deserialización (`DateTimeParseException` o `IllegalArgumentException`) cuando M1 consuma de `eventos-paquete-queue` (Tarea 2 y 3).
 * **Dependencias:** Debería ejecutarse antes que las pruebas de humo en AWS (workstream 5).
-* **Tareas a completar:**
-  * **CRÍTICO** — Cambiar el tipo de dato de `fecha_hora_evento` de `OffsetDateTime` a `Instant` en los 6 DTOs de eventos dentro de `infrastructure/dto/event/`.
-  * **ALTA** — Actualizar `EventoPaqueteM2Mapper` para que tome ese `Instant`, lo convierta internamente a `OffsetDateTime` y se lo pase correctamente al caso de uso (y utilizar este campo no solo para el ID del evento).
-  * **ALTA** — Implementar una lógica de validación o *fallback* en el Mapper para castear con seguridad los valores de texto (`String`) que llegan de M2 a los enums locales `MotivoParadaFallida` y `TipoNovedadGrave`.
+* **Tareas completadas:**
+  * **CRÍTICO** — Cambiado `fecha_hora_evento` de `OffsetDateTime` a `Instant` en los 7 DTOs (padre + 6 hijos). Eliminado `@JsonFormat` obsoleto.
+  * **ALTA** — `EventoPaqueteM2Mapper` actualizado: recibe `Instant`, convierte a `OffsetDateTime` con `ZoneOffset.UTC` y asigna al campo `fechaHoraEvento` de `EventoRutaDto` (antes solo se usaba para generar el ID).
+  * **ALTA** — Implementado fallback defensivo con `try-catch` en el Mapper para `motivo` (`ParadaFallida`) y `tipoNovedad` (`NovedadGrave`): si el string de M2 no coincide con el enum de M1, se loguea `warn` y se asigna valor por defecto (`MOTIVO_DESCONOCIDO` o `DEVOLUCION`).
 * **Bloqueantes:** Ninguno.
-* **Riesgo:** Alto. Fallos de deserialización en runtime pueden detener el procesamiento de eventos de M2.
+* **Riesgo:** Resuelto. La deserialización ahora es compatible con el formato `Instant` de M2 y los enums tienen fallback seguro.
 
 ---
 
@@ -104,10 +105,10 @@
 | # | Workstream | Prioridad | Depende de | Estado |
 |---|------------|-----------|------------|--------|
 | 2 | Contratos Salida (M1→M2) | 🔴 Crítica | — | ✅ **Completado** |
-| 3 | Contratos Entrada (M2→M1) | 🔴 Crítica | — | ❌ No iniciado |
+| 3 | Contratos Entrada (M2→M1) | 🔴 Crítica | — | ✅ **Completado** |
 | 4 | Purificación del Dominio | ⚠️ Alta | — | ⚠️ Parcial |
 | 1 | Infraestructura/Perfiles SQS | ⚠️ Alta | — | ✅ **Completado** |
 | 5 | Pruebas de Humo AWS | ⚠️ Media | 1, 2, 3 | ❌ No iniciado |
 
 > [!NOTE]
-> Los workstreams 2 y 3 son bloqueantes para la comunicación funcional con M2. El workstream 4 (dominio) es independiente y puede ejecutarse en paralelo.
+> Los workstreams 2 y 3 están completados, desbloqueando el workstream 5 (pruebas de humo AWS). El workstream 4 (dominio) es independiente y puede ejecutarse en paralelo.
