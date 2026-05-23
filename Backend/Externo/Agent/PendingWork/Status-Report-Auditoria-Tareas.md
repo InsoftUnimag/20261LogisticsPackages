@@ -1,7 +1,7 @@
 # Reporte de Estado del Proyecto — Auditoría vs Task.md
 
 **Fecha:** 2026-05-23  
-**Última actualización:** 2026-05-23 (post PR9: feature/m3-async-sqs-migration)  
+**Última actualización:** 2026-05-23 (post Bloque 2: feature/m3-async-sqs-migration)  
 **Auditor:** Agente de Revisión Arquitectónica  
 **Documento fuente:** `Backend/Externo/Agent/PendingWork/Task.md`
 
@@ -31,7 +31,7 @@
 | PR6 | Alinear contratos de salida M1→M2: Instant + String en SolicitudRutaPayload | `bugfix/m2-outbound-contracts` | ✅ Commiteado |
 | PR7 | Alinear contratos de entrada M2→M1: Instant en DTOs, fallback enums, fechaHoraEvento en mapper | `bugfix/m2-inbound-contracts` | ✅ Commiteado |
 | PR8 | Purificación del dominio: eliminar @Setter, @Embeddable, NovedadBodega VO, Paquete.reconstruir() | `bugfix/domain-immutability-and-states` | ✅ Commiteado |
-| PR9 | Migración M3 asíncrona: eliminar sync controller/UC, crear puerto/adapter/DTO SQS, integrar en UC, tests | `feature/m3-async-sqs-migration` | ✅ Commiteado |
+| PR9 | Migración M3 asíncrona: eliminar sync controller/UC, crear puerto/adapter/DTO SQS, integrar en UC, tests + Bloque 2 (catch→throw adapter, tests RegistrarNovedadUseCase, test propagación excepción) | `feature/m3-async-sqs-migration` | ✅ Commiteado |
 
 ---
 
@@ -199,8 +199,9 @@ M1 (Packages)                              M2 (Routes)
 | `FinanzasEventSqsAdapter` | `infrastructure/adapter/messaging/FinanzasEventSqsAdapter.java` | Adaptador SQS que implementa el puerto usando `SqsTemplate` |
 | `ProcesarEventoRutaUseCase` (modificado) | `application/usecase/gestionnovedad/ProcesarEventoRutaUseCase.java` | Invoca publisher tras notificaciones (eventos M2) |
 | `RegistrarNovedadUseCase` (modificado) | `application/usecase/novedad/RegistrarNovedadUseCase.java` | Invoca publisher tras evento interno de novedad |
-| `FinanzasEventSqsAdapterTest` | `test/.../FinanzasEventSqsAdapterTest.java` | 5 tests: ENTREGADO, NOVEDAD_EN_BODEGA, EN_TRANSITO, rutaId null |
+| `FinanzasEventSqsAdapterTest` | `test/.../FinanzasEventSqsAdapterTest.java` | 6 tests: ENTREGADO, NOVEDAD_EN_BODEGA, EN_TRANSITO, rutaId null, propagación de excepción SQS |
 | `ProcesarEventoRutaUseCaseTest` (modificado) | `test/.../ProcesarEventoRutaUseCaseTest.java` | Verificaciones `verify`/`never` para publicación M3 |
+| `RegistrarNovedadUseCaseTest` (modificado) | `test/.../RegistrarNovedadUseCaseTest.java` | Mock + verificaciones `verify`/`never` para `EstadoPaqueteFinanzasPublisher` añadidas en 5 tests |
 
 ### Componentes existentes relevantes — ✅
 
@@ -224,7 +225,9 @@ M1 (Packages)                              M2 (Routes)
 | 5 | **Migración M3: endpoint REST síncrono eliminado** | ✅ COMPLETADA | Se eliminó `ConsultaFinancieraController`, `ConsultarEstadoPaqueteUseCase` y `GestionNovedadPaqueteResponse`. Se creó puerto `EstadoPaqueteFinanzasPublisher`, adaptador `FinanzasEventSqsAdapter` y DTO `EventoFinancieroPaqueteDto`. | ✅ **Completado en PR9** |
 | 6 | **Publisher M3 no integrado en casos de uso** | 🔴 ALTA | ~~El adaptador SQS existe pero no se invoca desde ningún caso de uso~~ | ✅ **Resuelto en PR9** — Integrado en `ProcesarEventoRutaUseCase` y `RegistrarNovedadUseCase` |
 | 7 | **Payload SQS mínimo (3 campos)** | ℹ️ INFORMATIVO | El DTO `EventoFinancieroPaqueteDto` solo envía `id_paquete`, `id_ruta`, `estado` con snake_case. M3 consulta detalles adicionales por su cuenta. | ✅ Diseño intencional |
-| 8 | **Tests de integración SQS M3 ausentes** | ⚠️ MEDIA | ~~No hay tests para el adaptador SQS de M3~~ | ✅ **Resuelto en PR9** — `FinanzasEventSqsAdapterTest` con 5 escenarios |
+| 8 | **Tests de integración SQS M3 ausentes** | ⚠️ MEDIA | ~~No hay tests para el adaptador SQS de M3~~ | ✅ **Resuelto en PR9** — `FinanzasEventSqsAdapterTest` con 6 escenarios |
+| 9 | **Adapter SQS M3 traga excepción (catch sin throw)** | 🔴 ALTA | `FinanzasEventSqsAdapter` capturaba la excepción sin relanzarla, impidiendo el rollback transaccional cuando SQS falla. Contradice la decisión arquitectónica de "es preferible no actualizar el estado si no se puede notificar a Finanzas" | ✅ **Resuelto en Bloque 2** — catch→throw; se agrega test `testPropagarExcepcionCuandoSqsFalla` |
+| 10 | **RegistrarNovedadUseCaseTest sin mock de FinanzasPublisher** | 🔴 ALTA | `RegistrarNovedadUseCaseTest` no tenía `@Mock` para `EstadoPaqueteFinanzasPublisher`, causando NPE al ejecutar `registrarNovedad()` | ✅ **Resuelto en Bloque 2** — Se añadió mock y aserciones `verify`/`never` en los 5 tests existentes |
 
 ---
 
@@ -335,11 +338,17 @@ M1 (Packages)                              M2 (Routes)
 - ✅ `springdoc.paths-to-match` cambiado a `/api/**` (eliminado `/route/**`).
 - ✅ Publisher integrado en `ProcesarEventoRutaUseCase` (eventos M2).
 - ✅ Publisher integrado en `RegistrarNovedadUseCase` (novedades M1).
-- ✅ `FinanzasEventSqsAdapterTest` con 5 escenarios de publicación.
+- ✅ `FinanzasEventSqsAdapterTest` con 6 escenarios de publicación.
 - ✅ `ProcesarEventoRutaUseCaseTest` actualizado con verificación M3.
+- ✅ `RegistrarNovedadUseCaseTest` actualizado con mock + aserciones `verify`/`never` para Finanzas (5 tests).
+
+### ✅ Resueltas en Bloque 2 (garantía transaccional)
+- 🔴 **FinanzasEventSqsAdapter**: catch → throw para propagar excepción SQS y permitir rollback de transacción `@Transactional`.
+- ✅ `FinanzasEventSqsAdapterTest`: nuevo test `testPropagarExcepcionCuandoSqsFalla` que verifica que la excepción se propaga.
+- 🔴 **RegistrarNovedadUseCaseTest**: añadido `@Mock EstadoPaqueteFinanzasPublisher` + aserciones `verify`/`never` en los 5 tests existentes para evitar NPE.
 
 ---
 
 *Documento generado automáticamente por el Agente de Revisión Arquitectónica — 2026-05-23*
-*Actualizado post PR9 (feature/m3-async-sqs-migration)*
+*Actualizado post Bloque 2 (feature/m3-async-sqs-migration)*
 *Fuente: `Task.md`, código fuente en `src/`, documentación en `Backend/Externo/`*

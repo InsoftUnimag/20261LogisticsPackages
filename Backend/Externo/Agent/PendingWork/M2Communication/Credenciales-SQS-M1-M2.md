@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-05-23
 **Proyecto:** 20261LogisticsPackages (M1) ↔ 20261LogisticsRoutes (M2)
-**Versión:** 1.1 (actualizado con M3)
+**Versión:** 1.2 (actualizado con M3 + Bloque 2)
 
 ---
 

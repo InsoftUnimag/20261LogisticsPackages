@@ -34,6 +34,7 @@ public class FinanzasEventSqsAdapter implements EstadoPaqueteFinanzasPublisher {
         } catch (Exception e) {
             log.error("Error al publicar estado a cola de finanzas para paquete {}: {}",
                     paquete.getId(), e.getMessage(), e);
+            throw e;
         }
     }
 

@@ -1,5 +1,6 @@
 package com.logistics.packages.application.usecase.novedad;
 
+import com.logistics.packages.application.ports.EstadoPaqueteFinanzasPublisher;
 import com.logistics.packages.application.repository.ArchivoStoragePort;
 import com.logistics.packages.application.repository.HistorialEstadoRepository;
 import com.logistics.packages.application.repository.NovedadEventPublisher;
@@ -45,6 +46,9 @@ class RegistrarNovedadUseCaseTest {
 
     @Mock
     private NovedadEventPublisher novedadEventPublisher;
+
+    @Mock
+    private EstadoPaqueteFinanzasPublisher estadoPaqueteFinanzasPublisher;
 
     @InjectMocks
     private RegistrarNovedadUseCase registrarNovedadUseCase;
@@ -103,6 +107,7 @@ class RegistrarNovedadUseCaseTest {
         verify(paqueteRepository).save(paquete);
         verify(historialRepository).guardar(any(HistorialEstado.class));
         verify(novedadEventPublisher).publicarNovedadRegistrada(eq(paqueteId), any(UUID.class));
+        verify(estadoPaqueteFinanzasPublisher).publicarEstadoFinal(paquete);
     }
 
     @Test
@@ -135,6 +140,7 @@ class RegistrarNovedadUseCaseTest {
         verify(paqueteRepository).save(paquete);
         verify(historialRepository).guardar(any(HistorialEstado.class));
         verify(novedadEventPublisher).publicarNovedadRegistrada(eq(paqueteId), any(UUID.class));
+        verify(estadoPaqueteFinanzasPublisher).publicarEstadoFinal(paquete);
     }
 
     @Test
@@ -161,6 +167,7 @@ class RegistrarNovedadUseCaseTest {
         verify(paqueteRepository, never()).save(any());
         verify(historialRepository, never()).guardar(any());
         verify(novedadEventPublisher, never()).publicarNovedadRegistrada(any(), any());
+        verify(estadoPaqueteFinanzasPublisher, never()).publicarEstadoFinal(any());
     }
 
     @Test
@@ -190,6 +197,7 @@ class RegistrarNovedadUseCaseTest {
         verify(paqueteRepository, never()).save(any());
         verify(historialRepository, never()).guardar(any());
         verify(novedadEventPublisher, never()).publicarNovedadRegistrada(any(), any());
+        verify(estadoPaqueteFinanzasPublisher, never()).publicarEstadoFinal(any());
     }
 
     @Test
@@ -213,10 +221,11 @@ class RegistrarNovedadUseCaseTest {
         registrarNovedadUseCase.registrarNovedad(command);
 
         // Then - Verificar orden de ejecución
-        var inOrder = inOrder(paqueteRepository, historialRepository, novedadEventPublisher);
+        var inOrder = inOrder(paqueteRepository, historialRepository, novedadEventPublisher, estadoPaqueteFinanzasPublisher);
         inOrder.verify(paqueteRepository).findById(paqueteId);
         inOrder.verify(paqueteRepository).save(paquete);
         inOrder.verify(historialRepository).guardar(any(HistorialEstado.class));
         inOrder.verify(novedadEventPublisher).publicarNovedadRegistrada(eq(paqueteId), any(UUID.class));
+        inOrder.verify(estadoPaqueteFinanzasPublisher).publicarEstadoFinal(paquete);
     }
 }

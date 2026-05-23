@@ -2,7 +2,7 @@
 
 **Fecha de auditoría:** 2026-05-23
 **Auditor:** Agente de Integración — Arquitectura de Mensajería SQS
-**Versión del documento:** 1.1 (actualizado con M3)
+**Versión del documento:** 1.2 (actualizado con M3 + Bloque 2)
 
 ---
 

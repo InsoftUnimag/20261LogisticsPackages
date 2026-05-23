@@ -15,7 +15,8 @@ Aquí está tu nueva hoja de ruta. La procesaremos estrictamente en este orden:
 
 * **Tarea 4: Migración M3 (Finanzas) — Síncrono a Asíncrono vía SQS.** `[COMPLETADA]`
 * *Fase 1 (Infraestructura):* Eliminados `ConsultaFinancieraController`, `ConsultarEstadoPaqueteUseCase`, `GestionNovedadPaqueteResponse`. Creados puerto `EstadoPaqueteFinanzasPublisher`, adaptador `FinanzasEventSqsAdapter`, DTO `EventoFinancieroPaqueteDto`.
-* *Fase 2 (Integración en UC y Tests):* Publisher integrado en `ProcesarEventoRutaUseCase` (eventos M2) y `RegistrarNovedadUseCase` (novedades M1). Tests: `FinanzasEventSqsAdapterTest` (5 escenarios) + verificación en `ProcesarEventoRutaUseCaseTest`.
+* *Fase 2 (Integración en UC y Tests):* Publisher integrado en `ProcesarEventoRutaUseCase` (eventos M2) y `RegistrarNovedadUseCase` (novedades M1). Tests: `FinanzasEventSqsAdapterTest` (6 escenarios: ENTREGADO, NOVEDAD_EN_BODEGA, EN_TRANSITO, rutaId null, propagación de excepción SQS) + verificación en `ProcesarEventoRutaUseCaseTest` + `RegistrarNovedadUseCaseTest` actualizado.
+* *Bloque 2 (Garantía Transaccional):* `FinanzasEventSqsAdapter` cambió catch→throw para propagar excepción SQS y provocar rollback transaccional. Test agregado que verifica que la excepción se propaga cuando SQS falla.
 * *PR8 (prerrequisito):* `bugfix/domain-immutability-and-states` — Purificación del dominio.
 * *Rama:* `feature/m3-async-sqs-migration`
 * *Payload:* `{id_paquete, id_ruta, estado}` con snake_case via `@JsonProperty`.
