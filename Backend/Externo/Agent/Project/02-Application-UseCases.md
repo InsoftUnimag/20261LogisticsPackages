@@ -4,14 +4,14 @@
 
 | # | Caso de Uso | Puerto Entrada | Puertos Salida Orquestados | Command/Input | Response/Output |
 |---|---|---|---|---|---|
-| 1 | `RegistrarAdmisionUseCase` | `RegistrarAdmisionIn.registrarAdmision()` | `GeocodingService`, `CoverageService`, `DistanceService`, `PriceCalculationService`, `PaqueteRepository`, `RutaEventPublisher` | `RegistroAdmisionCommand` | `UUID` (paqueteId) |
+| 1 | `RegistrarAdmisionUseCase` | `RegistrarAdmisionIn.registrarAdmision()` | `GeocodingService`, `CoverageService`, `DistanceService`, `PriceCalculationService`, `PaqueteRepository`, `SolicitarRutaUseCase` + `RutaQueuePort` | `RegistroAdmisionCommand` | `UUID` (paqueteId) |
 | 2 | `ProcesarPesajeUseCase` | (directo) `procesarPesaje(PesajeCommand)` | `PaqueteRepository`, `SolicitarRutaUseCase` | `PesajeCommand` | `PesajeResponse` |
 | 3 | `ClasificarPaqueteUseCase` | (directo) `sugerirZonaParaPaquete()`, `confirmarClasificacion()` | `PaqueteRepository`, `ZonaDestinoRepository`, `CalculoZonaDestinoService` | UUID paqueteId + UUID zonaDestinoId | `ClasificacionSugeridaResponse` / void |
 | 4 | `PrepararAlmacenajeUseCase` | `PrepararAlmacenajeIn.prepararAlmacenaje()` | `PaqueteRepository`, `ZonaAlmacenajeRepository` | `PrepararAlmacenajeCommand` | void |
 | 5 | `SolicitarRutaUseCase` | (directo) `handle(SolicitudRutaEvent)` | `PaqueteRepository`, `RutaQueuePort` | `SolicitudRutaEvent` | void |
 | 6 | `AsignarRutaUseCase` | (directo) `asignarRuta(AsignarRutaCommand)` | `PaqueteRepository` | `AsignarRutaCommand` | void |
 | 7 | `ConsultarPaqueteUseCase` | `ConsultarPaqueteIn.consultarPaquete()` | `PaqueteRepository` | UUID paqueteId | `Optional<Paquete>` |
-| 8 | `ConsultarEstadoPaqueteUseCase` | (directo) `consultar(UUID, UUID)` | `PaqueteRepository`, `HistorialEstadoRepository` | rutaId + paqueteId | `ConsultaPaqueteResponse` |
+| 8 | `ConsultarEstadoPaqueteUseCase` | (directo) `consultar(UUID, UUID)` | `PaqueteRepository`, `HistorialEstadoRepository` | rutaId + paqueteId | `GestionNovedadPaqueteResponse` |
 | 9 | `ProcesarEventoRutaUseCase` | (directo) `procesar(EventoRutaDto)` | `PaqueteRepository`, `HistorialEstadoRepository`, `EventoProcesadoRepository`, `NotificacionPort` | `EventoRutaDto` | void |
 | 10 | `RegistrarNovedadUseCase` | (directo) `registrarNovedad(RegistrarNovedadCommand)` | `PaqueteRepository`, `HistorialEstadoRepository`, `ArchivoStoragePort`, `NovedadEventPublisher` | `RegistrarNovedadCommand` | `RegistroNovedadResponse` |
 
@@ -32,13 +32,13 @@
 | `DistanceService` | calcularDistanciaKm, calcularDistanciaDesdeSede | `DistanceCalculatorAdapter` |
 | `PriceCalculationService` | calculatePrice(Paquete) | `PriceCalculationServiceImpl` |
 | `ArchivoStoragePort` | guardar(carpeta, identificador, MultipartFile) | `S3ArchivoStorageAdapter` |
-| `RutaQueuePort` | enviarSolicitud(SolicitudRutaPayload) | `RutaSqsAdapter` |
+| `RutaQueuePort` | enviarSolicitud(Paquete) | `RutaSqsAdapter` |
 | `RutaEventPublisher` (app.repository) | publicarSolicitudRuta(UUID) | `RutaEventAdapter` |
 | `NovedadEventPublisher` | publicarNovedadRegistrada(UUID, UUID) | `NovedadEventAdapter` |
 | `NotificacionPort` | enviarSms, enviarEmail, enviar | `MockNotificacionAdapter` |
 | `ClasificacionEventPublisher` | publicarPaqueteListoParaClasificar(UUID) | (sin impl visible) |
 | `GeocodingService` (app.ports) | localizar(String) | `GoogleMapsAdapter` (también implementa este) |
-| `RutaEventPublisher` (app.ports) | publicarSolicitudRuta(UUID) | `RutaEventAdapter` |
+| `RutaEventPublisher` (app.repository) | publicarSolicitudRuta(UUID) | `RutaEventAdapter` (deprecado) |
 
 ## Flujo Lógico Detallado por Use Case
 
@@ -201,7 +201,7 @@ graph TD
 | `RegistrarNovedadCommand` | paqueteId, tipoNovedad, observaciones, usuarioId, evidencia(MultipartFile) |
 | `RegistroNovedadResponse` | paqueteId, estadoActual, historialId |
 | `ClasificacionSugeridaResponse` | paqueteId, zonaDestinoId, nombreZona, codigoZona |
-| `ConsultaPaqueteResponse` | idRoute, idPaquete, estado, valorDeclarado, precioEnvio, metodoPago, fechaIngresoUtc, fechaEntregaUtc, urlEvidenciaEntrega, nombreFirmante, historialEstados |
+| `GestionNovedadPaqueteResponse` | idRoute, idPaquete, estado, valorDeclarado, precioEnvio, metodoPago, fechaIngresoUtc, fechaEntregaUtc, urlEvidenciaEntrega, nombreFirmante, historialEstados |
 | `EventoRutaDto` | eventoId, paqueteId, rutaId, tipoEvento, observaciones, urlEvidencia, nombreFirmante, motivo |
 
 
@@ -258,7 +258,7 @@ graph TD
 | 🟦 Cls | `ClasificacionSugeridaResponse` | `com.logistics.packages.application.usecase` | `—` |
 | 🟦 Cls | `ClasificarPaqueteUseCase` | `com.logistics.packages.application.usecase` | `sugerirZonaParaPaquete, confirmarClasificacion` |
 | 🟦 Cls | `ConsultarPaqueteUseCase` | `com.logistics.packages.application.usecase` | `—` |
-| 🟦 Cls | `ConsultaPaqueteResponse` | `com.logistics.packages.application.usecase.gestionnovedad` | `—` |
+| 🟦 Cls | `GestionNovedadPaqueteResponse` | `com.logistics.packages.application.usecase.gestionnovedad` | `—` |
 | 🟦 Cls | `ConsultarEstadoPaqueteUseCase` | `com.logistics.packages.application.usecase.gestionnovedad` | `consultar` |
 | 🟨 Enm | `TipoEventoRuta` | `com.logistics.packages.application.usecase.gestionnovedad` | `—` |
 | 🟦 Cls | `ProcesarEventoRutaUseCase` | `com.logistics.packages.application.usecase.gestionnovedad` | `procesar` |

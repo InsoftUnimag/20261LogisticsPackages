@@ -35,11 +35,11 @@ public class ConsultarEstadoPaqueteUseCase {
      * 
      * @param rutaId ID de la ruta
      * @param paqueteId ID del paquete
-     * @return ConsultaPaqueteResponse DTO con la información del paquete
+     * @return GestionNovedadPaqueteResponse DTO con la información del paquete
      * @throws PaqueteNotFoundException si el paquete no existe
      */
     @Transactional(readOnly = true)
-    public ConsultaPaqueteResponse consultar(UUID rutaId, UUID paqueteId) {
+    public GestionNovedadPaqueteResponse consultar(UUID rutaId, UUID paqueteId) {
         log.info("Consultando estado del paquete: {} en ruta: {}", paqueteId, rutaId);
         
         // Buscar el paquete
@@ -58,7 +58,7 @@ public class ConsultarEstadoPaqueteUseCase {
         List<HistorialEstado> historial = historialEstadoRepository.obtenerHistorialPorPaqueteId(paqueteId);
         
         // Construir y retornar el response
-        ConsultaPaqueteResponse response = ConsultaPaqueteResponse.builder()
+        GestionNovedadPaqueteResponse response = GestionNovedadPaqueteResponse.builder()
                 .idRoute(rutaId)
                 .idPaquete(paqueteId)
                 .estado(paquete.getEstado().name())

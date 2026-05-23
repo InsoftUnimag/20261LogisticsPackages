@@ -1,6 +1,6 @@
 package com.logistics.packages.infrastructure.controller;
 
-import com.logistics.packages.application.usecase.gestionnovedad.ConsultaPaqueteResponse;
+import com.logistics.packages.application.usecase.gestionnovedad.GestionNovedadPaqueteResponse;
 import com.logistics.packages.application.usecase.gestionnovedad.ConsultarEstadoPaqueteUseCase;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,21 +41,21 @@ public class ConsultaFinancieraController {
      * 
      * @param idRoute ID de la ruta
      * @param idPaquete ID del paquete
-     * @return ResponseEntity con ConsultaPaqueteResponse
+     * @return ResponseEntity con GestionNovedadPaqueteResponse
      */
     @Operation(summary = "Consultar estado de paquete por ruta", description = "Permite al Módulo de Finanzas consultar el estado de un paquete asociado a una ruta específica")
     @ApiResponse(responseCode = "200", description = "Paquete encontrado con información completa")
     @ApiResponse(responseCode = "404", description = "Paquete no encontrado o no pertenece a la ruta especificada")
     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     @GetMapping("/{idRoute}/package/{idPaquete}")
-    public ResponseEntity<ConsultaPaqueteResponse> consultarEstadoPaquete(
+    public ResponseEntity<GestionNovedadPaqueteResponse> consultarEstadoPaquete(
             @PathVariable UUID idRoute,
             @PathVariable UUID idPaquete) {
         
         log.info("Solicitud de consulta recibida - Ruta: {}, Paquete: {}", idRoute, idPaquete);
         
         try {
-            ConsultaPaqueteResponse response = consultarEstadoPaqueteUseCase.consultar(idRoute, idPaquete);
+            GestionNovedadPaqueteResponse response = consultarEstadoPaqueteUseCase.consultar(idRoute, idPaquete);
             
             // FR-007: Código 200 OK cuando el paquete existe
             return ResponseEntity.ok(response);

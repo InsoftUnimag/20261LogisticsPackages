@@ -8,7 +8,7 @@
 |---|---|---|---|---|
 | `POST` | `/api/paquetes/admision` | `RegistroAdmisionRequest` | `RegistroAdmisionResponse { paqueteId }` | `RegistrarAdmisionUseCase` |
 | `GET` | `/api/paquetes` | Query: page, size, estado, fechaDesde, fechaHasta | `Page<PaqueteListadoResponse>` | `PaqueteRepository.findAll()` |
-| `GET` | `/api/paquetes/{idPaquete}` | Path: idPaquete (UUID) | `ConsultaPaqueteResponse` | `ConsultarPaqueteUseCase` |
+| `GET` | `/api/paquetes/{idPaquete}` | Path: idPaquete (UUID) | `infrastructure.dto.response.ConsultaPaqueteResponse` | `ConsultarPaqueteUseCase` |
 
 **RegistroAdmisionRequest:**
 ```json
