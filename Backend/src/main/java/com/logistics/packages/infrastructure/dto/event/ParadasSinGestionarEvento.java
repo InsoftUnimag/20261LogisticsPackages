@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +21,7 @@ public class ParadasSinGestionarEvento extends EventoPaqueteM2Dto {
     @JsonProperty("paquetes")
     private List<PaqueteEnRutaDto> paquetes;
 
-    public ParadasSinGestionarEvento(String tipoEvento, UUID rutaId, OffsetDateTime fechaHoraEvento,
+    public ParadasSinGestionarEvento(String tipoEvento, UUID rutaId, Instant fechaHoraEvento,
                                      String tipoCierre, List<PaqueteEnRutaDto> paquetes) {
         super(tipoEvento, null, rutaId, fechaHoraEvento);
         this.tipoCierre = tipoCierre;

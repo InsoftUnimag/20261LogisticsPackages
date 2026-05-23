@@ -7,7 +7,6 @@ import com.logistics.packages.infrastructure.dto.event.EventoPaqueteM2Dto;
 import com.logistics.packages.infrastructure.dto.event.PaqueteEnTransitoEvento;
 import com.logistics.packages.infrastructure.dto.event.PaqueteEntregadoEvento;
 import com.logistics.packages.infrastructure.dto.event.NovedadGraveEvento;
-import com.logistics.packages.infrastructure.dto.event.NovedadGraveEvento.TipoNovedadGrave;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,8 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,7 +42,7 @@ class RutaEventSqsListenerTest {
 
     private final UUID paqueteId = UUID.randomUUID();
     private final UUID rutaId = UUID.randomUUID();
-    private final OffsetDateTime fecha = OffsetDateTime.now(ZoneOffset.UTC);
+    private final Instant fecha = Instant.now();
 
     @Test
     @DisplayName("PAQUETE_ENTREGADO: mapper produce un comando y el use case lo procesa")
@@ -71,7 +69,7 @@ class RutaEventSqsListenerTest {
     @DisplayName("NOVEDAD_GRAVE (DAÑADO): mapea y procesa correctamente")
     void testListenerProcesaNovedadGraveDanado() {
         EventoPaqueteM2Dto m2Evento = new NovedadGraveEvento(
-                "NOVEDAD_GRAVE", paqueteId, rutaId, fecha, TipoNovedadGrave.DAÑADO_EN_RUTA);
+                "NOVEDAD_GRAVE", paqueteId, rutaId, fecha, "DAÑADO_EN_RUTA");
 
         EventoRutaDto comando = EventoRutaDto.builder()
                 .eventoId("M2:DAÑADO:" + paqueteId + ":" + fecha)

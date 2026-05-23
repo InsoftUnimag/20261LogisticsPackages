@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Getter
@@ -17,7 +17,7 @@ public class PaqueteEntregadoEvento extends EventoPaqueteM2Dto {
     @JsonProperty("evidencia")
     private EvidenciaDto evidencia;
 
-    public PaqueteEntregadoEvento(String tipoEvento, UUID paqueteId, UUID rutaId, OffsetDateTime fechaHoraEvento, EvidenciaDto evidencia) {
+    public PaqueteEntregadoEvento(String tipoEvento, UUID paqueteId, UUID rutaId, Instant fechaHoraEvento, EvidenciaDto evidencia) {
         super(tipoEvento, paqueteId, rutaId, fechaHoraEvento);
         this.evidencia = evidencia;
     }
