@@ -12,15 +12,21 @@ spring:
       region:
         static: us-east-1
       credentials:
-        access-key: test-access-key
-        secret-key: test-secret-key
-      endpoint: http://localhost:4566
+        access-key: test
+        secret-key: test
       sqs:
-        ruta-request-queue: ${DEV_PREFIX:carlos}-solicitar-ruta-queue
-        ruta-response-queue: ${DEV_PREFIX:carlos}-respuestas-ruta-queue
-        clasificacion-queue: ${DEV_PREFIX:carlos}-paquete-listo-clasificar-queue
+        endpoint: http://localhost:4566
+
+# Queue names for M1-M2 SQS communication
+aws:
+  sqs:
+    ruta-request-queue: solicitudes-ruta-queue
+    ruta-response-queue: respuestas-ruta-queue
+    clasificacion-queue: paquete-listo-clasificar-queue
 
 app:
+  sqs:
+    eventos-paquete-queue: eventos-paquete-queue
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   geocoding:
@@ -38,9 +44,9 @@ app:
     secret: ${JWT_SECRET:dGhpcyBpcyBhIHNlY3JldCBrZXkgZm9yIEpXVCB0b2tlbiBpbiBsb2dpc3RpY3MgcGFja2FnZXMgYXBpIDIwMjY=}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
   tarifas:
-    base: 5000           # Tarifa base en USD por envío
-    por-kg: 250          # Tarifa por kilogramo
-    por-km: 150          # Tarifa por kilómetro de distancia
-    recargo-fragil: 1000      # Recargo por mercancía frágil
-    recargo-peligroso: 2000   # Recargo por mercancía peligrosa
-    recargo-carga-especial: 500  # Recargo por carga especial (>50kg o >0.5m³)
+    base: 5000
+    por-kg: 250
+    por-km: 150
+    recargo-fragil: 1000
+    recargo-peligroso: 2000
+    recargo-carga-especial: 500

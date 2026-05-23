@@ -6,6 +6,7 @@ import com.logistics.packages.domain.valueobject.EstadoGps;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -17,6 +18,7 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
+@Profile({"default", "local", "aws"})
 @RequiredArgsConstructor
 public class PaqueteListoClasificacionSqsListener {
 
