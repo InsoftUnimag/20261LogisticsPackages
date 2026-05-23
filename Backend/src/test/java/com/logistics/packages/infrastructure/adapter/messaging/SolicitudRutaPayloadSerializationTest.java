@@ -2,15 +2,14 @@ package com.logistics.packages.infrastructure.adapter.messaging;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.logistics.packages.domain.valueobject.MetodoPago;
-import com.logistics.packages.domain.valueobject.TipoMercancia;
 import com.logistics.packages.infrastructure.dto.request.SolicitudRutaPayload;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,6 +23,7 @@ class SolicitudRutaPayloadSerializationTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
     @Test
@@ -41,9 +41,9 @@ class SolicitudRutaPayloadSerializationTest {
                         .build())
                 .latitud(4.7110)
                 .longitud(-74.0721)
-                .fechaLimiteEntrega(OffsetDateTime.parse("2026-05-24T18:54:32Z"))
-                .tipoMercancia(TipoMercancia.ESTANDAR)
-                .metodoPago(MetodoPago.PREPAGO)
+                .fechaLimiteEntrega(Instant.parse("2026-05-24T18:54:32Z"))
+                .tipoMercancia("ESTANDAR")
+                .metodoPago("PREPAGO")
                 .build();
 
         String json = objectMapper.writeValueAsString(payload);
@@ -93,8 +93,8 @@ class SolicitudRutaPayloadSerializationTest {
         SolicitudRutaPayload payload = SolicitudRutaPayload.builder()
                 .tipoEvento("SOLICITAR_RUTA")
                 .paqueteId(UUID.randomUUID())
-                .tipoMercancia(TipoMercancia.PELIGROSO)
-                .metodoPago(MetodoPago.CONTRA_ENTREGA)
+                .tipoMercancia("PELIGROSO")
+                .metodoPago("CONTRA_ENTREGA")
                 .build();
 
         String json = objectMapper.writeValueAsString(payload);

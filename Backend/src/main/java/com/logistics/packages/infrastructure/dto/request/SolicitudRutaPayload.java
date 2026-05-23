@@ -1,15 +1,12 @@
 package com.logistics.packages.infrastructure.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.logistics.packages.domain.valueobject.MetodoPago;
-import com.logistics.packages.domain.valueobject.TipoMercancia;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Getter
@@ -40,14 +37,13 @@ public class SolicitudRutaPayload {
     private Double longitud;
 
     @JsonProperty("fecha_limite_entrega")
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "UTC")
-    private OffsetDateTime fechaLimiteEntrega;
+    private Instant fechaLimiteEntrega;
 
     @JsonProperty("tipo_mercancia")
-    private TipoMercancia tipoMercancia;
+    private String tipoMercancia;
 
     @JsonProperty("metodo_pago")
-    private MetodoPago metodoPago;
+    private String metodoPago;
 
     @Getter
     @Builder
