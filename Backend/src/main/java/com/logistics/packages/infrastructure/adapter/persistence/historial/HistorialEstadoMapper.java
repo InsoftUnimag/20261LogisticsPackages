@@ -2,6 +2,7 @@ package com.logistics.packages.infrastructure.adapter.persistence.historial;
 
 import com.logistics.packages.domain.model.HistorialEstado;
 import com.logistics.packages.domain.valueobject.EstadoPaquete;
+import com.logistics.packages.domain.valueobject.TipoNovedad;
 import org.springframework.stereotype.Component;
 
 /**
@@ -22,16 +23,19 @@ public class HistorialEstadoMapper {
             return null;
         }
         
-        return HistorialEstadoEntity.builder()
-            .id(historial.getId())
-            .paqueteId(historial.getPaqueteId())
-            .estadoAnterior(historial.getEstadoAnterior().name())
-            .estadoNuevo(historial.getEstadoNuevo().name())
-            .observaciones(historial.getObservaciones())
-            .usuarioId(historial.getUsuarioId())
-            .urlEvidencia(historial.getUrlEvidencia())
-            .fechaTransicionUtc(historial.getFechaTransicionUtc())
-            .build();
+        HistorialEstadoEntity entity = new HistorialEstadoEntity();
+        entity.setId(historial.getId());
+        entity.setPaqueteId(historial.getPaqueteId());
+        entity.setEstadoAnterior(historial.getEstadoAnterior().name());
+        entity.setEstadoNuevo(historial.getEstadoNuevo().name());
+        entity.setObservaciones(historial.getObservaciones());
+        entity.setUsuarioId(historial.getUsuarioId());
+        entity.setUrlEvidencia(historial.getUrlEvidencia());
+        entity.setFechaTransicionUtc(historial.getFechaTransicionUtc());
+        if (historial.getTipoNovedad() != null) {
+            entity.setTipoNovedad(historial.getTipoNovedad().name());
+        }
+        return entity;
     }
     
     /**
@@ -45,15 +49,16 @@ public class HistorialEstadoMapper {
             return null;
         }
         
-        return HistorialEstado.builder()
-            .id(entity.getId())
-            .paqueteId(entity.getPaqueteId())
-            .estadoAnterior(EstadoPaquete.valueOf(entity.getEstadoAnterior()))
-            .estadoNuevo(EstadoPaquete.valueOf(entity.getEstadoNuevo()))
-            .observaciones(entity.getObservaciones())
-            .usuarioId(entity.getUsuarioId())
-            .urlEvidencia(entity.getUrlEvidencia())
-            .fechaTransicionUtc(entity.getFechaTransicionUtc())
-            .build();
+        return new HistorialEstado(
+            entity.getId(),
+            entity.getPaqueteId(),
+            EstadoPaquete.valueOf(entity.getEstadoAnterior()),
+            EstadoPaquete.valueOf(entity.getEstadoNuevo()),
+            entity.getObservaciones(),
+            entity.getUsuarioId(),
+            entity.getUrlEvidencia(),
+            entity.getTipoNovedad() != null ? TipoNovedad.valueOf(entity.getTipoNovedad()) : null,
+            entity.getFechaTransicionUtc()
+        );
     }
 }

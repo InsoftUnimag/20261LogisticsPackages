@@ -49,4 +49,7 @@ public class HistorialEstadoEntity {
     
     @Column(name = "fecha_transicion_utc", nullable = false)
     private LocalDateTime fechaTransicionUtc;
+
+    @Column(name = "tipo_novedad", length = 50)
+    private String tipoNovedad;
 }

@@ -1,6 +1,7 @@
 package com.logistics.packages.domain.model;
 
 import com.logistics.packages.domain.valueobject.EstadoPaquete;
+import com.logistics.packages.domain.valueobject.TipoNovedad;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -49,6 +50,11 @@ public class HistorialEstado {
      * URL de la evidencia multimedia (obligatoria para tipo DAÑADO)
      */
     private String urlEvidencia;
+
+    /**
+     * Tipo de novedad (DAÑADO o EXTRAVIADO) cuando aplica
+     */
+    private TipoNovedad tipoNovedad;
     
     /**
      * FR-001: Timestamp UTC del momento en que se registró la transición
@@ -69,6 +75,11 @@ public class HistorialEstado {
      */
     public HistorialEstado(UUID paqueteId, EstadoPaquete estadoAnterior, EstadoPaquete estadoNuevo, 
                           String observaciones, UUID usuarioId, String urlEvidencia) {
+        this(paqueteId, estadoAnterior, estadoNuevo, observaciones, usuarioId, urlEvidencia, null);
+    }
+
+    public HistorialEstado(UUID paqueteId, EstadoPaquete estadoAnterior, EstadoPaquete estadoNuevo, 
+                          String observaciones, UUID usuarioId, String urlEvidencia, TipoNovedad tipoNovedad) {
         this.id = UUID.randomUUID();
         this.paqueteId = paqueteId;
         this.estadoAnterior = estadoAnterior;
@@ -76,6 +87,7 @@ public class HistorialEstado {
         this.observaciones = observaciones;
         this.usuarioId = usuarioId;
         this.urlEvidencia = urlEvidencia;
+        this.tipoNovedad = tipoNovedad;
         this.fechaTransicionUtc = LocalDateTime.now(ZoneOffset.UTC);
     }
 }
