@@ -26,7 +26,7 @@ aws:
 
 app:
   sqs:
-    eventos-paquete-queue: eventos-paquete-queue
+    eventos-paquete-queue: logistics-eventos-paquete
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   geocoding:

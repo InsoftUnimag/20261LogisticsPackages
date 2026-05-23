@@ -22,7 +22,7 @@ public class RutaEventSqsListener {
     private final ProcesarEventoRutaUseCase procesarEventoRutaUseCase;
     private final EventoPaqueteM2Mapper eventoMapper;
 
-    @SqsListener("${app.sqs.eventos-paquete-queue:eventos-paquete-queue}")
+    @SqsListener("${app.sqs.eventos-paquete-queue:logistics-eventos-paquete}")
     public void onEventoPaquete(EventoPaqueteM2Dto m2Dto) {
         log.info("Evento de paquete M2 recibido: {} para paquete: {}",
                 m2Dto.getTipoEvento(), m2Dto.getPaqueteId());
