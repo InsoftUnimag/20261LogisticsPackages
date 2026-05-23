@@ -133,41 +133,43 @@ public class Paquete {
         return null;
     }
 
-    /**
-     * FR-002: Determina la categoría de carga
-     * Carga Especial si: Peso > 50 kg AND Peso ≤ 70 kg O Volumen > 0.5 m³ AND Volumen ≤ 0.7 m³
-     * Fuera de estos rangos: peso > 70 kg o volumen > 0.7 m³ deben ser bloqueados
-     */
-    private CategoriaCarga determinarCategoriaCarga() {
-        if (this.peso != null) {
-            double pesoKg = this.peso.getKilogramos();
-            if (pesoKg > 50 && pesoKg <= 70) {
-                this.alertaCargaEspecial = true;
-                return CategoriaCarga.CARGA_ESPECIAL;
-            }
-        }
-        if (this.volumenM3 != null) {
-            if (this.volumenM3 > 0.5 && this.volumenM3 <= 0.7) {
-                this.alertaCargaEspecial = true;
-                return CategoriaCarga.CARGA_ESPECIAL;
-            }
-        }
-        return CategoriaCarga.NORMAL;
-    }
+     /**
+      * FR-002: Determina la categoría de carga
+      * Carga Especial si: Peso > 50 kg AND Peso ≤ 70 kg O Volumen > 0.5 m³ AND Volumen ≤ 0.7 m³
+      * Fuera de estos rangos: peso > 70 kg o volumen > 0.7 m³ deben ser bloqueados
+      */
+     private CategoriaCarga determinarCategoriaCarga() {
+         this.alertaCargaEspecial = false;  // Reset para evitar que quede true en próximas llamadas
+         if (this.peso != null) {
+             double pesoKg = this.peso.getKilogramos();
+             if (pesoKg > 50 && pesoKg <= 70) {
+                 this.alertaCargaEspecial = true;
+                 return CategoriaCarga.CARGA_ESPECIAL;
+             }
+         }
+         if (this.volumenM3 != null) {
+             if (this.volumenM3 > 0.5 && this.volumenM3 <= 0.7) {
+                 this.alertaCargaEspecial = true;
+                 return CategoriaCarga.CARGA_ESPECIAL;
+             }
+         }
+         return CategoriaCarga.NORMAL;
+     }
 
-    /**
-     * FR-010: Verifica si hay una densidad atípica
-     * Densidad Atípica si: |Peso Real - Peso Volumétrico| / Peso Real > 30%
-     */
-    private void verificarDensidadAtipica() {
-        if (this.peso != null && this.pesoVolumetrico != null) {
-            double diferencia = Math.abs(this.peso.getKilogramos() - this.pesoVolumetrico);
-            double porcentajeDiferencia = (diferencia / this.peso.getKilogramos());
-            if (porcentajeDiferencia > 0.3) {
-                this.alertaDensidadAtipica = true;
-            }
-        }
-    }
+     /**
+      * FR-010: Verifica si hay una densidad atípica
+      * Densidad Atípica si: |Peso Real - Peso Volumétrico| / MAX(Peso Real, Peso Volumétrico) > 30%
+      */
+     private void verificarDensidadAtipica() {
+         this.alertaDensidadAtipica = false;  // Reset para evitar que quede true en próximas llamadas
+         if (this.peso != null && this.pesoVolumetrico != null) {
+             double diferencia = Math.abs(this.peso.getKilogramos() - this.pesoVolumetrico);
+             double porcentajeDiferencia = diferencia / Math.max(this.peso.getKilogramos(), this.pesoVolumetrico);
+             if (porcentajeDiferencia > 0.3) {
+                 this.alertaDensidadAtipica = true;
+             }
+         }
+     }
 
     public void calcularPrecioEnvio(BigDecimal tarifaBase, BigDecimal tarifaPorKg, BigDecimal tarifaPorKm, BigDecimal recargoTipoMercancia, BigDecimal recargoCategoriaCarga) {
         BigDecimal precio = tarifaBase;
@@ -204,6 +206,14 @@ public class Paquete {
     }
 
     public void asignarZonaAlmacenamiento(UUID zonaAlmacenamientoId) {
+        if (zonaAlmacenamientoId == null) {
+            throw new IllegalArgumentException("El ID de zona de almacenamiento no puede ser nulo.");
+        }
+        if (this.estado != EstadoPaquete.RECIBIDO_EN_SEDE) {
+            throw new IllegalStateException(
+                "El paquete debe estar en estado RECIBIDO_EN_SEDE para asignar zona de almacenamiento. Estado actual: " + this.estado
+            );
+        }
         this.zonaAlmacenamientoId = zonaAlmacenamientoId;
         this.estado = EstadoPaquete.EN_CLASIFICACION;
     }

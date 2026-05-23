@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 /**
@@ -19,7 +20,7 @@ public class SolicitudRutaEvent {
     private final UUID paqueteId;
     private final LocalDateTime timestamp;
 
-    public static SolicitudRutaEvent of(UUID paqueteId) {
-        return new SolicitudRutaEvent(paqueteId, LocalDateTime.now());
-    }
+     public static SolicitudRutaEvent of(UUID paqueteId) {
+         return new SolicitudRutaEvent(paqueteId, LocalDateTime.now(ZoneOffset.UTC));
+     }
 }

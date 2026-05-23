@@ -3,6 +3,8 @@ package com.logistics.packages.infrastructure.controller;
 import com.logistics.packages.application.usecase.ClasificarPaqueteUseCase;
 import com.logistics.packages.application.usecase.ClasificacionSugeridaResponse;
 import com.logistics.packages.application.ports.ZonaDestinoRepository;
+import com.logistics.packages.application.repository.PaqueteRepository;
+import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.infrastructure.dto.request.ConfirmarZonaRequest;
 import com.logistics.packages.infrastructure.dto.response.ClasificacionSugeridaResponseDTO;
 import com.logistics.packages.infrastructure.dto.response.ConfirmacionClasificacionResponse;
@@ -35,6 +37,7 @@ public class ClasificacionController {
 
     private final ClasificarPaqueteUseCase clasificarPaqueteUseCase;
     private final ZonaDestinoRepository zonaDestinoRepository;
+    private final PaqueteRepository paqueteRepository;
 
     /**
      * Obtiene la sugerencia de zona de destino para un paquete.
@@ -57,11 +60,20 @@ public class ClasificacionController {
             ClasificacionSugeridaResponse sugerencia = 
                     clasificarPaqueteUseCase.sugerirZonaParaPaquete(paqueteId);
             
+            // Obtener el paquete para extraer la ciudad del destinatario
+            Paquete paquete = paqueteRepository.findById(paqueteId)
+                    .orElseThrow(() -> new IllegalArgumentException("Paquete no encontrado: " + paqueteId));
+            
+            String ciudadDestino = paquete.getDireccionDestino() != null && paquete.getDireccionDestino().getCiudad() != null
+                    ? paquete.getDireccionDestino().getCiudad()
+                    : "Desconocida";
+            
             ClasificacionSugeridaResponseDTO response = ClasificacionSugeridaResponseDTO.builder()
                     .paqueteId(sugerencia.getPaqueteId())
                     .zonaDestinoId(sugerencia.getZonaDestinoId())
                     .nombreZona(sugerencia.getNombreZona())
                     .codigoZona(sugerencia.getCodigoZona())
+                    .ciudadDestino(ciudadDestino)
                     .tieneCapacidad(true) // La validación se hace en la confirmación
                     .mensaje("Zona sugerida exitosamente")
                     .build();

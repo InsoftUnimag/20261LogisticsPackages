@@ -87,19 +87,20 @@ public class AdmisionController {
         // BE-4: Obtener el paquete guardado para enriquecer la respuesta
         Optional<Paquete> paqueteOpt = paqueteRepository.findById(paqueteId);
         
-        if (paqueteOpt.isPresent()) {
-            Paquete paquete = paqueteOpt.get();
-            return ResponseEntity.ok(RegistroAdmisionResponse.builder()
-                    .paqueteId(paquete.getId())
-                    .etiquetaDigital(paquete.getEtiquetaDigital())
-                    .estadoGps(paquete.getEstadoGps().toString())
-                    .estado(paquete.getEstado().toString())
-                    .build());
-        }
+         if (paqueteOpt.isPresent()) {
+             Paquete paquete = paqueteOpt.get();
+             return ResponseEntity.ok(RegistroAdmisionResponse.builder()
+                     .paqueteId(paquete.getId())
+                     .etiquetaDigital(paquete.getEtiquetaDigital())
+                     .estadoGps(paquete.getEstadoGps().toString())
+                     .estado(paquete.getEstado().toString())
+                     .distanciaEstimadaKm(paquete.getDistanciaEstimadaKm())
+                     .build());
+         }
 
-        return ResponseEntity.ok(RegistroAdmisionResponse.builder()
-                .paqueteId(paqueteId)
-                .build());
+         return ResponseEntity.ok(RegistroAdmisionResponse.builder()
+                 .paqueteId(paqueteId)
+                 .build());
     }
 
     @Operation(summary = "Listar paquetes con paginación y filtros", description = "Obtiene una lista paginada de paquetes con filtros opcionales por estado y rango de fechas de ingreso. Los resultados se ordenan por fecha de ingreso descendente.")
