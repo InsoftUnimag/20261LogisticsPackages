@@ -13,7 +13,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -75,6 +77,15 @@ class FinanzasEventSqsAdapterTest {
                 .build();
 
         adapter.publicarEstadoFinal(paquete);
+        verify(sqsTemplate).send(any());
+    }
+
+    @Test
+    @DisplayName("Debe propagar la excepción cuando SQS falla")
+    void testPropagarExcepcionCuandoSqsFalla() {
+        doThrow(new RuntimeException("SQS no disponible")).when(sqsTemplate).send(any());
+
+        assertThrows(RuntimeException.class, () -> adapter.publicarEstadoFinal(paquete));
         verify(sqsTemplate).send(any());
     }
 

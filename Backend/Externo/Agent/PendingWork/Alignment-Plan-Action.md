@@ -1,7 +1,7 @@
 ### Plan de Acción: Integración SQS M1 ↔ M2
 
 > **Última actualización:** 2026-05-23  
-> **PRs ejecutados:** PR1 (`@Builder` en controller), PR2 (renombre + docs), PR3 (eliminación componentes deprecados), PR4+PR5 (alineación infraestructura SQS), PR6 (`bugfix/m2-outbound-contracts`), PR7 (`bugfix/m2-inbound-contracts`), PR8 (`bugfix/domain-immutability-and-states`), PR9 (`feature/m3-async-sqs-migration`)
+> **PRs ejecutados:** PR1 (`@Builder` en controller), PR2 (renombre + docs), PR3 (eliminación componentes deprecados), PR4+PR5 (alineación infraestructura SQS), PR6 (`bugfix/m2-outbound-contracts`), PR7 (`bugfix/m2-inbound-contracts`), PR8 (`bugfix/domain-immutability-and-states`), PR9 (`feature/m3-async-sqs-migration` + Bloque 2)
 
 ---
 
@@ -101,9 +101,13 @@
   * Creado DTO `EventoFinancieroPaqueteDto` con `@JsonProperty` snake_case (`id_paquete`, `id_ruta`, `estado`).
   * Creado adaptador `FinanzasEventSqsAdapter` que implementa el puerto usando `SqsTemplate`.
   * Integrado publisher en `ProcesarEventoRutaUseCase` (eventos M2) y `RegistrarNovedadUseCase` (novedades M1).
-  * Tests: `FinanzasEventSqsAdapterTest` (5 escenarios: ENTREGADO, NOVEDAD_EN_BODEGA, EN_TRANSITO, rutaId null) + verificación en `ProcesarEventoRutaUseCaseTest`.
+  * Tests: `FinanzasEventSqsAdapterTest` (6 escenarios: ENTREGADO, NOVEDAD_EN_BODEGA, EN_TRANSITO, rutaId null, propagación excepción SQS) + verificación en `ProcesarEventoRutaUseCaseTest` + `RegistrarNovedadUseCaseTest` actualizado.
+* **Bloque 2 (Garantía Transaccional):**
+  * `FinanzasEventSqsAdapter` corregido: el `catch` ahora relanza la excepción (`throw e`) para que el `@Transactional` del caso de uso realice rollback si SQS falla.
+  * Nuevo test `testPropagarExcepcionCuandoSqsFalla` que verifica que la excepción se propaga.
+  * `RegistrarNovedadUseCaseTest` actualizado con `@Mock EstadoPaqueteFinanzasPublisher` + aserciones `verify`/`never` en 5 tests (resuelve NPE por dependencia no mockeada).
 * **Payload SQS:** Mínimo (3 campos) — M3 consulta detalles adicionales por su cuenta.
-* **Riesgo:** Bajo. Publisher invocado después de notificaciones; no afecta flujo principal.
+* **Riesgo:** Bajo. Publisher invocado después de notificaciones; la excepción SQS ahora se propaga correctamente para rollback transaccional.
 
 ---
 
