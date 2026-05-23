@@ -1,14 +1,14 @@
 # Configuración de Credenciales SQS para Comunicación M1 ↔ M2
 
-**Fecha:** 2026-05-18
-**Proyecto:** 20261LogisticsRoutes (M2)
-**Versión:** 1.0
+**Fecha:** 2026-05-23
+**Proyecto:** 20261LogisticsPackages (M1) ↔ 20261LogisticsRoutes (M2)
+**Versión:** 1.1 (actualizado con M3)
 
 ---
 
 ## 1. Resumen Ejecutivo
 
-El Módulo 2 (Routes) actúa como receptor y emisor en la comunicación con el Módulo 1 (Packages). A continuación se documentan las credenciales SQS usadas para ambos sentidos de la comunicación, organizadas por perfil de entorno.
+El Módulo 1 (Packages) se comunica vía SQS con el Módulo 2 (Routes) y el Módulo 3 (Finanzas). A continuación se documentan las credenciales SQS usadas para todos los sentidos de la comunicación, organizadas por perfil de entorno.
 
 ---
 
@@ -110,6 +110,18 @@ spring:
 | **M1 rol** | Consumer (`RutaSqsListener`) escuchando |
 | **Evento esperado** | `RUTA_ASIGNADA` con `paquete_id`, `ruta_id`, `fecha_hora_evento` |
 
+### 3.4 Flujo: M1 → M3 (M1 escribe / M3 lee) — NUEVO
+
+| Dato | DEV | PROD |
+|------|-----|------|
+| **Property** | `app.sqs.eventos-financieros-queue` | `${SQS_EVENTOS_FINANCIEROS_QUEUE}` |
+| **Nombre cola** | `eventos-financieros-paquete-queue` | Variable de entorno |
+| **M1 rol** | Producer (publica estado final del paquete) | Producer |
+| **M3 rol** | Consumer (pendiente de implementar en M3) | Consumer |
+| **Clase producer en M1** | `com.logistics.packages.infrastructure.adapter.messaging.FinanzasEventSqsAdapter` | — |
+| **Payload** | `EventoFinancieroPaqueteDto` con `id_paquete`, `id_ruta`, `estado` (snake_case) | — |
+| **Orígenes de publicación** | `ProcesarEventoRutaUseCase` (eventos M2) + `RegistrarNovedadUseCase` (novedades M1) | — |
+
 ---
 
 ## 4. Variables de Entorno Requeridas para Producción
@@ -129,7 +141,13 @@ spring:
 | `REDIS_PASSWORD` | Contraseña de Redis (opcional) |
 | `JWT_SECRET` | Secreto para firma JWT |
 
-### 4.2 Credenciales AWS en Producción
+### 4.2 M1 (Packages) — Variables de entorno para M3
+
+| Variable de Entorno | Descripción |
+|--------------------|-------------|
+| `SQS_EVENTOS_FINANCIEROS_QUEUE` | Nombre de la cola de eventos financieros hacia M3 (default: `eventos-financieros-paquete-queue`) |
+
+### 4.3 Credenciales AWS en Producción
 
 | Método | Descripción |
 |--------|-------------|
@@ -149,6 +167,10 @@ spring:
 │  Producer:  RutaSqsAdapter                                   │
 │             Cola: solicitudes-ruta-queue                     │
 │             Eventos: SOLICITAR_RUTA                          │
+│                                                              │
+│  Producer:  FinanzasEventSqsAdapter                          │
+│             Cola: eventos-financieros-paquete-queue          │
+│             Eventos: ESTADO_FINAL_PAQUETE (hacia M3)         │
 │                                                              │
 │  Consumer:  RutaEventSqsListener                             │
 │             Cola: logistics-eventos-paquete                  │
@@ -172,6 +194,14 @@ spring:
 │             Eventos: 6 tipos de eventos                      │
 │             Perfil: aws                                      │
 └──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│  MÓDULO 3 — Finanzas                                         │
+│                                                              │
+│  Consumer:  [M3 Consumer]                                    │
+│             Cola: eventos-financieros-paquete-queue          │
+│             Eventos: ESTADO_FINAL_PAQUETE (desde M1)         │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -184,6 +214,8 @@ spring:
 | 2 | En producción, M2 debe tener permisos IAM para: `sqs:SendMessage` y `sqs:ReceiveMessage` en las colas `solicitudes-ruta-queue` y `eventos-paquete-queue`. |
 | 3 | El `endpoint: http://localhost:4566` solo aplica en perfiles dev y test. En prod se usa el endpoint real de AWS SQS. |
 | 4 | M2 tiene un adapter stub `InMemoryIntegracionModulo1Adapter` para perfiles no-aws (dev/test) que solo hace logging en lugar de publicar a SQS. |
+| 5 | M1 ahora publica a `eventos-financieros-paquete-queue` para comunicación asíncrona con M3. M1 necesita permiso `sqs:SendMessage` en esta cola. |
+| 6 | El endpoint REST síncrono `GET /route/{idRoute}/package/{idPaquete}` ha sido eliminado. M3 debe consumir de la cola SQS en lugar de llamar a M1 vía HTTP. |
 
 ---
 

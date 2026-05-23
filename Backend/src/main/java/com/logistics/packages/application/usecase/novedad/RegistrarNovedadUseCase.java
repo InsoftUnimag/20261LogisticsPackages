@@ -1,5 +1,6 @@
 package com.logistics.packages.application.usecase.novedad;
 
+import com.logistics.packages.application.ports.EstadoPaqueteFinanzasPublisher;
 import com.logistics.packages.application.repository.ArchivoStoragePort;
 import com.logistics.packages.application.repository.HistorialEstadoRepository;
 import com.logistics.packages.application.repository.NovedadEventPublisher;
@@ -31,6 +32,7 @@ public class RegistrarNovedadUseCase {
     private final HistorialEstadoRepository historialRepository;
     private final ArchivoStoragePort archivoStoragePort;
     private final NovedadEventPublisher novedadEventPublisher;
+    private final EstadoPaqueteFinanzasPublisher estadoPaqueteFinanzasPublisher;
 
     /**
      * Ejecuta el registro de una novedad en un paquete.
@@ -72,6 +74,9 @@ public class RegistrarNovedadUseCase {
 
         // 5. Publicar evento para notificar al Controlador de Novedades (FR-005)
         novedadEventPublisher.publicarNovedadRegistrada(paquete.getId(), historial.getId());
+
+        // Publicar estado actualizado a la cola de Finanzas (M3)
+        estadoPaqueteFinanzasPublisher.publicarEstadoFinal(paquete);
 
         // 6. Retornar respuesta
         return new RegistroNovedadResponse(

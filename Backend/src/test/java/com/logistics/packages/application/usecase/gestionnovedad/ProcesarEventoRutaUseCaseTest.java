@@ -1,5 +1,6 @@
 package com.logistics.packages.application.usecase.gestionnovedad;
 
+import com.logistics.packages.application.ports.EstadoPaqueteFinanzasPublisher;
 import com.logistics.packages.application.ports.EventoProcesadoRepository;
 import com.logistics.packages.application.ports.NotificacionPort;
 import com.logistics.packages.application.repository.HistorialEstadoRepository;
@@ -44,6 +45,9 @@ class ProcesarEventoRutaUseCaseTest {
     
     @Mock
     private NotificacionPort notificacionPort;
+    
+    @Mock
+    private EstadoPaqueteFinanzasPublisher estadoPaqueteFinanzasPublisher;
     
     @InjectMocks
     private ProcesarEventoRutaUseCase useCase;
@@ -105,6 +109,9 @@ class ProcesarEventoRutaUseCaseTest {
         // Verificar que se enviaron notificaciones
         verify(notificacionPort, atLeastOnce()).enviarSms(anyString(), anyString());
         verify(notificacionPort, atLeastOnce()).enviarEmail(anyString(), anyString(), anyString());
+        
+        // Verificar que se publicó el estado a la cola de Finanzas (M3)
+        verify(estadoPaqueteFinanzasPublisher).publicarEstadoFinal(paquete);
     }
     
     @Test
@@ -124,6 +131,7 @@ class ProcesarEventoRutaUseCaseTest {
         // Verificar que NO se procesó el evento
         verify(paqueteRepository, never()).save(any());
         verify(historialEstadoRepository, never()).guardar(any());
+        verify(estadoPaqueteFinanzasPublisher, never()).publicarEstadoFinal(any());
     }
     
     @Test
@@ -140,6 +148,7 @@ class ProcesarEventoRutaUseCaseTest {
         assertEquals(EstadoPaquete.EN_TRANSITO, paquete.getEstado());
         verify(paqueteRepository).save(paquete);
         verify(eventoProcesadoRepository).guardar(any());
+        verify(estadoPaqueteFinanzasPublisher).publicarEstadoFinal(paquete);
     }
     
     @Test
@@ -151,6 +160,7 @@ class ProcesarEventoRutaUseCaseTest {
         
         // When & Then
         assertThrows(PaqueteNotFoundException.class, () -> useCase.procesar(eventoDto));
+        verify(estadoPaqueteFinanzasPublisher, never()).publicarEstadoFinal(any());
     }
     
     @Test
@@ -171,5 +181,6 @@ class ProcesarEventoRutaUseCaseTest {
         // Then
         assertEquals(EstadoPaquete.DEVOLUCION_EN_RUTA, paquete.getEstado());
         verify(paqueteRepository).save(paquete);
+        verify(estadoPaqueteFinanzasPublisher).publicarEstadoFinal(paquete);
     }
 }

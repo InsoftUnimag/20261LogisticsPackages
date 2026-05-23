@@ -1,5 +1,6 @@
 package com.logistics.packages.application.usecase.gestionnovedad;
 
+import com.logistics.packages.application.ports.EstadoPaqueteFinanzasPublisher;
 import com.logistics.packages.application.ports.EventoProcesadoRepository;
 import com.logistics.packages.application.ports.NotificacionPort;
 import com.logistics.packages.application.repository.HistorialEstadoRepository;
@@ -37,6 +38,7 @@ public class ProcesarEventoRutaUseCase {
     private final HistorialEstadoRepository historialEstadoRepository;
     private final EventoProcesadoRepository eventoProcesadoRepository;
     private final NotificacionPort notificacionPort;
+    private final EstadoPaqueteFinanzasPublisher estadoPaqueteFinanzasPublisher;
     
     // ID del módulo de rutas para el registro de historial
     private static final UUID MODULO_RUTAS_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
@@ -82,6 +84,9 @@ public class ProcesarEventoRutaUseCase {
         
         // FR-002: Enviar notificaciones
         enviarNotificaciones(paquete, eventoDto);
+
+        // Publicar estado actualizado a la cola de Finanzas (M3)
+        estadoPaqueteFinanzasPublisher.publicarEstadoFinal(paquete);
         
         log.info("Evento procesado exitosamente: {}", eventoDto.getEventoId());
     }

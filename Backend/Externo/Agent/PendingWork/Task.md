@@ -13,8 +13,13 @@ Aquí está tu nueva hoja de ruta. La procesaremos estrictamente en este orden:
 * *Cola 3 (M1 lee):* Eventos de Estado de Parada (`PAQUETE_EN_TRANSITO`, `NOVEDAD_GRAVE`, etc.). ✅ Resuelto en PR7.
 
 
-* **Tarea 4: Actualización de UC e IP 007 (Gestión de Novedades — Síncrono a Asíncrono).**
-* *Objetivo:* Ahora sí, con los eventos de `NOVEDAD_GRAVE` de M2 asimilados, estructuramos el flujo asíncrono final hacia M3.
+* **Tarea 4: Migración M3 (Finanzas) — Síncrono a Asíncrono vía SQS.** `[COMPLETADA]`
+* *Fase 1 (Infraestructura):* Eliminados `ConsultaFinancieraController`, `ConsultarEstadoPaqueteUseCase`, `GestionNovedadPaqueteResponse`. Creados puerto `EstadoPaqueteFinanzasPublisher`, adaptador `FinanzasEventSqsAdapter`, DTO `EventoFinancieroPaqueteDto`.
+* *Fase 2 (Integración en UC y Tests):* Publisher integrado en `ProcesarEventoRutaUseCase` (eventos M2) y `RegistrarNovedadUseCase` (novedades M1). Tests: `FinanzasEventSqsAdapterTest` (5 escenarios) + verificación en `ProcesarEventoRutaUseCaseTest`.
+* *PR8 (prerrequisito):* `bugfix/domain-immutability-and-states` — Purificación del dominio.
+* *Rama:* `feature/m3-async-sqs-migration`
+* *Payload:* `{id_paquete, id_ruta, estado}` con snake_case via `@JsonProperty`.
+* *Cola:* `eventos-financieros-paquete-queue`.
 
 
 * **Tarea 5: Verificación y Pruebas de Humo en AWS Real.**
@@ -23,6 +28,8 @@ Aquí está tu nueva hoja de ruta. La procesaremos estrictamente en este orden:
 
 * **Tarea 6: Contextualización sobre Módulo Profesor.**
 * **Tarea 7: JSON para Módulo Profesor.**
+* **Tarea 8: Eliminar referencias hardcodeadas sobre sedes, usuarios, zonasAlmacena y zonasDestino, etc. (Referencias al modulo del profesor).**
+* **Tarea 9: Consumir API del módulo del profesor.**
 
 ---
 
@@ -30,5 +37,5 @@ Aquí está tu nueva hoja de ruta. La procesaremos estrictamente en este orden:
 
 Ya que vas a trabajar con el entorno real de AWS y no con LocalStack, debemos seguir estas buenas prácticas de infraestructura para evitar pisarse los dedos con los otros módulos:
 
-1. **Nombres de Colas Fijos:** Las colas ya no usan prefijo dinámico. Los nombres actuales son: `solicitudes-ruta-queue`, `logistics-eventos-paquete`, `respuestas-ruta-queue`, `paquete-listo-clasificar-queue`. Estos deben coincidir exactamente con los nombres creados en AWS.
+1. **Nombres de Colas Fijos:** Las colas ya no usan prefijo dinámico. Los nombres actuales son: `solicitudes-ruta-queue`, `logistics-eventos-paquete`, `respuestas-ruta-queue`, `paquete-listo-clasificar-queue`, `eventos-financieros-paquete-queue`. Estos deben coincidir exactamente con los nombres creados en AWS.
 2. **Manejo Seguro de Credenciales:** Queda terminantemente prohibido escribir las `aws.secret-key` o tokens en los archivos de configuración del proyecto. Spring Cloud AWS detecta automáticamente las credenciales si tienes configurado tu entorno local mediante el AWS CLI (`~/.aws/credentials`). Usaremos el `DefaultCredentialsProvider`.

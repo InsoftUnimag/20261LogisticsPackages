@@ -1,7 +1,7 @@
 ### Plan de Acción: Integración SQS M1 ↔ M2
 
 > **Última actualización:** 2026-05-23  
-> **PRs ejecutados:** PR1 (`@Builder` en controller), PR2 (renombre + docs), PR3 (eliminación componentes deprecados), PR4+PR5 (alineación infraestructura SQS), PR6 (`bugfix/m2-outbound-contracts`), PR7 (`bugfix/m2-inbound-contracts`), PR8 (`bugfix/domain-immutability-and-states`)
+> **PRs ejecutados:** PR1 (`@Builder` en controller), PR2 (renombre + docs), PR3 (eliminación componentes deprecados), PR4+PR5 (alineación infraestructura SQS), PR6 (`bugfix/m2-outbound-contracts`), PR7 (`bugfix/m2-inbound-contracts`), PR8 (`bugfix/domain-immutability-and-states`), PR9 (`feature/m3-async-sqs-migration`)
 
 ---
 
@@ -85,6 +85,28 @@
 
 ---
 
+#### 4b. Migración M3 (Finanzas) — Síncrono a Asíncrono vía SQS
+
+| Estado | Prioridad |
+|--------|-----------|
+| ✅ **Completado** | ⚠️ **Alta** |
+
+* **Rama:** `feature/m3-async-sqs-migration`
+* **Objetivo:** Migrar la comunicación con M3 (Finanzas) del endpoint REST síncrono (`GET /route/{idRoute}/package/{idPaquete}`) a una cola SQS asíncrona `eventos-financieros-paquete-queue` (Tarea 4).
+* **Dependencias:** Workstream 4 (purificación del dominio) como prerrequisito.
+* **Tareas completadas:**
+  * Eliminados componentes síncronos legacy: `ConsultaFinancieraController`, `ConsultarEstadoPaqueteUseCase`, `GestionNovedadPaqueteResponse`.
+  * Modificado `springdoc.paths-to-match=/api/**` en `application.properties`.
+  * Creado puerto `EstadoPaqueteFinanzasPublisher` (interfaz `publicarEstadoFinal(Paquete paquete)`).
+  * Creado DTO `EventoFinancieroPaqueteDto` con `@JsonProperty` snake_case (`id_paquete`, `id_ruta`, `estado`).
+  * Creado adaptador `FinanzasEventSqsAdapter` que implementa el puerto usando `SqsTemplate`.
+  * Integrado publisher en `ProcesarEventoRutaUseCase` (eventos M2) y `RegistrarNovedadUseCase` (novedades M1).
+  * Tests: `FinanzasEventSqsAdapterTest` (5 escenarios: ENTREGADO, NOVEDAD_EN_BODEGA, EN_TRANSITO, rutaId null) + verificación en `ProcesarEventoRutaUseCaseTest`.
+* **Payload SQS:** Mínimo (3 campos) — M3 consulta detalles adicionales por su cuenta.
+* **Riesgo:** Bajo. Publisher invocado después de notificaciones; no afecta flujo principal.
+
+---
+
 #### 5. Pruebas de Humo End-to-End en AWS
 
 | Estado | Prioridad |
@@ -111,7 +133,8 @@
 | 3 | Contratos Entrada (M2→M1) | 🔴 Crítica | — | ✅ **Completado** |
 | 4 | Purificación del Dominio | ⚠️ Alta | — | ✅ **Completado** |
 | 1 | Infraestructura/Perfiles SQS | ⚠️ Alta | — | ✅ **Completado** |
+| 4b | Migración M3 (Finanzas) Síncrono→Asíncrono | ⚠️ Alta | 4 | ✅ **Completado** |
 | 5 | Pruebas de Humo AWS | ⚠️ Media | 1, 2, 3 | ❌ No iniciado |
 
 > [!NOTE]
-> Los workstreams 1-4 están completados, desbloqueando el workstream 5 (pruebas de humo AWS).
+> Los workstreams 1-4 y 4b están completados, desbloqueando el workstream 5 (pruebas de humo AWS).
