@@ -114,16 +114,15 @@ class RutaSqsAdapterIntegrationTest {
         assertEquals("Colombia", payload.getDireccion().getPais());
         assertEquals(4.7110, payload.getLatitud());
         assertEquals(-74.0721, payload.getLongitud());
-        assertEquals(TipoMercancia.ESTANDAR, payload.getTipoMercancia());
-        assertEquals(MetodoPago.PREPAGO, payload.getMetodoPago());
+        assertEquals("ESTANDAR", payload.getTipoMercancia());
+        assertEquals("PREPAGO", payload.getMetodoPago());
         assertNotNull(payload.getFechaLimiteEntrega());
 
         // Validar que la fecha límite es 7 días después de la de ingreso
-        long diasDiferencia = java.time.temporal.ChronoUnit.DAYS.between(
-                paquete.getFechaIngresoUtc().atOffset(ZoneOffset.UTC).toLocalDateTime(),
-                payload.getFechaLimiteEntrega().toLocalDateTime()
+        assertEquals(
+                paquete.getFechaIngresoUtc().plusDays(7).atOffset(ZoneOffset.UTC).toInstant(),
+                payload.getFechaLimiteEntrega()
         );
-        assertEquals(7, diasDiferencia);
     }
 
     @Test
