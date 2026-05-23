@@ -2,5 +2,8 @@
 .vscode/
 .idea/
 
+# Skills locales de opencode (uso personal, no se versionan)
+.opencode/
+
 # Logs y reportes dinámicos del Agente de IA
 Backend/Externo/Agent/.sync-status.json
