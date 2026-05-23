@@ -126,10 +126,12 @@ public class AdmisionController {
         Optional<Paquete> paqueteOpt = consultarPaqueteIn.consultarPaquete(idPaquete);
 
         return paqueteOpt
-                .map(paquete -> ResponseEntity.ok(new ConsultaPaqueteResponse(
-                        paquete.getRutaId(),
-                        paquete.getId(),
-                        paquete.getEstado())))
+                .map(paquete -> ResponseEntity.ok(ConsultaPaqueteResponse.builder()
+                        .rutaId(paquete.getRutaId())
+                        .idPaquete(paquete.getId())
+                        .estado(paquete.getEstado())
+                        .fechaEntregaSujetaConfirmacion(paquete.getRutaId() == null)
+                        .build()))
                 .orElse(ResponseEntity.notFound().build());
     }
 
