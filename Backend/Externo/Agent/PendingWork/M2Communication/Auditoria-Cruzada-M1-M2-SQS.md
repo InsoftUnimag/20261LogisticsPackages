@@ -1,8 +1,8 @@
 # Auditoría de Código Cruzada: Módulo 1 (Packages) ↔ Módulo 2 (Routes)
 
-**Fecha de auditoría:** 2026-05-18
+**Fecha de auditoría:** 2026-05-23
 **Auditor:** Agente de Integración — Arquitectura de Mensajería SQS
-**Versión del documento:** 1.0
+**Versión del documento:** 1.1 (actualizado con M3)
 
 ---
 
@@ -10,11 +10,12 @@
 
 ### 1.1 Colas Compartidas
 
-| Cola | Dirección | M1 (Producer) | M1 (Consumer) | M2 (Producer) | M2 (Consumer) |
-|------|-----------|--------------|---------------|---------------|---------------|
-| `solicitudes-ruta-queue` | M1 → M2 | `RutaSqsAdapter` | `SolicitarRutaConsumer` | — | — |
-| `logistics-eventos-paquete` | M2 → M1 | `SqsIntegracionModulo1Adapter` | `RutaEventSqsListener` | — | — |
-| `respuestas-ruta-queue` | M2 → M1 | `RutaSqsListener` | — | **NO IMPLEMENTADO** | — |
+| Cola | Dirección | M1 (Producer) | M1 (Consumer) | M2 (Producer) | M2 (Consumer) | M3 (Consumer) |
+|------|-----------|--------------|---------------|---------------|---------------|---------------|
+| `solicitudes-ruta-queue` | M1 → M2 | `RutaSqsAdapter` | `SolicitarRutaConsumer` | — | — | — |
+| `logistics-eventos-paquete` | M2 → M1 | `SqsIntegracionModulo1Adapter` | `RutaEventSqsListener` | — | — | — |
+| `respuestas-ruta-queue` | M2 → M1 | `RutaSqsListener` | — | **NO IMPLEMENTADO** | — | — |
+| `eventos-financieros-paquete-queue` | M1 → M3 | `FinanzasEventSqsAdapter` | — | — | — | M3 (Finanzas) |
 
 ### 1.2 Mapa de Interacciones Detallado
 
@@ -24,6 +25,9 @@
 │                                                                         │
 │  [RutaSqsAdapter]  ──send──>  solicitudes-ruta-queue                    │
 │       │                      (SOLICITAR_RUTA)                           │
+│       │                                                                 │
+│  [FinanzasEventSqsAdapter]  ──send──>  eventos-financieros-paquete-queue│
+│       │                       (ESTADO_FINAL_PAQUETE — hacia Módulo 3)   │
 │       │                                                                 │
 │  [RutaEventSqsListener]   ◄──receive──  logistics-eventos-paquete       │
 │       │                                    (6 tipos de eventos M2)      │
@@ -48,6 +52,14 @@
 │  [SqsIntegracionModulo3Adapter]  ──send──>  cierre-ruta-queue           │
 │       │                       (RUTA_CERRADA — hacia Módulo 3)           │
 └─────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│  MÓDULO 3 — Finanzas                                                    │
+│                                                                         │
+│  [M3 Consumer]  ◄──receive──  eventos-financieros-paquete-queue          │
+│       │                       (ESTADO_FINAL_PAQUETE — desde M1)         │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 1.3 Clases de Infraestructura Involucradas
@@ -59,6 +71,7 @@
 | `com.logistics.packages.infrastructure.adapter.messaging.RutaSqsAdapter` | Producer | `solicitudes-ruta-queue` |
 | `com.logistics.packages.infrastructure.adapter.messaging.RutaEventSqsListener` | Consumer | `logistics-eventos-paquete` |
 | `com.logistics.packages.infrastructure.adapter.messaging.RutaSqsListener` | Consumer | `respuestas-ruta-queue` |
+| `com.logistics.packages.infrastructure.adapter.messaging.FinanzasEventSqsAdapter` | Producer (M1→M3) | `eventos-financieros-paquete-queue` |
 
 **Módulo 2 (Consumer / Producer):**
 
@@ -177,6 +190,7 @@
 | Solicitud de ruta | `aws.sqs.ruta-request-queue` | `solicitudes-ruta-queue` | `app.sqs.solicitudes-ruta-queue` | `solicitudes-ruta-queue` |
 | Eventos de paquete | `app.sqs.eventos-paquete-queue` | `logistics-eventos-paquete` | `app.sqs.eventos-paquete-queue` | `logistics-eventos-paquete` |
 | Respuesta de ruta | `aws.sqs.ruta-response-queue` | `respuestas-ruta-queue` | — | — |
+| Eventos financieros paquete | `app.sqs.eventos-financieros-queue` | `eventos-financieros-paquete-queue` | — | — |
 
 ### 3.2 Análisis de Desalineaciones
 
@@ -186,6 +200,7 @@
 | 2 | ~~**Perfil AWS:** M1 no tiene perfil `aws` definido para los listeners SQS~~ | ~~⚠️ MEDIA~~ | **✅ Resuelto en PR4** — `@Profile({"default", "local", "aws"})` añadido a los 3 listeners |
 | 3 | **Cola `respuestas-ruta-queue` huérfana:** M1 escucha en `respuestas-ruta-queue` pero M2 no tiene ningún producer hacia esa cola. El flujo `RUTA_ASIGNADA` está incompleto. | 🔴 ALTA | M1: `RutaSqsListener:20`, M2: N/A |
 | 4 | **Cola `cierre-ruta-queue` fuera del alcance:** M2 produce hacia `cierre-ruta-queue` (hacia M3), pero M1 no tiene ningún listener para esta cola. Esto es correcto ya que M3 debería consumirlas. | N/A | M2: `SqsIntegracionModulo3Adapter` |
+| 5 | **Nueva cola M1→M3:** M1 ahora publica a `eventos-financieros-paquete-queue` para comunicación asíncrona con M3 (Finanzas). Se eliminó el endpoint REST síncrono `GET /route/{idRoute}/package/{idPaquete}`. | ✅ COMPLETADA | M1: `FinanzasEventSqsAdapter` → `eventos-financieros-paquete-queue` |
 
 ### 3.3 Configuración de Deserialización Jackson
 
@@ -298,6 +313,7 @@ La integración entre M1 y M2 presenta incompatibilidades que **causarán excepc
 | M2 → M1 | PARADAS_SIN_GESTIONAR | ✅ COMPATIBLE | Resuelto vía M1 (PR7) — DTOs aceptan Instant |
 | M2 → M1 | PAQUETE_EXCLUIDO_DESPACHO | ✅ COMPATIBLE | Resuelto vía M1 (PR7) — DTOs aceptan Instant |
 | M2 → M1 | RUTA_ASIGNADA | 🔴 NO IMPLEMENTADO | Implementar producer en M2 hacia `respuestas-ruta-queue` |
+| M1 → M3 | ESTADO_FINAL_PAQUETE | ✅ COMPLETADO | Migrado de REST síncrono a SQS asíncrono vía `FinanzasEventSqsAdapter` → `eventos-financieros-paquete-queue` |
 
 ---
 

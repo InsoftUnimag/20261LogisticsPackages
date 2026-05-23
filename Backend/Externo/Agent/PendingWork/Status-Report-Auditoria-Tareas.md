@@ -1,7 +1,7 @@
 # Reporte de Estado del Proyecto — Auditoría vs Task.md
 
 **Fecha:** 2026-05-23  
-**Última actualización:** 2026-05-23 (post PR7: bugfix/m2-inbound-contracts)  
+**Última actualización:** 2026-05-23 (post PR9: feature/m3-async-sqs-migration)  
 **Auditor:** Agente de Revisión Arquitectónica  
 **Documento fuente:** `Backend/Externo/Agent/PendingWork/Task.md`
 
@@ -14,7 +14,7 @@
 | **1.** Migración RabbitMQ → Amazon SQS | ✅ **Completada** | 100% |
 | **2.** Definición/Diseño flujo M2 (Contratos e Infraestructura) | ✅ **Completada** | 100% |
 | **3.** Implementación secuencial de las 3 colas de M2 | ✅ **Completada** | ~100% |
-| **4.** Actualización UC/IP 007 (Gestión Novedades — Síncrono a Asíncrono) | ⚠️ **Completada con observaciones** | ~85% |
+| **4.** Actualización UC/IP 007 (Gestión Novedades — Síncrono a Asíncrono) | ✅ **Completada** | 100% |
 | **5.** Verificación y Pruebas de Humo en AWS Real | ❌ **No iniciada** | 0% |
 | **6.** Contextualización sobre Módulo Profesor | ❌ **No iniciada** | 0% |
 | **7.** JSON para Módulo Profesor | ❌ **No iniciada** | 0% |
@@ -30,6 +30,8 @@
 | PR5 | Corrección nombre cola logistics-eventos-paquete según ARN de M2 | `fix/m2-queue-name-arn` | ✅ Commiteado |
 | PR6 | Alinear contratos de salida M1→M2: Instant + String en SolicitudRutaPayload | `bugfix/m2-outbound-contracts` | ✅ Commiteado |
 | PR7 | Alinear contratos de entrada M2→M1: Instant en DTOs, fallback enums, fechaHoraEvento en mapper | `bugfix/m2-inbound-contracts` | ✅ Commiteado |
+| PR8 | Purificación del dominio: eliminar @Setter, @Embeddable, NovedadBodega VO, Paquete.reconstruir() | `bugfix/domain-immutability-and-states` | ✅ Commiteado |
+| PR9 | Migración M3 asíncrona: eliminar sync controller/UC, crear puerto/adapter/DTO SQS, integrar en UC, tests | `feature/m3-async-sqs-migration` | ✅ Commiteado |
 
 ---
 
@@ -178,32 +180,51 @@ M1 (Packages)                              M2 (Routes)
 
 ---
 
-## Tarea 4 — Actualización UC/IP 007 (Síncrono → Asíncrono) ⚠️ COMPLETADA CON OBSERVACIONES (85%)
+## Tarea 4 — Migración M3 (Finanzas) Síncrono → Asíncrono vía SQS ✅ COMPLETADA (100%)
 
-### Componentes implementados — ✅
+### Componentes síncronos eliminados — ❌
+
+| Componente | Archivo | Acción |
+|------------|---------|--------|
+| `ConsultaFinancieraController` | `infrastructure/controller/ConsultaFinancieraController.java` | ❌ **Eliminado** — Endpoint REST síncrono `GET /route/{idRoute}/package/{idPaquete}` |
+| `ConsultarEstadoPaqueteUseCase` | `application/usecase/gestionnovedad/ConsultarEstadoPaqueteUseCase.java` | ❌ **Eliminado** — Caso de uso para consulta síncrona a M3 |
+| `GestionNovedadPaqueteResponse` | `application/usecase/gestionnovedad/GestionNovedadPaqueteResponse.java` | ❌ **Eliminado** — DTO de respuesta financiera (renombrado en PR2) |
+
+### Componentes asíncronos creados — ✅
 
 | Componente | Archivo | Funcionalidad |
 |------------|---------|---------------|
-| `ProcesarEventoRutaUseCase` | `application/usecase/gestionnovedad/ProcesarEventoRutaUseCase.java` | Orquestador: idempotencia → actualizar estado → historial → notificaciones |
-| `ConsultarEstadoPaqueteUseCase` | `application/usecase/gestionnovedad/ConsultarEstadoPaqueteUseCase.java` | Consulta síncrona para M3 Finanzas |
-| `ConsultaFinancieraController` | `infrastructure/controller/ConsultaFinancieraController.java` | `GET /route/{idRoute}/package/{idPaquete}` |
+| `EstadoPaqueteFinanzasPublisher` | `application/ports/EstadoPaqueteFinanzasPublisher.java` | Puerto hexagonal: `publicarEstadoFinal(Paquete paquete)` |
+| `EventoFinancieroPaqueteDto` | `infrastructure/dto/event/EventoFinancieroPaqueteDto.java` | DTO con `@JsonProperty` snake_case (`id_paquete`, `id_ruta`, `estado`) |
+| `FinanzasEventSqsAdapter` | `infrastructure/adapter/messaging/FinanzasEventSqsAdapter.java` | Adaptador SQS que implementa el puerto usando `SqsTemplate` |
+| `ProcesarEventoRutaUseCase` (modificado) | `application/usecase/gestionnovedad/ProcesarEventoRutaUseCase.java` | Invoca publisher tras notificaciones (eventos M2) |
+| `RegistrarNovedadUseCase` (modificado) | `application/usecase/novedad/RegistrarNovedadUseCase.java` | Invoca publisher tras evento interno de novedad |
+| `FinanzasEventSqsAdapterTest` | `test/.../FinanzasEventSqsAdapterTest.java` | 5 tests: ENTREGADO, NOVEDAD_EN_BODEGA, EN_TRANSITO, rutaId null |
+| `ProcesarEventoRutaUseCaseTest` (modificado) | `test/.../ProcesarEventoRutaUseCaseTest.java` | Verificaciones `verify`/`never` para publicación M3 |
+
+### Componentes existentes relevantes — ✅
+
+| Componente | Archivo | Funcionalidad |
+|------------|---------|---------------|
 | `EventoRutaDto` | `application/usecase/gestionnovedad/EventoRutaDto.java` | DTO con 6 `TipoEventoRuta` |
 | `RutaEventSqsListener` | `infrastructure/adapter/messaging/RutaEventSqsListener.java` | Consumo asíncrono de eventos M2 |
 | `EventoPaqueteM2Mapper` | `infrastructure/adapter/messaging/EventoPaqueteM2Mapper.java` | Mapeo M2 DTOs → `EventoRutaDto` |
 | Idempotencia (FR-008) | `domain/model/EventoProcesado.java` + Flyway V5 | Tabla `eventos_procesados` con validación |
 | Notificaciones (FR-002) | `application/ports/NotificacionPort.java` + `MockNotificacionAdapter` | SMS + Email con manejo de fallos |
-| Endpoint síncrono (FR-005) | `ConsultaFinancieraController` | `GET /route/{idRoute}/package/{idPaquete}` |
 | 6 transiciones de estado en `Paquete.java` | `domain/model/Paquete.java` | `transitarAEnRuta()`, `entregarPaquete()`, `registrarDevolucionEnRuta()`, etc. |
-| DTO de respuesta financiera | `application/usecase/gestionnovedad/GestionNovedadPaqueteResponse.java` (antes `ConsultaPaqueteResponse`) | Renombrado en PR2 para eliminar ambigüedad |
 
 ### Observaciones — ⚠️
 
 | # | Hallazgo | Severidad | Detalle | Estado |
 |---|----------|-----------|---------|--------|
-| 1 | **`@Setter` a nivel de clase en `Paquete.java`** | 🔴 **ALTA** | Viola el principio de inmutabilidad del dominio. Cualquier código puede mutar el estado sin pasar por métodos de negocio. Documentado en `ConsideracionesAgentes.md` | ❌ Pendiente |
+| 1 | **`@Setter` a nivel de clase en `Paquete.java`** | 🔴 **ALTA** | Viola el principio de inmutabilidad del dominio. Cualquier código puede mutar el estado sin pasar por métodos de negocio. Documentado en `ConsideracionesAgentes.md` | ✅ **Resuelto en PR8** — Eliminado `@Setter` class-level y field `etiquetaDigital`. Creadas fábricas `crearNuevo()` y `reconstruir()`. `@NoArgsConstructor` privado. |
 | 2 | **`EN_PARADA_DE_ENTREGA` sin evento M2 correspondiente** | ⚠️ MEDIA | El `ProcesarEventoRutaUseCase` lo maneja, pero M2 no tiene evento equivalente. El mapper nunca generará este tipo. | ❌ Pendiente |
 | 3 | **Mapper no recibía `fechaHoraEvento`** | ⚠️ MEDIA | ~~En `EventoPaqueteM2Mapper.construirDto()`, `fechaHoraEvento` no se usaba para construir el `EventoRutaDto` (línea 74-90), solo para generar el `eventoId`~~ | ✅ **Resuelto en PR7** — Ahora se asigna `fechaHoraEvento` al DTO |
-| 4 | **`registrarNovedad()` usa `NOVEDAD_EN_BODEGA` fijo** | ⚠️ MEDIA | `Paquete.registrarNovedad()` cambia siempre a `NOVEDAD_EN_BODEGA` sin distinguir subtipos de novedad | ❌ Pendiente |
+| 4 | **`registrarNovedad()` usa `NOVEDAD_EN_BODEGA` fijo** | ⚠️ MEDIA | `Paquete.registrarNovedad()` cambia siempre a `NOVEDAD_EN_BODEGA` sin distinguir subtipos de novedad | ✅ **Resuelto en PR8** — Ahora recibe `NovedadBodega` VO que preserva `tipoNovedad` en `HistorialEstado` (columna `tipo_novedad` + Flyway V7). La transición de estado sigue siendo `NOVEDAD_EN_BODEGA` pero el contexto completo del subtipo queda registrado en el historial. |
+| 5 | **Migración M3: endpoint REST síncrono eliminado** | ✅ COMPLETADA | Se eliminó `ConsultaFinancieraController`, `ConsultarEstadoPaqueteUseCase` y `GestionNovedadPaqueteResponse`. Se creó puerto `EstadoPaqueteFinanzasPublisher`, adaptador `FinanzasEventSqsAdapter` y DTO `EventoFinancieroPaqueteDto`. | ✅ **Completado en PR9** |
+| 6 | **Publisher M3 no integrado en casos de uso** | 🔴 ALTA | ~~El adaptador SQS existe pero no se invoca desde ningún caso de uso~~ | ✅ **Resuelto en PR9** — Integrado en `ProcesarEventoRutaUseCase` y `RegistrarNovedadUseCase` |
+| 7 | **Payload SQS mínimo (3 campos)** | ℹ️ INFORMATIVO | El DTO `EventoFinancieroPaqueteDto` solo envía `id_paquete`, `id_ruta`, `estado` con snake_case. M3 consulta detalles adicionales por su cuenta. | ✅ Diseño intencional |
+| 8 | **Tests de integración SQS M3 ausentes** | ⚠️ MEDIA | ~~No hay tests para el adaptador SQS de M3~~ | ✅ **Resuelto en PR9** — `FinanzasEventSqsAdapterTest` con 5 escenarios |
 
 ---
 
@@ -241,14 +262,15 @@ M1 (Packages)                              M2 (Routes)
 
 | # | Hallazgo | Severidad | Archivo | Estado |
 |---|----------|-----------|---------|--------|
-| H1 | `Paquete.java` usa `@Setter` a nivel de clase | 🔴 ALTA | `domain/model/Paquete.java:14` | ❌ Pendiente |
-| H2 | `Persona.java` usa anotaciones `jakarta.validation` en dominio | ⚠️ MEDIA | `domain/model/Persona.java` — viola pureza del dominio | ❌ Pendiente |
+| H1 | `Paquete.java` usa `@Setter` a nivel de clase | 🔴 ALTA | `domain/model/Paquete.java:14` | ✅ **Resuelto en PR8** — `@Setter` eliminado. |
+| H2 | `Persona.java` usa anotaciones `jakarta.validation` en dominio | ⚠️ MEDIA | `domain/model/Persona.java` — viola pureza del dominio | ✅ **Resuelto** — `Persona.java` no tiene anotaciones `jakarta.validation`. `@Embeddable` eliminado en PR8. |
 | H3 | `PaqueteDbo.java` aplana `Direccion` a String en vez de columnas separadas | ⚠️ MEDIA | `infrastructure/adapter/persistence/paquete/PaqueteDbo.java` | ❌ Pendiente |
 | H4 | `PaqueteMapper.java` intenta instanciar `Persona` con constructor sin ser `@AllArgsConstructor` | ⚠️ MEDIA | `infrastructure/adapter/persistence/paquete/PaqueteMapper.java` | ❌ Pendiente |
 | H5 | `GeocodingService` — firma inconsistente: interfaz `localizar(String)`, uso con `Direccion`, adapter con `Direccion` | ⚠️ MEDIA | `application/ports/GeocodingService.java` vs `GoogleMapsAdapter.java` | ❌ Pendiente |
 | H6 | ~~`RutaEventAdapter` deprecated pero aún presente en el código~~ | ~~✅ BAJA~~ | ❌ **Resuelto en PR3** — `RutaEventAdapter` y `RutaEventPublisher` eliminados | ✅ Resuelto |
 | H7 | Sin `UNIQUE CONSTRAINT` en tabla `eventos_procesados` para idempotencia | ⚠️ MEDIA | Riesgo de condición de carrera (documentado en `sqs-m2-contrat-discrepancies-fix.md`) | ❌ Pendiente |
 | H8 | Perfil `aws` no definido en M1 para listeners SQS | ⚠️ MEDIA | M2 sí usa `@Profile("aws")`, M1 no. Los listeners de M1 siempre activos. | ✅ **Resuelto en PR4** — `@Profile({"default", "local", "aws"})` añadido a los 3 listeners |
+| H9 | Comunicación M1→M3 migrada de REST síncrono a SQS asíncrono | ✅ COMPLETADA | Se eliminó endpoint síncrono `ConsultaFinancieraController` y se creó `FinanzasEventSqsAdapter` publicando a `eventos-financieros-paquete-queue` | ✅ **Resuelto en PR9** |
 
 ---
 
@@ -256,10 +278,10 @@ M1 (Packages)                              M2 (Routes)
 
 | Severidad | Cantidad | Descripción |
 |-----------|:--------:|-------------|
-| 🔴 CRÍTICO | 1 | `@Setter` en dominio (fecha outbound + fecha inbound + enums resueltos) |
-| ⚠️ ALTA | 2 | RUTA_ASIGNADA no implementado en M2, `jakarta.validation` en dominio |
-| ⚠️ MEDIA | 4 | `volumen_m3` extra, unique constraint, transición fija, `Direccion` aplanada |
-| ✅ Resuelto | 8 | H6 (PR3), H8 (PR4), Dirección (compatible), fecha_limite_entrega (PR6), Enums TipoMercancia/MetodoPago (PR6), **fecha_hora_evento inbound (PR7)**, **MotivoParadaFallida/TipoNovedadGrave (PR7)**, **mapper fechaHoraEvento (PR7)** |
+| 🔴 CRÍTICO | 0 | ~~`@Setter` en dominio~~ — **Resuelto en PR8**. Fecha outbound + inbound + enums resueltos en PR6/PR7. |
+| ⚠️ ALTA | 1 | RUTA_ASIGNADA no implementado en M2 |
+| ⚠️ MEDIA | 3 | `volumen_m3` extra, unique constraint, `Direccion` aplanada |
+| ✅ Resuelto | 15 | H1 (PR8), H2 (PR8), H6 (PR3), H8 (PR4), Dirección (compatible), fecha_limite_entrega (PR6), Enums TipoMercancia/MetodoPago (PR6), **fecha_hora_evento inbound (PR7)**, **MotivoParadaFallida/TipoNovedadGrave (PR7)**, **mapper fechaHoraEvento (PR7)**, **Observación 4 registrarNovedad (PR8)**, **Obs. 5 M3 sync→async (PR9)**, **Obs. 6 Publisher integrado (PR9)**, **Obs. 8 Tests M3 (PR9)** |
 | ✅ Sin novedad | ~30+ | Campos UUID, nombres de eventos, estructura de SQS, polimorfismo, notificaciones, historial, endpoints |
 
 > [!IMPORTANT]
@@ -271,18 +293,20 @@ M1 (Packages)                              M2 (Routes)
 
 ### Inmediatas (Bloqueantes)
 1. ~~🔴 **Cambiar `OffsetDateTime` → `Instant`** en los 6 DTOs de eventos M2 (inbound) y convertir en `EventoPaqueteM2Mapper`~~ — **Resuelto en PR7**
-2. 🔴 **Eliminar `@Setter` de `Paquete.java`** e implementar métodos de negocio explícitos
+2. ~~🔴 **Eliminar `@Setter` de `Paquete.java`** e implementar métodos de negocio explícitos~~ — **Resuelto en PR8**
 
 ### Corto plazo
 4. ⚠️ Exigir a M2 la implementación del producer para `respuestas-ruta-queue` (`RUTA_ASIGNADA`)
 5. ⚠️ Agregar `UNIQUE CONSTRAINT` en `eventos_procesados(evento_id)` para idempotencia robusta
-6. ⚠️ Eliminar `jakarta.validation.*` del dominio (`Persona.java`)
+6. ~~⚠️ Eliminar `jakarta.validation.*` del dominio (`Persona.java`)~~ — **Resuelto — `Persona.java` no contenía dichas anotaciones; `@Embeddable` eliminado en PR8**
 7. ⚠️ Separar `Direccion` en columnas individuales en `PaqueteDbo.java`
+8. ~~🔴 Eliminar endpoint REST síncrono de M3 (`ConsultaFinancieraController`)~~ — **Resuelto en PR9**
 
 ### Mediano plazo
-8. ✅ Perfil `application-aws.yml` creado. Pruebas de humo en AWS pendientes.
-9. Iniciar análisis del Módulo Profesor (Tareas 6-7)
-10. Agregar integración continua con pruebas contra LocalStack en CI
+9. ✅ Perfil `application-aws.yml` creado. Pruebas de humo en AWS pendientes.
+10. ✅ Migración M3 a SQS asíncrono completada. Validar que M3 consuma correctamente `eventos-financieros-paquete-queue`.
+11. Iniciar análisis del Módulo Profesor (Tareas 6-7)
+12. Agregar integración continua con pruebas contra LocalStack en CI
 
 ### ✅ Resueltas en PR6
 - 🔴 `fecha_limite_entrega`: `OffsetDateTime` → `Instant` en outbound M1→M2
@@ -293,8 +317,29 @@ M1 (Packages)                              M2 (Routes)
 - ⚠️ `MotivoParadaFallida` y `TipoNovedadGrave`: de enum a `String` + try-catch con log.warn y fallback
 - ⚠️ `EventoPaqueteM2Mapper`: ahora asigna `fechaHoraEvento` a `EventoRutaDto` (antes solo se usaba para ID)
 
+### ✅ Resueltas en PR8 (`bugfix/domain-immutability-and-states`)
+- 🔴 `@Setter` eliminado de `Paquete.java` (class-level y field `etiquetaDigital`). Creadas fábricas `crearNuevo()` y `reconstruir()`.
+- ⚠️ `@Embeddable` eliminado de `Persona.java`.
+- ⚠️ `Paquete.reconstruir()` público para hidratación desde infraestructura; `@NoArgsConstructor` privado.
+- ⚠️ `RegistrarAdmisionUseCase`: UUID generado por el caso de uso (no por infraestructura).
+- ⚠️ `PriceCalculationService`: recibe `distanciaKm` como parámetro explícito en vez de leer de `Paquete`.
+- ⚠️ `registrarNovedad()`: ahora recibe `NovedadBodega` VO preservando `tipoNovedad` en `HistorialEstado`. Flyway V7: columna `tipo_novedad`.
+- ⚠️ Tests refactorizados sin `new Paquete()`, `setEstado()` ni `setTipoMercancia()`.
+
+### ✅ Resueltas en PR9 (`feature/m3-async-sqs-migration`)
+- 🔴 **Migración M3 (Finanzas) de REST síncrono a SQS asíncrono.**
+- ❌ Eliminados componentes síncronos: `ConsultaFinancieraController`, `ConsultarEstadoPaqueteUseCase`, `GestionNovedadPaqueteResponse`.
+- ✅ Creado puerto `EstadoPaqueteFinanzasPublisher` (interfaz hexagonal).
+- ✅ Creado DTO `EventoFinancieroPaqueteDto` con `@JsonProperty` snake_case.
+- ✅ Creado adaptador `FinanzasEventSqsAdapter` usando `SqsTemplate`.
+- ✅ `springdoc.paths-to-match` cambiado a `/api/**` (eliminado `/route/**`).
+- ✅ Publisher integrado en `ProcesarEventoRutaUseCase` (eventos M2).
+- ✅ Publisher integrado en `RegistrarNovedadUseCase` (novedades M1).
+- ✅ `FinanzasEventSqsAdapterTest` con 5 escenarios de publicación.
+- ✅ `ProcesarEventoRutaUseCaseTest` actualizado con verificación M3.
+
 ---
 
 *Documento generado automáticamente por el Agente de Revisión Arquitectónica — 2026-05-23*
-*Actualizado post PR7 (bugfix/m2-inbound-contracts)*
+*Actualizado post PR9 (feature/m3-async-sqs-migration)*
 *Fuente: `Task.md`, código fuente en `src/`, documentación en `Backend/Externo/`*
