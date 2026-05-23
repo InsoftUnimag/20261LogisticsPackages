@@ -7,13 +7,16 @@ import com.logistics.packages.infrastructure.dto.event.NovedadGraveEvento.TipoNo
 import com.logistics.packages.infrastructure.dto.event.PaqueteEntregadoEvento;
 import com.logistics.packages.infrastructure.dto.event.PaqueteExcluidoDespachoEvento;
 import com.logistics.packages.infrastructure.dto.event.ParadaFallidaEvento;
+import com.logistics.packages.infrastructure.dto.event.ParadaFallidaEvento.MotivoParadaFallida;
 import com.logistics.packages.infrastructure.dto.event.ParadasSinGestionarEvento;
 import com.logistics.packages.infrastructure.dto.event.PaqueteEnTransitoEvento;
 import com.logistics.packages.infrastructure.dto.event.EventoPaqueteM2Dto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -39,7 +42,7 @@ public class EventoPaqueteM2Mapper {
             }
             case "PARADA_FALLIDA" -> {
                 ParadaFallidaEvento evento = (ParadaFallidaEvento) m2Dto;
-                String motivo = evento.getMotivo() != null ? evento.getMotivo().name() : null;
+                String motivo = evento.getMotivo();
                 resultados.add(construirDto(evento.getPaqueteId(), evento.getRutaId(),
                         evento.getFechaHoraEvento(), TipoEventoRuta.DEVOLUCION, motivo, null, null, null));
             }
@@ -71,9 +74,13 @@ public class EventoPaqueteM2Mapper {
         return resultados;
     }
 
-    private EventoRutaDto construirDto(UUID paqueteId, UUID rutaId, OffsetDateTime fechaHoraEvento,
+    private EventoRutaDto construirDto(UUID paqueteId, UUID rutaId, Instant fechaHoraEventoInstant,
                                        TipoEventoRuta tipoEvento, String motivo,
                                        String urlEvidencia, String nombreFirmante, String observaciones) {
+        OffsetDateTime fechaHoraEvento = fechaHoraEventoInstant != null
+                ? fechaHoraEventoInstant.atOffset(ZoneOffset.UTC)
+                : OffsetDateTime.now(ZoneOffset.UTC);
+
         String eventoId = String.format("M2:%s:%s:%s",
                 tipoEvento.name(), paqueteId, fechaHoraEvento);
 
@@ -82,6 +89,7 @@ public class EventoPaqueteM2Mapper {
                 .paqueteId(paqueteId)
                 .rutaId(rutaId)
                 .tipoEvento(tipoEvento)
+                .fechaHoraEvento(fechaHoraEvento)
                 .observaciones(observaciones)
                 .urlEvidencia(urlEvidencia)
                 .nombreFirmante(nombreFirmante)
@@ -89,12 +97,18 @@ public class EventoPaqueteM2Mapper {
                 .build();
     }
 
-    private TipoEventoRuta mapTipoNovedad(TipoNovedadGrave tipoNovedad) {
-        if (tipoNovedad == null) return null;
-        return switch (tipoNovedad) {
-            case DAÑADO_EN_RUTA -> TipoEventoRuta.DAÑADO;
-            case EXTRAVIADO -> TipoEventoRuta.EXTRAVIADO;
-            case DEVOLUCION -> TipoEventoRuta.DEVOLUCION;
-        };
+    private TipoEventoRuta mapTipoNovedad(String tipoNovedadRaw) {
+        if (tipoNovedadRaw == null) return null;
+        try {
+            TipoNovedadGrave tipoNovedad = TipoNovedadGrave.valueOf(tipoNovedadRaw);
+            return switch (tipoNovedad) {
+                case DAÑADO_EN_RUTA -> TipoEventoRuta.DAÑADO;
+                case EXTRAVIADO -> TipoEventoRuta.EXTRAVIADO;
+                case DEVOLUCION -> TipoEventoRuta.DEVOLUCION;
+            };
+        } catch (IllegalArgumentException e) {
+            log.warn("Valor desconocido para tipoNovedad: {}. Usando DEVOLUCION por defecto.", tipoNovedadRaw);
+            return TipoEventoRuta.DEVOLUCION;
+        }
     }
 }
