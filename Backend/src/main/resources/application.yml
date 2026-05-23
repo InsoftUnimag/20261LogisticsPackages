@@ -1,6 +1,10 @@
 spring:
   jpa:
     open-in-view: false
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
   cloud:
     flyway:
       baseline-on-migrate: true

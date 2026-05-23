@@ -30,4 +30,7 @@ public class RegistroAdmisionResponse {
     
     @Schema(description = "Estado actual del paquete (ej: RECIBIDO_EN_SEDE)")
     private String estado;
+    
+    @Schema(description = "Distancia estimada desde la sede al destino en kilómetros")
+    private Double distanciaEstimadaKm;
 }

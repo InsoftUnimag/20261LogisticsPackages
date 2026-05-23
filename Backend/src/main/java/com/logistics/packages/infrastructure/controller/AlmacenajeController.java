@@ -3,8 +3,10 @@ package com.logistics.packages.infrastructure.controller;
 import com.logistics.packages.application.repository.PrepararAlmacenajeIn;
 import com.logistics.packages.application.usecase.PrepararAlmacenajeCommand;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
+import com.logistics.packages.domain.exception.ZonaAlmacenajeNotFoundException;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.model.ZonaAlmacenaje;
+import com.logistics.packages.domain.valueobject.EstadoPaquete;
 import com.logistics.packages.infrastructure.dto.request.AsignarZonaRequest;
 import com.logistics.packages.infrastructure.dto.response.AsignacionZonaResponse;
 import com.logistics.packages.application.repository.PaqueteRepository;
@@ -59,37 +61,72 @@ public class AlmacenajeController {
         
         log.info("Solicitando zona sugerida para paquete: {}", paqueteId);
         
-        Paquete paquete = paqueteRepository.findById(paqueteId)
-                .orElseThrow(() -> new IllegalArgumentException("Paquete no encontrado: " + paqueteId));
-        
-        var zonasCompatibles = zonaAlmacenajeRepository.findCompatibleZonesWithCapacity(
-                paquete.getTipoMercancia(), paquete.getSedeId());
-        
-        ZonaAlmacenaje zonaSugerida = zonasCompatibles.stream()
-                .filter(z -> z.tieneCapacidadPara(paquete))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No hay zona disponible para el paquete: " + paqueteId));
-        
-        boolean saturada = !zonaSugerida.tieneCapacidadPara(paquete);
-        
-        AsignacionZonaResponse response = AsignacionZonaResponse.builder()
-                .paqueteId(paqueteId)
-                .zonaId(zonaSugerida.getId())
-                .nombreZona(zonaSugerida.getNombre())
-                .categoria(zonaSugerida.getCategoria())
-                .tipoMercancia(paquete.getTipoMercancia())
-                .pesoActualKg(zonaSugerida.getPesoActualKg() != null ? zonaSugerida.getPesoActualKg().doubleValue() : 0.0)
-                .capacidadMaxKg(zonaSugerida.getCapacidadMaxKg() != null ? zonaSugerida.getCapacidadMaxKg().doubleValue() : 0.0)
-                .volumenActualM3(zonaSugerida.getVolumenActualM3() != null ? zonaSugerida.getVolumenActualM3().doubleValue() : 0.0)
-                .capacidadMaxM3(zonaSugerida.getCapacidadMaxM3() != null ? zonaSugerida.getCapacidadMaxM3().doubleValue() : 0.0)
-                .contadorPaquetes(zonaSugerida.getContadorPaquetes() != null ? zonaSugerida.getContadorPaquetes() : 0)
-                .capacidadMaxPaquetes(zonaSugerida.getCapacidadMaxPaquetes() != null ? zonaSugerida.getCapacidadMaxPaquetes() : 0)
-                .zonaSaturada(saturada)
-                .datosActualizados(false)
-                .mensaje("Zona sugerida correctamente")
-                .build();
-        
-        return ResponseEntity.ok(response);
+        try {
+            Paquete paquete = paqueteRepository.findById(paqueteId)
+                    .orElseThrow(() -> new PaqueteNotFoundException(paqueteId));
+            
+            // Validar que el paquete esté en estado RECIBIDO_EN_SEDE
+            if (paquete.getEstado() != EstadoPaquete.RECIBIDO_EN_SEDE) {
+                throw new IllegalStateException(
+                    "El paquete " + paqueteId + " ya fue procesado. Estado actual: " + paquete.getEstado() + 
+                    ". No puede sugerir una nueva zona de almacenaje para un paquete ya clasificado."
+                );
+            }
+            
+            // Buscar zonas compatibles con la sede del paquete
+            var zonasCompatibles = zonaAlmacenajeRepository.findCompatibleZonesWithCapacity(
+                    paquete.getTipoMercancia(), paquete.getSedeId());
+            
+            if (zonasCompatibles.isEmpty()) {
+                throw new IllegalArgumentException("No hay zonas disponibles para el tipo de mercancía: " + paquete.getTipoMercancia());
+            }
+            
+            // Intentar encontrar la zona ideal (con capacidad disponible)
+            ZonaAlmacenaje zonaSugerida = zonasCompatibles.stream()
+                    .filter(z -> z.tieneCapacidadPara(paquete))
+                    .findFirst()
+                    .orElse(null);
+            
+            // Si no hay zona con capacidad, usar la zona de contingencia de la primera zona compatible
+            boolean zonaPrincipalSaturada = false;
+            if (zonaSugerida == null) {
+                zonaPrincipalSaturada = true;
+                ZonaAlmacenaje zonaPrincipal = zonasCompatibles.get(0);
+                
+                if (zonaPrincipal.getZonaContingenciaId() != null) {
+                    zonaSugerida = zonaAlmacenajeRepository.findById(zonaPrincipal.getZonaContingenciaId())
+                            .orElse(zonaPrincipal); // Fallback a la zona principal
+                } else {
+                    zonaSugerida = zonaPrincipal; // Usar la zona principal aunque esté saturada
+                }
+                
+                log.warn("Zona principal saturada para paquete {}. Usando zona de contingencia: {}", 
+                        paqueteId, zonaSugerida.getNombre());
+            }
+            
+            AsignacionZonaResponse response = AsignacionZonaResponse.builder()
+                    .paqueteId(paqueteId)
+                    .zonaId(zonaSugerida.getId())
+                    .nombreZona(zonaSugerida.getNombre())
+                    .categoria(zonaSugerida.getCategoria())
+                    .tipoMercancia(paquete.getTipoMercancia())
+                    .pesoActualKg(zonaSugerida.getPesoActualKg() != null ? zonaSugerida.getPesoActualKg().doubleValue() : 0.0)
+                    .capacidadMaxKg(zonaSugerida.getCapacidadMaxKg() != null ? zonaSugerida.getCapacidadMaxKg().doubleValue() : 0.0)
+                    .volumenActualM3(zonaSugerida.getVolumenActualM3() != null ? zonaSugerida.getVolumenActualM3().doubleValue() : 0.0)
+                    .capacidadMaxM3(zonaSugerida.getCapacidadMaxM3() != null ? zonaSugerida.getCapacidadMaxM3().doubleValue() : 0.0)
+                    .contadorPaquetes(zonaSugerida.getContadorPaquetes() != null ? zonaSugerida.getContadorPaquetes() : 0)
+                    .capacidadMaxPaquetes(zonaSugerida.getCapacidadMaxPaquetes() != null ? zonaSugerida.getCapacidadMaxPaquetes() : 0)
+                    .zonaSaturada(zonaPrincipalSaturada)
+                    .datosActualizados(false)
+                    .mensaje(zonaPrincipalSaturada ? "Zona principal saturada. Usando zona de contingencia." : "Zona sugerida correctamente")
+                    .build();
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Error al obtener zona sugerida para paquete {}: {}", paqueteId, e.getMessage(), e);
+            throw e;
+        }
     }
     
     /**
@@ -119,27 +156,27 @@ public class AlmacenajeController {
         
         // Obtener usuarioId del contexto de seguridad
          String username = SecurityContextHolder.getContext().getAuthentication().getName();
-         // En un caso de producción, buscaríamos el usuarioId por username desde el repositorio
-         // Por ahora usamos el username como identificador único
-         UUID usuarioId = UUID.nameUUIDFromBytes(username.getBytes());
+          // En un caso de producción, buscaríamos el usuarioId por username desde el repositorio
+          // Por ahora usamos el username como identificador único
+          UUID usuarioId = UUID.nameUUIDFromBytes(username.getBytes());
+          
+          // Delegar toda la lógica de negocio al UseCase
+          PrepararAlmacenajeCommand command = new PrepararAlmacenajeCommand(
+                  paqueteId,
+                  request.getZonaId(),
+                  usuarioId,
+                  request.tieneDiscrepancias() ? Optional.of(request.getDatosDiscrepancia()) : Optional.empty()
+          );
          
-         // Delegar toda la lógica de negocio al UseCase
-         PrepararAlmacenajeCommand command = new PrepararAlmacenajeCommand(
-                 paqueteId,
-                 request.getZonaId(),
-                 usuarioId,
-                 request.tieneDiscrepancias() ? Optional.of(request.getDatosDiscrepancia()) : Optional.empty()
-         );
-        
-        prepararAlmacenajeIn.prepararAlmacenaje(command);
-        
-        // Cargar la zona asignada para la respuesta
-        ZonaAlmacenaje zona = zonaAlmacenajeRepository.findById(request.getZonaId())
-                .orElseThrow(() -> new IllegalArgumentException("Zona no encontrada: " + request.getZonaId()));
-        
-        // Cargar el paquete actualizado para obtener su estado actual
-        Paquete paqueteActualizado = paqueteRepository.findById(paqueteId)
-                .orElseThrow(() -> new IllegalArgumentException("Paquete no encontrado: " + paqueteId));
+         prepararAlmacenajeIn.prepararAlmacenaje(command);
+         
+         // Cargar la zona asignada para la respuesta
+         ZonaAlmacenaje zona = zonaAlmacenajeRepository.findById(request.getZonaId())
+                 .orElseThrow(() -> new IllegalArgumentException("Zona no encontrada: " + request.getZonaId()));
+         
+         // Cargar el paquete actualizado para obtener su estado actual
+         Paquete paqueteActualizado = paqueteRepository.findById(paqueteId)
+                 .orElseThrow(() -> new IllegalArgumentException("Paquete no encontrado: " + paqueteId));
         
         AsignacionZonaResponse response = AsignacionZonaResponse.builder()
                 .paqueteId(paqueteId)
