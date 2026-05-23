@@ -6,10 +6,12 @@ import com.logistics.packages.infrastructure.dto.response.RespuestaRutaPayload;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@Profile({"default", "local", "aws"})
 @RequiredArgsConstructor
 public class RutaSqsListener {
 

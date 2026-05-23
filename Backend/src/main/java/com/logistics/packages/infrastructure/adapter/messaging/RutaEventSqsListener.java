@@ -8,12 +8,14 @@ import com.logistics.packages.infrastructure.exception.SqsCommunicationException
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Slf4j
 @Component
+@Profile({"default", "local", "aws"})
 @RequiredArgsConstructor
 public class RutaEventSqsListener {
 
