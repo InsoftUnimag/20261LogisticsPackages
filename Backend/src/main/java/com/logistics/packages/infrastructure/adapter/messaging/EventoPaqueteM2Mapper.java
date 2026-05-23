@@ -42,7 +42,7 @@ public class EventoPaqueteM2Mapper {
             }
             case "PARADA_FALLIDA" -> {
                 ParadaFallidaEvento evento = (ParadaFallidaEvento) m2Dto;
-                String motivo = evento.getMotivo();
+                String motivo = mapMotivo(evento.getMotivo());
                 resultados.add(construirDto(evento.getPaqueteId(), evento.getRutaId(),
                         evento.getFechaHoraEvento(), TipoEventoRuta.DEVOLUCION, motivo, null, null, null));
             }
@@ -95,6 +95,17 @@ public class EventoPaqueteM2Mapper {
                 .nombreFirmante(nombreFirmante)
                 .motivo(motivo)
                 .build();
+    }
+
+    private String mapMotivo(String motivoRaw) {
+        if (motivoRaw == null) return null;
+        try {
+            MotivoParadaFallida.valueOf(motivoRaw);
+        } catch (IllegalArgumentException e) {
+            log.warn("Valor desconocido para motivo: {}. Usando MOTIVO_DESCONOCIDO por defecto.", motivoRaw);
+            return "MOTIVO_DESCONOCIDO";
+        }
+        return motivoRaw;
     }
 
     private TipoEventoRuta mapTipoNovedad(String tipoNovedadRaw) {

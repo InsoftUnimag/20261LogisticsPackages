@@ -92,6 +92,18 @@ class EventoPaqueteM2MapperTest {
     }
 
     @Test
+    @DisplayName("PARADA_FALLIDA con motivo desconocido → fallback a MOTIVO_DESCONOCIDO")
+    void testParadaFallidaMotivoDesconocido() {
+        var evento = new com.logistics.packages.infrastructure.dto.event.ParadaFallidaEvento(
+                "PARADA_FALLIDA", paqueteId, rutaId, fecha, "VALOR_INESPERADO");
+
+        List<EventoRutaDto> resultado = mapper.mapToEventoRuta(evento);
+
+        assertEquals(1, resultado.size());
+        assertEquals("MOTIVO_DESCONOCIDO", resultado.getFirst().getMotivo());
+    }
+
+    @Test
     @DisplayName("NOVEDAD_GRAVE tipo DAÑADO_EN_RUTA → DAÑADO")
     void testNovedadGraveDanado() {
         var evento = new com.logistics.packages.infrastructure.dto.event.NovedadGraveEvento(
