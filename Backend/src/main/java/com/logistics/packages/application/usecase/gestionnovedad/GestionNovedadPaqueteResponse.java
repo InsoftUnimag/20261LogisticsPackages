@@ -22,7 +22,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ConsultaPaqueteResponse {
+public class GestionNovedadPaqueteResponse {
     
     /**
      * ID de la ruta
