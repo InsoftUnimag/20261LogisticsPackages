@@ -41,7 +41,7 @@ class PaqueteRutaTest {
     void testAsignarRutaConIdValido() {
         // Given
         UUID rutaId = UUID.randomUUID();
-        paquete.setEstado(EstadoPaquete.RECIBIDO_EN_SEDE);
+        paquete.cambiarEstado(EstadoPaquete.RECIBIDO_EN_SEDE);
         assertNull(paquete.getRutaId(), "El paquete no debe tener ruta asignada inicialmente");
         
         // When
@@ -104,7 +104,7 @@ class PaqueteRutaTest {
     @DisplayName("transitarAParadaDeEntrega() desde EN_TRANSITO cambia el estado correctamente")
     void testTransitarAParadaDeEntrega() {
         // Given
-        paquete.setEstado(EstadoPaquete.EN_TRANSITO);
+        paquete.cambiarEstado(EstadoPaquete.EN_TRANSITO);
         
         // When
         HistorialEstado historial = paquete.transitarAParadaDeEntrega("Llegando al destino", moduloId);
@@ -120,7 +120,7 @@ class PaqueteRutaTest {
     @DisplayName("entregarPaquete() cambia el estado a ENTREGADO y asocia evidencia")
     void testEntregarPaquete() {
         // Given
-        paquete.setEstado(EstadoPaquete.EN_PARADA_DE_ENTREGA);
+        paquete.cambiarEstado(EstadoPaquete.EN_PARADA_DE_ENTREGA);
         String urlEvidencia = "https://storage.com/pod/123.jpg";
         String nombreFirmante = "Juan Pérez";
         
@@ -140,7 +140,7 @@ class PaqueteRutaTest {
     @DisplayName("entregarPaquete() lanza excepción si no se proporciona evidencia")
     void testEntregarPaqueteSinEvidencia() {
         // Given
-        paquete.setEstado(EstadoPaquete.EN_PARADA_DE_ENTREGA);
+        paquete.cambiarEstado(EstadoPaquete.EN_PARADA_DE_ENTREGA);
         
         // When & Then
         assertThrows(EvidenciaRequeridaException.class, () -> 
@@ -151,7 +151,7 @@ class PaqueteRutaTest {
     @DisplayName("No se puede transitar a un estado anterior desde ENTREGADO")
     void testNoRetrocederDesdeEntregado() {
         // Given
-        paquete.setEstado(EstadoPaquete.ENTREGADO);
+        paquete.cambiarEstado(EstadoPaquete.ENTREGADO);
         
         // When & Then
         assertThrows(EstadoTransicionInvalidaException.class, () -> 
@@ -162,7 +162,7 @@ class PaqueteRutaTest {
     @DisplayName("registrarDevolucionEnRuta() cambia el estado correctamente")
     void testRegistrarDevolucionEnRuta() {
         // Given
-        paquete.setEstado(EstadoPaquete.EN_TRANSITO);
+        paquete.cambiarEstado(EstadoPaquete.EN_TRANSITO);
         String motivo = "Dirección incorrecta";
         
         // When
@@ -177,7 +177,7 @@ class PaqueteRutaTest {
     @DisplayName("registrarExtraviadoEnRuta() cambia el estado correctamente")
     void testRegistrarExtraviadoEnRuta() {
         // Given
-        paquete.setEstado(EstadoPaquete.EN_TRANSITO);
+        paquete.cambiarEstado(EstadoPaquete.EN_TRANSITO);
         
         // When
         HistorialEstado historial = paquete.registrarExtraviadoEnRuta("Paquete extraviado", moduloId);
@@ -191,7 +191,7 @@ class PaqueteRutaTest {
     @DisplayName("registrarDañadoEnRuta() requiere evidencia obligatoria")
     void testRegistrarDañadoEnRutaConEvidencia() {
         // Given
-        paquete.setEstado(EstadoPaquete.EN_TRANSITO);
+        paquete.cambiarEstado(EstadoPaquete.EN_TRANSITO);
         String urlEvidencia = "https://storage.com/damage/456.jpg";
         
         // When
@@ -207,7 +207,7 @@ class PaqueteRutaTest {
     @DisplayName("registrarDañadoEnRuta() lanza excepción sin evidencia")
     void testRegistrarDañadoEnRutaSinEvidencia() {
         // Given
-        paquete.setEstado(EstadoPaquete.EN_TRANSITO);
+        paquete.cambiarEstado(EstadoPaquete.EN_TRANSITO);
         
         // When & Then
         assertThrows(EvidenciaRequeridaException.class, () -> 

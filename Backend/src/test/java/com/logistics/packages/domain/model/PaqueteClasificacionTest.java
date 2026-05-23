@@ -46,7 +46,7 @@ class PaqueteClasificacionTest {
     @DisplayName("No debe permitir asignar zona de destino si el estado no es EN_CLASIFICACION")
     void noDebePermitirAsignarZonaDestinoSiEstadoIncorrecto() {
         // Given
-        paquete.setEstado(EstadoPaquete.RECIBIDO_EN_SEDE);
+        paquete.cambiarEstado(EstadoPaquete.RECIBIDO_EN_SEDE);
         UUID zonaDestinoId = UUID.randomUUID();
 
         // When & Then
@@ -74,7 +74,7 @@ class PaqueteClasificacionTest {
         paquete.asignarZonaDestino(primeraZona);
         
         // Volvemos a EN_CLASIFICACION para simular reclasificación
-        paquete.setEstado(EstadoPaquete.EN_CLASIFICACION);
+        paquete.cambiarEstado(EstadoPaquete.EN_CLASIFICACION);
         UUID segundaZona = UUID.randomUUID();
 
         // When

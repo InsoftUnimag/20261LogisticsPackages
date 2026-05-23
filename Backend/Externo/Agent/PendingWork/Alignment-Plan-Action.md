@@ -1,7 +1,7 @@
 ### Plan de Acción: Integración SQS M1 ↔ M2
 
 > **Última actualización:** 2026-05-23  
-> **PRs ejecutados:** PR1 (`@Builder` en controller), PR2 (renombre + docs), PR3 (eliminación componentes deprecados), PR4+PR5 (alineación infraestructura SQS), PR6 (`bugfix/m2-outbound-contracts`), PR7 (`bugfix/m2-inbound-contracts`)
+> **PRs ejecutados:** PR1 (`@Builder` en controller), PR2 (renombre + docs), PR3 (eliminación componentes deprecados), PR4+PR5 (alineación infraestructura SQS), PR6 (`bugfix/m2-outbound-contracts`), PR7 (`bugfix/m2-inbound-contracts`), PR8 (`bugfix/domain-immutability-and-states`)
 
 ---
 
@@ -67,18 +67,21 @@
 
 | Estado | Prioridad |
 |--------|-----------|
-| ⚠️ **Progreso parcial** | ⚠️ **Alta** |
+| ✅ **Completado** | ⚠️ **Alta** |
 
-* **Rama propuesta:** `fix/domain-immutability-and-states`
+* **Rama:** `bugfix/domain-immutability-and-states`
+* **Commits:** `466551d` (domain core), `f11d11f` (app/infra), `f8eb8ff` (tests)
 * **Objetivo:** Proteger el núcleo del negocio y corregir las inconsistencias detectadas en la gestión de novedades (Tarea 4).
-* **Avance:** Renombre de `ConsultaPaqueteResponse` → `GestionNovedadPaqueteResponse` completado en PR2. Documentación corregida en PR2. Resto de tareas pendiente.
-* **Tareas a completar:**
-  * **CRÍTICO** — Eliminar el `@Setter` a nivel de clase en `domain/model/Paquete.java`.
-  * **ALTA** — Refactorizar los casos de uso para que utilicen exclusivamente los métodos de transición de negocio (ej. `transitarAEnRuta()`, `entregarPaquete()`).
-  * **MEDIA** — Modificar `Paquete.registrarNovedad()` para que evalúe y asigne el subtipo correcto de novedad en lugar de fijar siempre `NOVEDAD_EN_BODEGA`.
-  * **MEDIA** — Eliminar las anotaciones de `jakarta.validation` de la entidad `Persona`.
-* **Bloqueantes:** El refactor de `@Setter` requiere revisar todos los lugares que modifican `Paquete` directamente.
-* **Riesgo:** Alto. Cambios en el core del dominio afectan a todos los casos de uso. Requiere suite completa de tests.
+* **Tareas completadas:**
+  * **CRÍTICO** — Eliminado `@Setter` a nivel de clase y field `etiquetaDigital` en `Paquete.java`. Creadas fábricas `crearNuevo()` y `reconstruir()`.
+  * **CRÍTICO** — `Paquete.reconstruir()` público para hidratación desde infraestructura; `@NoArgsConstructor` privado.
+  * **ALTA** — Refactorizados casos de uso: `RegistrarAdmisionUseCase` genera UUID, `PriceCalculationService` recibe `distanciaKm` explícito.
+  * **MEDIA** — `registrarNovedad()` recibe `NovedadBodega` VO preservando `tipoNovedad` en `HistorialEstado`.
+  * **MEDIA** — Eliminado `@Embeddable` de `Persona.java`.
+  * **MEDIA** — Flyway V7: columna `tipo_novedad` en `historial_estados`.
+  * **Todos los tests** refactorizados sin `new Paquete()`, `setEstado()` ni `setTipoMercancia()`.
+* **Evidencia:** 185 tests, 7 fallos (solo Docker/LocalStack no disponible).
+* **Riesgo:** Resuelto. Compilación y tests unitarios verificados.
 
 ---
 
@@ -106,9 +109,9 @@
 |---|------------|-----------|------------|--------|
 | 2 | Contratos Salida (M1→M2) | 🔴 Crítica | — | ✅ **Completado** |
 | 3 | Contratos Entrada (M2→M1) | 🔴 Crítica | — | ✅ **Completado** |
-| 4 | Purificación del Dominio | ⚠️ Alta | — | ⚠️ Parcial |
+| 4 | Purificación del Dominio | ⚠️ Alta | — | ✅ **Completado** |
 | 1 | Infraestructura/Perfiles SQS | ⚠️ Alta | — | ✅ **Completado** |
 | 5 | Pruebas de Humo AWS | ⚠️ Media | 1, 2, 3 | ❌ No iniciado |
 
 > [!NOTE]
-> Los workstreams 2 y 3 están completados, desbloqueando el workstream 5 (pruebas de humo AWS). El workstream 4 (dominio) es independiente y puede ejecutarse en paralelo.
+> Los workstreams 1-4 están completados, desbloqueando el workstream 5 (pruebas de humo AWS).

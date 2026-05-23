@@ -165,7 +165,12 @@ class ClasificarPaqueteUseCaseTest {
     @DisplayName("Debe lanzar excepción si la zona no es apta para el tipo de mercancía")
     void debeLanzarExcepcionSiZonaNoAptaParaTipoMercancia() {
         // Given
-        paquete.setTipoMercancia(TipoMercancia.PELIGROSO);
+        paquete = Paquete.builder()
+                .id(paquete.getId())
+                .estado(EstadoPaquete.EN_CLASIFICACION)
+                .coordenadas(paquete.getCoordenadas())
+                .tipoMercancia(TipoMercancia.PELIGROSO)
+                .build();
         zonaDestino.setCategoria(CategoriaZona.NORMAL); // NORMAL no puede con PELIGROSO
 
         when(paqueteRepository.findById(paquete.getId())).thenReturn(Optional.of(paquete));

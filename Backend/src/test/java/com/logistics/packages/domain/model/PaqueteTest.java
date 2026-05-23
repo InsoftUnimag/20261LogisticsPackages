@@ -16,8 +16,11 @@ class PaqueteTest {
 
     @BeforeEach
     void setUp() {
-        paquete = new Paquete();
-        paquete.prePersist();
+        paquete = Paquete.crearNuevo(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                null, null, null, null, null, null, null
+        );
     }
 
     @Test
@@ -108,9 +111,10 @@ class PaqueteTest {
 
     @Test
     void calcularPrecioEnvio() {
-        paquete.setPesoFacturable(10.0);
-        paquete.setDistanciaEstimadaKm(100.0);
-        paquete.calcularPrecioEnvio(new BigDecimal("5000"), new BigDecimal("100"), new BigDecimal("50"), BigDecimal.ZERO, BigDecimal.ZERO);
+        Peso peso = new Peso(10.0);
+        Dimensiones dimensiones = new Dimensiones(50.0, 30.0, 20.0);
+        paquete.procesarPesaje(peso, dimensiones, TipoMercancia.ESTANDAR, false);
+        paquete.calcularPrecioEnvio(new BigDecimal("5000"), new BigDecimal("100"), new BigDecimal("50"), BigDecimal.ZERO, BigDecimal.ZERO, 100.0);
         assertEquals(0, new BigDecimal("11000").compareTo(paquete.getPrecioEnvio().getValor()));
     }
 
@@ -140,7 +144,7 @@ class PaqueteTest {
 
     @Test
     void asignarZonaDestinoCambiaEstado() {
-        paquete.setEstado(EstadoPaquete.EN_CLASIFICACION);
+        paquete.cambiarEstado(EstadoPaquete.EN_CLASIFICACION);
         UUID zonaId = UUID.randomUUID();
         paquete.asignarZonaDestino(zonaId);
         assertEquals(EstadoPaquete.LISTO_PARA_DESPACHO, paquete.getEstado());
@@ -183,7 +187,7 @@ class PaqueteTest {
         assertEquals(paquete.getId(), historial.getPaqueteId());
         assertEquals(EstadoPaquete.RECIBIDO_EN_SEDE, historial.getEstadoAnterior());
         assertEquals(EstadoPaquete.NOVEDAD_EN_BODEGA, historial.getEstadoNuevo());
-        assertEquals("Caja rota", historial.getObservaciones());
+        assertEquals("DAÑADO - Caja rota", historial.getObservaciones());
         assertEquals(usuarioId, historial.getUsuarioId());
         assertEquals(urlEvidencia, historial.getUrlEvidencia());
     }
@@ -205,7 +209,7 @@ class PaqueteTest {
 
     @Test
     void registrarNovedadEnEstadoInvalidoLanzaExcepcion() {
-        paquete.setEstado(EstadoPaquete.EN_TRANSITO);
+        paquete.cambiarEstado(EstadoPaquete.EN_TRANSITO);
         UUID usuarioId = UUID.randomUUID();
         assertThrows(EstadoTransicionInvalidaException.class, () -> {
             paquete.registrarNovedad(TipoNovedad.EXTRAVIADO, "No se encuentra", usuarioId, null);
