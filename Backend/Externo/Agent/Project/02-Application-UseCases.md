@@ -33,12 +33,12 @@
 | `PriceCalculationService` | calculatePrice(Paquete) | `PriceCalculationServiceImpl` |
 | `ArchivoStoragePort` | guardar(carpeta, identificador, MultipartFile) | `S3ArchivoStorageAdapter` |
 | `RutaQueuePort` | enviarSolicitud(Paquete) | `RutaSqsAdapter` |
-| `RutaEventPublisher` (app.repository) | publicarSolicitudRuta(UUID) | `RutaEventAdapter` |
+| ~~`RutaEventPublisher` (app.repository)~~ | ~~publicarSolicitudRuta(UUID)~~ | ~~`RutaEventAdapter` — ❌ Eliminado~~ |
 | `NovedadEventPublisher` | publicarNovedadRegistrada(UUID, UUID) | `NovedadEventAdapter` |
 | `NotificacionPort` | enviarSms, enviarEmail, enviar | `MockNotificacionAdapter` |
 | `ClasificacionEventPublisher` | publicarPaqueteListoParaClasificar(UUID) | (sin impl visible) |
 | `GeocodingService` (app.ports) | localizar(String) | `GoogleMapsAdapter` (también implementa este) |
-| `RutaEventPublisher` (app.repository) | publicarSolicitudRuta(UUID) | `RutaEventAdapter` (deprecado) |
+| ~~`RutaEventPublisher` (app.repository)~~ | ~~publicarSolicitudRuta(UUID)~~ | ~~`RutaEventAdapter` — ❌ Eliminado~~ |
 
 ## Flujo Lógico Detallado por Use Case
 
