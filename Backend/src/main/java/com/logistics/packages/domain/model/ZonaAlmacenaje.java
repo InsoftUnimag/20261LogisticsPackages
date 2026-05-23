@@ -36,6 +36,7 @@ public class ZonaAlmacenaje {
     private String ubicacionFisica;
     private UUID idSede;
     private UUID zonaContingenciaId;
+    private Long version;
 
     /**
      * FR-006: Verifica si la zona puede albergar un paquete según su tipo de mercancía.
