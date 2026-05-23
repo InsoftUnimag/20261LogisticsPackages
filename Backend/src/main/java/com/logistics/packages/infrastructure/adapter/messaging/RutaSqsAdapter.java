@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.time.ZoneOffset;
 
 @Slf4j
@@ -48,8 +48,8 @@ public class RutaSqsAdapter implements RutaQueuePort {
                 .latitud(paquete.getCoordenadas() != null ? paquete.getCoordenadas().latitud() : null)
                 .longitud(paquete.getCoordenadas() != null ? paquete.getCoordenadas().longitud() : null)
                 .fechaLimiteEntrega(calcularFechaLimite(paquete.getFechaIngresoUtc()))
-                .tipoMercancia(paquete.getTipoMercancia())
-                .metodoPago(paquete.getMetodoPago())
+                .tipoMercancia(paquete.getTipoMercancia().name())
+                .metodoPago(paquete.getMetodoPago().name())
                 .build();
     }
 
@@ -62,8 +62,8 @@ public class RutaSqsAdapter implements RutaQueuePort {
                 .build();
     }
 
-    private OffsetDateTime calcularFechaLimite(java.time.LocalDateTime fechaIngresoUtc) {
+    private Instant calcularFechaLimite(java.time.LocalDateTime fechaIngresoUtc) {
         if (fechaIngresoUtc == null) return null;
-        return fechaIngresoUtc.plusDays(7).atOffset(ZoneOffset.UTC);
+        return fechaIngresoUtc.plusDays(7).atOffset(ZoneOffset.UTC).toInstant();
     }
 }
