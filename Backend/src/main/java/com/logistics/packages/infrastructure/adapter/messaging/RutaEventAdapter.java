@@ -5,6 +5,7 @@ import io.awspring.cloud.sqs.operations.SqsTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import java.util.UUID;
 @Deprecated(since = "2026-05-21", forRemoval = true)
 @Slf4j
 @Component
+@Profile("!prod")
 @RequiredArgsConstructor
 public class RutaEventAdapter implements RutaEventPublisher {
 
