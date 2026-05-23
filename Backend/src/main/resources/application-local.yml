@@ -22,10 +22,6 @@ spring:
         secret-key: test
       sqs:
         endpoint: http://localhost:4566
-        ruta-request-queue: ${DEV_PREFIX:carlos}-solicitar-ruta-queue
-        ruta-response-queue: ${DEV_PREFIX:carlos}-respuestas-ruta-queue
-        eventos-paquete-queue: ${DEV_PREFIX:carlos}-eventos-paquete-queue
-        clasificacion-queue: ${DEV_PREFIX:carlos}-paquete-listo-clasificar-queue
       s3:
         endpoint: http://localhost:4566
 
