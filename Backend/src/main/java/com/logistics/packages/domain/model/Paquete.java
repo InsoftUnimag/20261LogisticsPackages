@@ -11,9 +11,8 @@ import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Getter
-@Setter
 @Builder
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor
 public class Paquete {
     private UUID id;
@@ -55,9 +54,84 @@ public class Paquete {
     private LocalDateTime fechaEntregaUtc;  // Timestamp de entrega
 
     @Getter
-    @Setter
     @Builder.Default
     private String etiquetaDigital = null;  // FR-007: Etiqueta digital vinculada al UUID
+
+    /**
+     * Factory method para crear un nuevo paquete en el dominio.
+     * El ID es generado por el caso de uso y el paquete nace con su identidad completa.
+     */
+    public static Paquete crearNuevo(UUID id, UUID sedeId, Direccion direccionDestino,
+                                     BigDecimal valorDeclarado, MetodoPago metodoPago,
+                                     Persona remitente, Persona destinatario,
+                                     TipoMercancia tipoMercancia, Boolean indicadorFormaIrregular) {
+        Paquete p = new Paquete();
+        p.id = id;
+        p.fechaIngresoUtc = LocalDateTime.now(ZoneOffset.UTC);
+        p.estado = EstadoPaquete.RECIBIDO_EN_SEDE;
+        p.sedeId = sedeId;
+        p.direccionDestino = direccionDestino;
+        p.valorDeclarado = valorDeclarado;
+        p.metodoPago = metodoPago;
+        p.remitente = remitente;
+        p.destinatario = destinatario;
+        p.tipoMercancia = tipoMercancia;
+        p.indicadorFormaIrregular = indicadorFormaIrregular;
+        p.estadoGps = EstadoGps.PENDIENTE;
+        p.etiquetaDigital = "PK-" + id.toString().toUpperCase();
+        return p;
+    }
+
+    /**
+     * Factory method para reconstruir un paquete desde la persistencia.
+     * Uso exclusivo del mapper de infraestructura.
+     */
+    public static Paquete reconstruir(UUID id, LocalDateTime fechaIngresoUtc, EstadoPaquete estado,
+                                      UUID sedeId, Direccion direccionDestino, Coordenadas coordenadas,
+                                      EstadoGps estadoGps, BigDecimal valorDeclarado, MetodoPago metodoPago,
+                                      Persona remitente, Persona destinatario,
+                                      Peso peso, Dimensiones dimensiones, Double volumenM3,
+                                      Double pesoVolumetrico, Double pesoFacturable,
+                                      TipoMercancia tipoMercancia, CategoriaCarga categoriaCarga,
+                                      Boolean indicadorFormaIrregular, PrecioEnvio precioEnvio,
+                                      Double distanciaEstimadaKm, UUID rutaId,
+                                      UUID zonaAlmacenamientoId, UUID zonaDestinoId,
+                                      boolean alertaCargaEspecial, boolean alertaDensidadAtipica,
+                                      String urlEvidenciaEntrega, String nombreFirmante,
+                                      LocalDateTime fechaEntregaUtc, String etiquetaDigital) {
+        Paquete p = new Paquete();
+        p.id = id;
+        p.fechaIngresoUtc = fechaIngresoUtc;
+        p.estado = estado;
+        p.sedeId = sedeId;
+        p.direccionDestino = direccionDestino;
+        p.coordenadas = coordenadas;
+        p.estadoGps = estadoGps;
+        p.valorDeclarado = valorDeclarado;
+        p.metodoPago = metodoPago;
+        p.remitente = remitente;
+        p.destinatario = destinatario;
+        p.peso = peso;
+        p.dimensiones = dimensiones;
+        p.volumenM3 = volumenM3;
+        p.pesoVolumetrico = pesoVolumetrico;
+        p.pesoFacturable = pesoFacturable;
+        p.tipoMercancia = tipoMercancia;
+        p.categoriaCarga = categoriaCarga;
+        p.indicadorFormaIrregular = indicadorFormaIrregular;
+        p.precioEnvio = precioEnvio;
+        p.distanciaEstimadaKm = distanciaEstimadaKm;
+        p.rutaId = rutaId;
+        p.zonaAlmacenamientoId = zonaAlmacenamientoId;
+        p.zonaDestinoId = zonaDestinoId;
+        p.alertaCargaEspecial = alertaCargaEspecial;
+        p.alertaDensidadAtipica = alertaDensidadAtipica;
+        p.urlEvidenciaEntrega = urlEvidenciaEntrega;
+        p.nombreFirmante = nombreFirmante;
+        p.fechaEntregaUtc = fechaEntregaUtc;
+        p.etiquetaDigital = etiquetaDigital;
+        return p;
+    }
 
     public void prePersist() {
         this.id = UUID.randomUUID();
@@ -73,6 +147,11 @@ public class Paquete {
     }
 
     public void asignarPrecio(BigDecimal precio) {
+        this.precioEnvio = new PrecioEnvio(precio);
+    }
+
+    public void asignarPrecioEnvio(BigDecimal precio, double distanciaKm) {
+        this.distanciaEstimadaKm = distanciaKm;
         this.precioEnvio = new PrecioEnvio(precio);
     }
 
@@ -172,10 +251,15 @@ public class Paquete {
      }
 
     public void calcularPrecioEnvio(BigDecimal tarifaBase, BigDecimal tarifaPorKg, BigDecimal tarifaPorKm, BigDecimal recargoTipoMercancia, BigDecimal recargoCategoriaCarga) {
+        double distancia = this.distanciaEstimadaKm != null ? this.distanciaEstimadaKm : 0.0;
+        calcularPrecioEnvio(tarifaBase, tarifaPorKg, tarifaPorKm, recargoTipoMercancia, recargoCategoriaCarga, distancia);
+    }
+
+    public void calcularPrecioEnvio(BigDecimal tarifaBase, BigDecimal tarifaPorKg, BigDecimal tarifaPorKm, BigDecimal recargoTipoMercancia, BigDecimal recargoCategoriaCarga, double distanciaKm) {
+        this.distanciaEstimadaKm = distanciaKm;
         BigDecimal precio = tarifaBase;
         precio = precio.add(new BigDecimal(this.pesoFacturable).multiply(tarifaPorKg));
-        // La distancia se asignará cuando se solicite la ruta; por ahora se inicializa en 0.0
-        double distancia = this.distanciaEstimadaKm != null ? this.distanciaEstimadaKm : 0.0;
+        double distancia = distanciaKm;
         precio = precio.add(new BigDecimal(distancia).multiply(tarifaPorKm));
         precio = precio.add(recargoTipoMercancia);
         precio = precio.add(recargoCategoriaCarga);
@@ -283,13 +367,18 @@ public class Paquete {
      * @throws EvidenciaRequeridaException si es tipo DAÑADO y no se proporciona evidencia
      */
     public HistorialEstado registrarNovedad(TipoNovedad tipo, String observaciones, UUID usuarioId, String urlEvidencia) {
+        NovedadBodega novedad = new NovedadBodega(tipo, observaciones, usuarioId, urlEvidencia);
+        return registrarNovedad(novedad);
+    }
+
+    public HistorialEstado registrarNovedad(NovedadBodega novedad) {
         // FR-006: Validar que el estado permita registrar novedades desde bodega
         if (!this.estado.permiteNovedadEnBodega()) {
             throw new EstadoTransicionInvalidaException(this.id, this.estado);
         }
-        
+
         // FR-004: Validar evidencia obligatoria para tipo DAÑADO
-        if (tipo == TipoNovedad.DAÑADO && (urlEvidencia == null || urlEvidencia.isBlank())) {
+        if (novedad.getTipo() == TipoNovedad.DAÑADO && (novedad.getUrlEvidencia() == null || novedad.getUrlEvidencia().isBlank())) {
             throw new EvidenciaRequeridaException(this.id);
         }
 
@@ -299,8 +388,10 @@ public class Paquete {
         // Actualizar el estado del paquete
         this.estado = EstadoPaquete.NOVEDAD_EN_BODEGA;
 
-        // Crear y retornar el registro de historial
-        return new HistorialEstado(this.id, estadoAnterior, this.estado, observaciones, usuarioId, urlEvidencia);
+        // Crear y retornar el registro de historial con el contexto completo de la novedad
+        return new HistorialEstado(this.id, estadoAnterior, this.estado,
+                novedad.getTipo().name() + " - " + novedad.getObservaciones(),
+                novedad.getUsuarioId(), novedad.getUrlEvidencia(), novedad.getTipo());
     }
     
     /**

@@ -24,7 +24,7 @@ public class PriceCalculationServiceImpl implements PriceCalculationService {
     private static final BigDecimal IVA = new BigDecimal("0.19");
 
     @Override
-    public BigDecimal calculatePrice(Paquete paquete) {
+    public BigDecimal calculatePrice(Paquete paquete, Double distanciaEstimadaKm) {
         log.debug("Calculando precio de envío para paquete {}", paquete.getId());
 
         if (paquete.getPesoFacturable() == null) {
@@ -33,7 +33,7 @@ public class PriceCalculationServiceImpl implements PriceCalculationService {
             );
         }
 
-        if (paquete.getDistanciaEstimadaKm() == null) {
+        if (distanciaEstimadaKm == null) {
             throw new DistanciaRequeridaException();
         }
 
@@ -42,7 +42,7 @@ public class PriceCalculationServiceImpl implements PriceCalculationService {
         BigDecimal costoPeso = new BigDecimal(paquete.getPesoFacturable()).multiply(TARIFA_POR_KG);
         precio = precio.add(costoPeso);
 
-        BigDecimal costoDistancia = new BigDecimal(paquete.getDistanciaEstimadaKm()).multiply(TARIFA_POR_KM);
+        BigDecimal costoDistancia = new BigDecimal(distanciaEstimadaKm).multiply(TARIFA_POR_KM);
         precio = precio.add(costoDistancia);
 
         precio = precio.add(calcularRecargoTipoMercancia(paquete.getTipoMercancia()));

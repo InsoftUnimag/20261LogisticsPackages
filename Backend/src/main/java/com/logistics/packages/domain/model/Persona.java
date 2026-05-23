@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.logistics.packages.domain.valueobject.Direccion;
 import com.logistics.packages.domain.valueobject.TipoDocumento;
-import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,7 +11,6 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
-@Embeddable
 @AllArgsConstructor
 @NoArgsConstructor(force = true)
 @JsonDeserialize(builder = Persona.PersonaBuilder.class)

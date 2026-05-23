@@ -7,6 +7,7 @@ import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.model.HistorialEstado;
 import com.logistics.packages.domain.model.Paquete;
+import com.logistics.packages.domain.valueobject.NovedadBodega;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,12 +58,13 @@ public class RegistrarNovedadUseCase {
         }
 
         // 3. Registrar la novedad en el dominio (aplica las validaciones de negocio)
-        HistorialEstado historial = paquete.registrarNovedad(
+        NovedadBodega novedad = new NovedadBodega(
             command.getTipoNovedad(),
             command.getObservaciones(),
             command.getUsuarioId(),
             urlEvidencia
         );
+        HistorialEstado historial = paquete.registrarNovedad(novedad);
 
         // 4. Persistir cambios en base de datos
         paqueteRepository.save(paquete);

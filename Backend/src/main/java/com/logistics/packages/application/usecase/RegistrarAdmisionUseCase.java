@@ -37,17 +37,18 @@ public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
         }
 
         if (coordenadas != null && coverageService.isWithinCoverage(coordenadas)) {
-            Paquete paquete = Paquete.builder()
-                    .sedeId(command.sedeId())
-                    .direccionDestino(command.direccionDestino())
-                    .valorDeclarado(command.valorDeclarado())
-                    .metodoPago(command.metodoPago())
-                    .remitente(command.remitente())
-                    .destinatario(command.destinatario())
-                    .tipoMercancia(command.tipoMercancia())
-                    .indicadorFormaIrregular(command.indicadorFormaIrregular())
-                    .build();
-            paquete.prePersist();
+            UUID paqueteId = UUID.randomUUID();
+            Paquete paquete = Paquete.crearNuevo(
+                    paqueteId,
+                    command.sedeId(),
+                    command.direccionDestino(),
+                    command.valorDeclarado(),
+                    command.metodoPago(),
+                    command.remitente(),
+                    command.destinatario(),
+                    command.tipoMercancia(),
+                    command.indicadorFormaIrregular()
+            );
             paquete.asignarCoordenadas(coordenadas);
 
             if (haEjecutadoPesaje(command)) {
@@ -56,10 +57,8 @@ public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
                 paquete.procesarPesaje(peso, dimensiones, command.tipoMercancia(), command.indicadorFormaIrregular());
 
                 double distanciaKm = distanceService.calcularDistanciaDesdeSede(coordenadas);
-                paquete.setDistanciaEstimadaKm(distanciaKm);
-
-                BigDecimal precio = priceCalculationService.calculatePrice(paquete);
-                paquete.asignarPrecio(precio);
+                BigDecimal precio = priceCalculationService.calculatePrice(paquete, distanciaKm);
+                paquete.asignarPrecioEnvio(precio, distanciaKm);
             }
 
             Paquete saved = paqueteRepository.save(paquete);

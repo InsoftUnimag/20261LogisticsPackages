@@ -7,5 +7,5 @@ import java.math.BigDecimal;
 
 @Component
 public interface PriceCalculationService {
-    BigDecimal calculatePrice(Paquete paquete);
+    BigDecimal calculatePrice(Paquete paquete, Double distanciaEstimadaKm);
 }

@@ -63,12 +63,10 @@ public class PaqueteJpaAdapter implements PaqueteRepository {
         }
         
         // Guardar el paquete DBO con referencias a personas existentes/nuevas
-        PaqueteDbo savedDbo = paqueteJpaRepository.save(dbo);
-        
+        paqueteJpaRepository.save(dbo);
+
         // Retornamos el paquete domain original (que está en memoria y completamente válido)
-        // Evitamos pasar por toDomain que falla cuando peso/dimensiones son null
-        // El id ya fue asignado por prePersist(), pero por seguridad lo sincronizamos con el DBO
-        paquete.setId(savedDbo.getId());
+        // La identidad del paquete nace en el dominio (crearNuevo), JPA no la gestiona
         return paquete;
     }
 

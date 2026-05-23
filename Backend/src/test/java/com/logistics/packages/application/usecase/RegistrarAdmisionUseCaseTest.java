@@ -81,11 +81,12 @@ class RegistrarAdmisionUseCaseTest {
         Coordenadas coordenadas = new Coordenadas(4.5, -74.5);
         when(geocodingService.localizar(command.direccionDestino())).thenReturn(Optional.of(coordenadas));
         when(coverageService.isWithinCoverage(coordenadas)).thenReturn(true);
-        when(priceCalculationService.calculatePrice(any())).thenReturn(new BigDecimal("5000"));
+        when(priceCalculationService.calculatePrice(any(), anyDouble())).thenReturn(new BigDecimal("5000"));
         when(distanceService.calcularDistanciaDesdeSede(coordenadas)).thenReturn(150.0);
 
-        Paquete paqueteGuardado = new Paquete();
-        paqueteGuardado.prePersist();
+        UUID paqueteIdMock = UUID.randomUUID();
+        Paquete paqueteGuardado = mock(Paquete.class);
+        when(paqueteGuardado.getId()).thenReturn(paqueteIdMock);
         when(paqueteRepository.save(any(Paquete.class))).thenReturn(paqueteGuardado);
 
         UUID paqueteId = registrarAdmisionUseCase.registrarAdmision(command);
@@ -102,11 +103,11 @@ class RegistrarAdmisionUseCaseTest {
                 .build();
 
         when(coverageService.isWithinCoverage(command.coordenadasManuales())).thenReturn(true);
-        when(priceCalculationService.calculatePrice(any())).thenReturn(new BigDecimal("5000"));
+        when(priceCalculationService.calculatePrice(any(), anyDouble())).thenReturn(new BigDecimal("5000"));
         when(distanceService.calcularDistanciaDesdeSede(command.coordenadasManuales())).thenReturn(150.0);
 
-        Paquete paqueteGuardado = new Paquete();
-        paqueteGuardado.prePersist();
+        Paquete paqueteGuardado = mock(Paquete.class);
+        when(paqueteGuardado.getId()).thenReturn(UUID.randomUUID());
         when(paqueteRepository.save(any(Paquete.class))).thenReturn(paqueteGuardado);
 
         UUID paqueteId = registrarAdmisionUseCase.registrarAdmision(command);
@@ -147,7 +148,7 @@ class RegistrarAdmisionUseCaseTest {
 
         when(geocodingService.localizar(any())).thenReturn(Optional.of(new Coordenadas(4.5, -74.5)));
         when(coverageService.isWithinCoverage(any())).thenReturn(true);
-        when(priceCalculationService.calculatePrice(any())).thenReturn(new BigDecimal("10000"));
+        when(priceCalculationService.calculatePrice(any(), anyDouble())).thenReturn(new BigDecimal("10000"));
         when(distanceService.calcularDistanciaDesdeSede(any())).thenReturn(150.0);
         when(paqueteRepository.save(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -171,7 +172,7 @@ class RegistrarAdmisionUseCaseTest {
 
         when(geocodingService.localizar(any())).thenReturn(Optional.of(new Coordenadas(4.5, -74.5)));
         when(coverageService.isWithinCoverage(any())).thenReturn(true);
-        when(priceCalculationService.calculatePrice(any())).thenReturn(new BigDecimal("10000"));
+        when(priceCalculationService.calculatePrice(any(), anyDouble())).thenReturn(new BigDecimal("10000"));
         when(distanceService.calcularDistanciaDesdeSede(any())).thenReturn(150.0);
         when(paqueteRepository.save(any(Paquete.class))).thenAnswer(invocation -> invocation.getArgument(0));
 

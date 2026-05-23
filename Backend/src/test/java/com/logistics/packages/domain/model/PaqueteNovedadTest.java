@@ -35,7 +35,7 @@ class PaqueteNovedadTest {
     @DisplayName("Debe lanzar EstadoTransicionInvalidaException cuando el paquete está EN_TRANSITO")
     void registrarNovedad_PaqueteEnTransito_DebeRechazar() {
         // Given
-        paquete.setEstado(EstadoPaquete.EN_TRANSITO);
+        paquete.cambiarEstado(EstadoPaquete.EN_TRANSITO);
         
         // When & Then
         EstadoTransicionInvalidaException exception = assertThrows(
@@ -51,7 +51,7 @@ class PaqueteNovedadTest {
     @DisplayName("Debe lanzar EstadoTransicionInvalidaException cuando el paquete está ENTREGADO")
     void registrarNovedad_PaqueteEntregado_DebeRechazar() {
         // Given
-        paquete.setEstado(EstadoPaquete.ENTREGADO);
+        paquete.cambiarEstado(EstadoPaquete.ENTREGADO);
         
         // When & Then
         assertThrows(
@@ -125,9 +125,10 @@ class PaqueteNovedadTest {
         assertEquals(paquete.getId(), historial.getPaqueteId());
         assertEquals(EstadoPaquete.RECIBIDO_EN_SEDE, historial.getEstadoAnterior());
         assertEquals(EstadoPaquete.NOVEDAD_EN_BODEGA, historial.getEstadoNuevo());
-        assertEquals(observaciones, historial.getObservaciones());
+        assertEquals("DAÑADO - " + observaciones, historial.getObservaciones());
         assertEquals(usuarioId, historial.getUsuarioId());
         assertEquals(urlEvidencia, historial.getUrlEvidencia());
+        assertEquals(TipoNovedad.DAÑADO, historial.getTipoNovedad());
         assertNotNull(historial.getFechaTransicionUtc());
     }
 
@@ -152,7 +153,7 @@ class PaqueteNovedadTest {
     @DisplayName("Debe permitir registrar novedad desde estado EN_CLASIFICACION")
     void registrarNovedad_DesdeEnClasificacion_DebePermitir() {
         // Given
-        paquete.setEstado(EstadoPaquete.EN_CLASIFICACION);
+        paquete.cambiarEstado(EstadoPaquete.EN_CLASIFICACION);
         
         // When
         HistorialEstado historial = paquete.registrarNovedad(

@@ -88,7 +88,7 @@ class ProcesarEventoRutaUseCaseTest {
         eventoDto.setUrlEvidencia("https://storage.com/pod.jpg");
         eventoDto.setNombreFirmante("Juan Pérez");
         
-        paquete.setEstado(EstadoPaquete.EN_PARADA_DE_ENTREGA);
+        paquete.cambiarEstado(EstadoPaquete.EN_PARADA_DE_ENTREGA);
         
         when(eventoProcesadoRepository.yaFueProcesado(eventoDto.getEventoId())).thenReturn(false);
         when(paqueteRepository.findById(eventoDto.getPaqueteId())).thenReturn(Optional.of(paquete));
@@ -160,7 +160,7 @@ class ProcesarEventoRutaUseCaseTest {
         eventoDto.setTipoEvento(EventoRutaDto.TipoEventoRuta.DEVOLUCION);
         eventoDto.setMotivo("Dirección incorrecta");
         
-        paquete.setEstado(EstadoPaquete.EN_TRANSITO);
+        paquete.cambiarEstado(EstadoPaquete.EN_TRANSITO);
         
         when(eventoProcesadoRepository.yaFueProcesado(eventoDto.getEventoId())).thenReturn(false);
         when(paqueteRepository.findById(eventoDto.getPaqueteId())).thenReturn(Optional.of(paquete));
