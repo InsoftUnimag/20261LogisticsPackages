@@ -1,14 +1,11 @@
 package com.logistics.packages.infrastructure.adapter.persistence.paquete;
 
 import com.logistics.packages.domain.model.Paquete;
-import com.logistics.packages.domain.valueobject.Dimensiones;
-import com.logistics.packages.domain.valueobject.PrecioEnvio;
-import com.logistics.packages.domain.valueobject.Peso;
+import com.logistics.packages.domain.model.Persona;
+import com.logistics.packages.domain.valueobject.*;
 import com.logistics.packages.infrastructure.adapter.persistence.persona.PersonaMapper;
-import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 
 import java.math.BigDecimal;
@@ -32,26 +29,60 @@ public interface PaqueteMapper {
     @Mapping(source = "etiquetaDigital", target = "etiquetaDigital")
     PaqueteDbo toDbo(Paquete domain);
 
-     @Mapping(target = "direccionDestino", source = "direccionDestino")
-     @Mapping(target = "coordenadas.latitud", source = "latitud")
-     @Mapping(target = "coordenadas.longitud", source = "longitud")
-     @Mapping(target = "precioEnvio", source = "precioEnvio", qualifiedByName = "bigDecimalToPrecio")
-     @Mapping(target = "peso", source = "peso", qualifiedByName = "doubleToPeso")
-     @Mapping(target = "dimensiones", ignore = true)
-     @Mapping(target = "urlEvidenciaEntrega", source = "urlEvidenciaEntrega")
-     @Mapping(target = "nombreFirmante", source = "nombreFirmante")
-     @Mapping(target = "fechaEntregaUtc", source = "fechaEntregaUtc")
-     @Mapping(target = "alertaCargaEspecial", source = "alertaCargaEspecial")
-     @Mapping(target = "alertaDensidadAtipica", source = "alertaDensidadAtipica")
-     @Mapping(target = "etiquetaDigital", source = "etiquetaDigital")
-     Paquete toDomain(PaqueteDbo dbo);
+    default Paquete toDomain(PaqueteDbo dbo) {
+        if (dbo == null) return null;
 
-     @AfterMapping
-     default void mapDimensiones(PaqueteDbo dbo, @MappingTarget Paquete paquete) {
-         if (dbo.getLargo() != null && dbo.getAncho() != null && dbo.getAlto() != null) {
-             paquete.setDimensiones(new Dimensiones(dbo.getLargo(), dbo.getAncho(), dbo.getAlto()));
-         }
-     }
+        Persona remitente = null;
+        if (dbo.getRemitente() != null) {
+            remitente = Persona.builder()
+                    .tipoDocumento(dbo.getRemitente().getTipoDocumento())
+                    .numeroDocumento(dbo.getRemitente().getNumeroDocumento())
+                    .nombreCompleto(dbo.getRemitente().getNombreCompleto())
+                    .telefono(dbo.getRemitente().getTelefono())
+                    .correoElectronico(dbo.getRemitente().getCorreoElectronico())
+                    .direccion(dbo.getDireccionDestino())
+                    .build();
+        }
+
+        Persona destinatario = null;
+        if (dbo.getDestinatario() != null) {
+            destinatario = Persona.builder()
+                    .tipoDocumento(dbo.getDestinatario().getTipoDocumento())
+                    .numeroDocumento(dbo.getDestinatario().getNumeroDocumento())
+                    .nombreCompleto(dbo.getDestinatario().getNombreCompleto())
+                    .telefono(dbo.getDestinatario().getTelefono())
+                    .correoElectronico(dbo.getDestinatario().getCorreoElectronico())
+                    .build();
+        }
+
+        Coordenadas coordenadas = dbo.getLatitud() != null && dbo.getLongitud() != null
+                ? new Coordenadas(dbo.getLatitud(), dbo.getLongitud())
+                : null;
+
+        Peso peso = dbo.getPeso() != null ? new Peso(dbo.getPeso()) : null;
+
+        Dimensiones dimensiones = dbo.getLargo() != null && dbo.getAncho() != null && dbo.getAlto() != null
+                ? new Dimensiones(dbo.getLargo(), dbo.getAncho(), dbo.getAlto())
+                : null;
+
+        PrecioEnvio precioEnvio = dbo.getPrecioEnvio() != null ? new PrecioEnvio(dbo.getPrecioEnvio()) : null;
+
+        return Paquete.reconstruir(
+                dbo.getId(), dbo.getFechaIngresoUtc(), dbo.getEstado(),
+                dbo.getSedeId(), dbo.getDireccionDestino(), coordenadas,
+                dbo.getEstadoGps(), dbo.getValorDeclarado(), dbo.getMetodoPago(),
+                remitente, destinatario,
+                peso, dimensiones, dbo.getVolumenM3(),
+                dbo.getPesoVolumetrico(), dbo.getPesoFacturable(),
+                dbo.getTipoMercancia(), dbo.getCategoriaCarga(),
+                dbo.getIndicadorFormaIrregular(), precioEnvio,
+                dbo.getDistanciaEstimadaKm(), dbo.getRutaId(),
+                dbo.getZonaAlmacenamientoId(), dbo.getZonaDestinoId(),
+                dbo.isAlertaCargaEspecial(), dbo.isAlertaDensidadAtipica(),
+                dbo.getUrlEvidenciaEntrega(), dbo.getNombreFirmante(),
+                dbo.getFechaEntregaUtc(), dbo.getEtiquetaDigital()
+        );
+    }
 
     @Named("precioToBigDecimal")
     default BigDecimal mapToBigDecimal(PrecioEnvio precio) {
