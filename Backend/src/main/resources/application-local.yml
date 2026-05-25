@@ -2,15 +2,7 @@ spring:
   application:
     name: logistics-packages
 
-  datasource:
-    url: jdbc:postgresql://localhost:5432/logistics-packages
-    username: user
-    password: password
-
   flyway:
-    url: jdbc:postgresql://localhost:5432/logistics-packages
-    user: user
-    password: password
     enabled: true
 
   cloud:

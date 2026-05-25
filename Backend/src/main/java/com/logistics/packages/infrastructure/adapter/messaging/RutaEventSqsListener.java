@@ -5,6 +5,8 @@ import com.logistics.packages.application.usecase.gestionnovedad.ProcesarEventoR
 import com.logistics.packages.domain.exception.EventoDuplicadoException;
 import com.logistics.packages.infrastructure.dto.event.EventoPaqueteM2Dto;
 import com.logistics.packages.infrastructure.exception.SqsCommunicationException;
+import com.logistics.packages.infrastructure.messaging.consumers.JsonNodeMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +25,13 @@ public class RutaEventSqsListener {
     private final EventoPaqueteM2Mapper eventoMapper;
 
     @SqsListener("${app.sqs.eventos-paquete-queue:logistics-eventos-paquete}")
-    public void onEventoPaquete(EventoPaqueteM2Dto m2Dto) {
+    public void onEventoPaquete(Object payload) {
+        // Convertir el payload a JsonNode para manejo seguro
+        JsonNode jsonNode = JsonNodeMapper.toJsonNode(payload);
+        
+        // Deserializar al DTO local de M1
+        EventoPaqueteM2Dto m2Dto = JsonNodeMapper.fromJsonNode(jsonNode, EventoPaqueteM2Dto.class);
+        
         log.info("Evento de paquete M2 recibido: {} para paquete: {}",
                 m2Dto.getTipoEvento(), m2Dto.getPaqueteId());
 
