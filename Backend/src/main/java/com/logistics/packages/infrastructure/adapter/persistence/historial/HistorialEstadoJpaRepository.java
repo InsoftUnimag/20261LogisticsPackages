@@ -20,4 +20,12 @@ public interface HistorialEstadoJpaRepository extends JpaRepository<HistorialEst
      * @return Lista ordenada de registros de historial
      */
     List<HistorialEstadoEntity> findByPaqueteIdOrderByFechaTransicionUtcAsc(UUID paqueteId);
+
+    /**
+     * Encuentra todas las novedades (registros donde tipoNovedad no es null).
+     * Ordenadas del más reciente al más antiguo para listar primero las pendientes.
+     * 
+     * @return Lista de todas las novedades ordenadas por fecha descendente
+     */
+    List<HistorialEstadoEntity> findByTipoNovedadIsNotNullOrderByFechaTransicionUtcDesc();
 }

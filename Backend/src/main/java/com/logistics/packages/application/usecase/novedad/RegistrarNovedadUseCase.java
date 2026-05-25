@@ -1,6 +1,7 @@
 package com.logistics.packages.application.usecase.novedad;
 
 import com.logistics.packages.application.ports.EstadoPaqueteFinanzasPublisher;
+import com.logistics.packages.application.ports.NotificacionPort;
 import com.logistics.packages.application.repository.ArchivoStoragePort;
 import com.logistics.packages.application.repository.HistorialEstadoRepository;
 import com.logistics.packages.application.repository.NovedadEventPublisher;
@@ -9,7 +10,9 @@ import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.model.HistorialEstado;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.NovedadBodega;
+import com.logistics.packages.domain.valueobject.TipoNovedad;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RegistrarNovedadUseCase {
 
     private final PaqueteRepository paqueteRepository;
@@ -33,6 +37,7 @@ public class RegistrarNovedadUseCase {
     private final ArchivoStoragePort archivoStoragePort;
     private final NovedadEventPublisher novedadEventPublisher;
     private final EstadoPaqueteFinanzasPublisher estadoPaqueteFinanzasPublisher;
+    private final NotificacionPort notificacionPort;
 
     /**
      * Ejecuta el registro de una novedad en un paquete.
@@ -75,6 +80,9 @@ public class RegistrarNovedadUseCase {
         // 5. Publicar evento para notificar al Controlador de Novedades (FR-005)
         novedadEventPublisher.publicarNovedadRegistrada(paquete.getId(), historial.getId());
 
+        // FR-002: Enviar notificaciones al remitente y destinatario
+        enviarNotificacionesBodega(paquete, novedad.getTipo());
+
         // Publicar estado actualizado a la cola de Finanzas (M3)
         estadoPaqueteFinanzasPublisher.publicarEstadoFinal(paquete);
 
@@ -84,5 +92,79 @@ public class RegistrarNovedadUseCase {
             paquete.getEstado(),
             historial.getId()
         );
+    }
+
+    /**
+     * FR-002: Envía notificaciones al remitente y destinatario sobre la novedad registrada.
+     * Si el envío de notificaciones falla, se registra en logs pero NO hace rollback de la transacción principal.
+     * 
+     * @param paquete El paquete con novedad registrada
+     * @param tipoNovedad Tipo de novedad (DAÑADO o EXTRAVIADO)
+     */
+    private void enviarNotificacionesBodega(Paquete paquete, TipoNovedad tipoNovedad) {
+        try {
+            String mensaje = construirMensajeNotificacion(paquete, tipoNovedad);
+            
+            // Notificar al remitente por SMS
+            if (paquete.getRemitente() != null && paquete.getRemitente().getTelefono() != null) {
+                try {
+                    notificacionPort.enviarSms(paquete.getRemitente().getTelefono(), mensaje);
+                    log.info("Notificación SMS enviada al remitente sobre novedad en bodega: {}", 
+                            paquete.getRemitente().getTelefono());
+                } catch (Exception e) {
+                    log.error("Error al enviar SMS al remitente sobre novedad en bodega: {}", e.getMessage());
+                }
+            }
+            
+            // Notificar al destinatario por SMS y Email
+            if (paquete.getDestinatario() != null) {
+                if (paquete.getDestinatario().getTelefono() != null) {
+                    try {
+                        notificacionPort.enviarSms(paquete.getDestinatario().getTelefono(), mensaje);
+                        log.info("Notificación SMS enviada al destinatario sobre novedad en bodega: {}", 
+                                paquete.getDestinatario().getTelefono());
+                    } catch (Exception e) {
+                        log.error("Error al enviar SMS al destinatario sobre novedad en bodega: {}", e.getMessage());
+                    }
+                }
+                
+                if (paquete.getDestinatario().getCorreoElectronico() != null) {
+                    try {
+                        String asunto = "Novedad en tu paquete - " + tipoNovedad.name();
+                        notificacionPort.enviarEmail(paquete.getDestinatario().getCorreoElectronico(), asunto, mensaje);
+                        log.info("Notificación Email enviada al destinatario sobre novedad en bodega: {}", 
+                                paquete.getDestinatario().getCorreoElectronico());
+                    } catch (Exception e) {
+                        log.error("Error al enviar Email al destinatario sobre novedad en bodega: {}", e.getMessage());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error general al enviar notificaciones sobre novedad en bodega para paquete {}: {}", 
+                    paquete.getId(), e.getMessage());
+        }
+    }
+
+    /**
+     * Construye el mensaje de notificación según el tipo de novedad en bodega.
+     * 
+     * @param paquete El paquete con novedad
+     * @param tipoNovedad Tipo de novedad
+     * @return Mensaje de notificación
+     */
+    private String construirMensajeNotificacion(Paquete paquete, TipoNovedad tipoNovedad) {
+        String idPaquete = paquete.getId().toString().substring(0, 8);
+        
+        switch (tipoNovedad) {
+            case DAÑADO:
+                return String.format("Novedad crítica: Tu paquete %s presenta daños. " +
+                        "Nuestro equipo se pondrá en contacto para resolver la situación.", idPaquete);
+            case EXTRAVIADO:
+                return String.format("Novedad crítica: Tu paquete %s ha sido reportado como extraviado en bodega. " +
+                        "Nuestro equipo está trabajando para localizarlo.", idPaquete);
+            default:
+                return String.format("Se ha reportado una novedad en tu paquete %s. " +
+                        "Nuestro equipo se pondrá en contacto.", idPaquete);
+        }
     }
 }
