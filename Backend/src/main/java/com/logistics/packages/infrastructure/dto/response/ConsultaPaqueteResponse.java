@@ -30,6 +30,18 @@ public class ConsultaPaqueteResponse {
             example = "true")
     private Boolean fechaEntregaSujetaConfirmacion;
     
+    @Schema(description = "Peso del paquete en kg", nullable = true)
+    private Double pesoKg;
+    
+    @Schema(description = "Largo del paquete en cm", nullable = true)
+    private Double largoCm;
+    
+    @Schema(description = "Ancho del paquete en cm", nullable = true)
+    private Double anchoCm;
+    
+    @Schema(description = "Alto del paquete en cm", nullable = true)
+    private Double altoCm;
+    
     /**
      * Constructor legado para retrocompatibilidad con el campo idRoute.
      * @deprecated Usar el constructor con @Builder y proporcionar rutaId explícitamente

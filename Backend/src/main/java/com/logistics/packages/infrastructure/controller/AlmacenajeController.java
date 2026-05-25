@@ -89,9 +89,11 @@ public class AlmacenajeController {
             
             // Si no hay zona con capacidad, usar la zona de contingencia de la primera zona compatible
             boolean zonaPrincipalSaturada = false;
+            String nombreZonaPrincipal = null;
             if (zonaSugerida == null) {
                 zonaPrincipalSaturada = true;
                 ZonaAlmacenaje zonaPrincipal = zonasCompatibles.get(0);
+                nombreZonaPrincipal = zonaPrincipal.getNombre();
                 
                 if (zonaPrincipal.getZonaContingenciaId() != null) {
                     zonaSugerida = zonaAlmacenajeRepository.findById(zonaPrincipal.getZonaContingenciaId())
@@ -108,6 +110,7 @@ public class AlmacenajeController {
                     .paqueteId(paqueteId)
                     .zonaId(zonaSugerida.getId())
                     .nombreZona(zonaSugerida.getNombre())
+                    .nombreZonaPrincipal(nombreZonaPrincipal)
                     .categoria(zonaSugerida.getCategoria())
                     .tipoMercancia(paquete.getTipoMercancia())
                     .pesoActualKg(zonaSugerida.getPesoActualKg() != null ? zonaSugerida.getPesoActualKg().doubleValue() : 0.0)
