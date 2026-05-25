@@ -2,4 +2,11 @@ spring:
   cloud:
     aws:
       region:
-        static: ${AWS_REGION:us-east-1}
+        static: us-east-2
+
+app:
+  sqs:
+    eventos-paquete-queue: arn:aws:sqs:us-east-2:383941187903:logistics-eventos-paquete
+aws:
+  sqs:
+    ruta-response-queue: arn:aws:sqs:us-east-2:383941187903:respuestas-ruta-queue

@@ -21,6 +21,7 @@ services:
       - "4566:4566"
     environment:
       - SERVICES=sqs,s3
+      - DEFAULT_REGION=us-east-1
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:4566/_localstack/health || exit 1"]
       interval: 10s
@@ -49,6 +50,9 @@ services:
       - SPRING_CLOUD_AWS_CREDENTIALS_ACCESS-KEY=test
       - SPRING_CLOUD_AWS_CREDENTIALS_SECRET-KEY=test
       - SPRING_CLOUD_AWS_REGION_STATIC=us-east-1
+
+      #Spring Profile
+      - SPRING_PROFILES_ACTIVE=local
 
       #Google Maps
       - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
