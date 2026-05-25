@@ -295,41 +295,46 @@ sequenceDiagram
     end
 ```
 
-## Flujo 6: Consulta Financiera (UC-8)
+## Flujo 6: Notificación Asíncrona a Finanzas vía SQS (Estados Finales)
 
 ```mermaid
 sequenceDiagram
-    participant MOD as Módulo Finanzas
-    participant CTRL as ConsultaFinancieraController
-    participant UC8 as ConsultarEstadoPaqueteUseCase
+    participant UC as Caso de Uso\n(ProcesarEventoRutaUseCase /\nRegistrarNovedadUseCase)
     participant REPO as PaqueteJpaAdapter
-    participant HIST as HistorialEstadoJpaAdapter
+    participant PUB as EstadoPaqueteFinanzasPublisher\n(Puerto Hexagonal)
+    participant SQS_ADAPTER as FinanzasEventSqsAdapter
     participant DB as PostgreSQL
+    participant SQS as Amazon SQS\n(eventos-financieros-paquete-queue)
 
-    MOD->>CTRL: GET /route/{idRoute}/package/{idPaquete}
-    CTRL->>UC8: consultar(idRoute, idPaquete)
-    UC8->>REPO: findById(paqueteId)
+    Note over UC: 1. Persistencia del paquete\n(ocurre antes de publicar)
+    UC->>REPO: save(paquete)
+    REPO->>DB: UPDATE/INSERT paquetes, historial_estados,\neventos_procesados
+    DB-->>REPO: OK
+
+    Note over UC: 2. Notificaciones a usuarios\n(SMS/Email)
+
+    Note over UC: 3. Publicación asíncrona a Finanzas\ndentro de la misma transacción @Transactional
+
+    UC->>PUB: publicarEstadoFinal(paquete)
+    PUB->>SQS_ADAPTER: publicarEstadoFinal(paquete)
+    SQS_ADAPTER->>SQS_ADAPTER: mapear a EventoFinancieroPaqueteDto\ncon @JsonProperty snake_case
+
+    Note over SQS_ADAPTER: Payload mínimo:\n{\n  "id_paquete": "UUID",\n  "id_ruta": "UUID",\n  "estado": "ENTREGADO" | "NOVEDAD_EN_BODEGA"\n}
+
+    SQS_ADAPTER->>SQS: sqsTemplate.send(payload)
     
-    alt paquete no existe
-        REPO-->>UC8: empty
-        UC8-->>CTRL: PaqueteNotFoundException
-        CTRL-->>MOD: 404 Not Found
-    else paquete existe
-        REPO-->>UC8: Paquete
-        
-        alt rutaId no coincide
-            UC8-->>CTRL: IllegalArgumentException
-            CTRL-->>MOD: 404 Not Found
-        else rutaId coincide
-            UC8->>HIST: obtenerHistorialPorPaqueteId(paqueteId)
-            HIST->>DB: SELECT * FROM historial_estados\nWHERE paquete_id = ?\nORDER BY fecha_transicion ASC
-            DB-->>HIST: List<HistorialEstadoEntity>
-            HIST-->>UC8: List<HistorialEstado>
-            
-            UC8-->>CTRL: ConsultaPaqueteResponse
-            Note over CTRL: DTO incluye:\n- idRoute, idPaquete\n- estado actual\n- valorDeclarado, precioEnvio\n- metodoPago\n- fechaIngresoUtc, fechaEntregaUtc\n- urlEvidenciaEntrega, nombreFirmante\n- historialEstados[]
-            CTRL-->>MOD: 200 OK
-        end
+    alt publicación exitosa
+        SQS-->>SQS_ADAPTER: OK
+        SQS_ADAPTER-->>PUB: void
+        PUB-->>UC: OK
+        Note over UC: Transacción commit exitoso
+    else fallo en SQS
+        SQS--xSQS_ADAPTER: SqsException / Timeout
+        SQS_ADAPTER->>SQS_ADAPTER: log.error() → throw e
+        Note over SQS_ADAPTER: NO silencia la excepción\nPropaga al caso de uso
+        SQS_ADAPTER--xPUB: SqsCommunicationException
+        PUB--xUC: SqsCommunicationException
+        Note over UC: Excepción propagada →\nrollback @Transactional\nDB revierte cambios
     end
 ```
 
@@ -351,11 +356,10 @@ flowchart TD
         UC2[ProcesarPesaje]
         UC4[PrepararAlmacenaje]
         UC3[ClasificarPaquete]
-        UC10[RegistrarNovedad]
+        UC8[RegistrarNovedad]
         UC5[SolicitarRuta]
         UC6[AsignarRuta]
         UC9[ProcesarEventoRuta]
-        UC8[ConsultarEstado]
     end
 
     subgraph DOMAIN[Domain Model]
@@ -384,14 +388,14 @@ flowchart TD
     A2 --> UC2
     A3 --> UC4
     A4 --> UC3
-    A5 --> UC10
+    A5 --> UC8
     A6 --> UC9
 
     UC1 --> P
     UC2 --> P
     UC4 --> P & ZA
     UC3 --> P & ZD
-    UC10 --> P & HE
+    UC8 --> P & HE
     UC5 --> P
     UC6 --> P
     UC9 --> P & HE & EP & NOT
@@ -401,16 +405,19 @@ flowchart TD
     UC2 --> JPA
     UC4 --> JPA
     UC3 --> JPA
-    UC10 --> JPA & S3
+    UC8 --> JPA & S3
     UC9 --> JPA
 
     UC1 --> SQS
     UC5 --> SQS
     UC6 --> SQS
     UC9 --> SQS
+    UC8 --> SQS
+    UC9 -->|EstadoPaqueteFinanzasPublisher| SQS
 
     JPA --> R1
     SQS --> R2
     S3 --> R3
     R1 --> UI[Frontend / Clientes API]
+    SQS --> M3[Módulo Gestión Finanzas]
 ```

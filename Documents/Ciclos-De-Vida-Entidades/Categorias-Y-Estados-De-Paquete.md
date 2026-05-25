@@ -191,7 +191,7 @@ Los estados operativos representan la posición del paquete en el ciclo de vida 
 
 **Condiciones de entrada**: El `Módulo de Gestión de Rutas` confirma la entrega exitosa al destinatario, con firma digital (POD) obtenida.
 
-**Restricciones**: Estado terminal positivo. No puede revertirse. El sistema invoca automáticamente MOD1-UC-009 para notificar al `Módulo de Gestión de Finanzas`.
+**Restricciones**: Estado terminal positivo. No puede revertirse. El sistema invoca automáticamente MOD1-UC-009 para notificar al `Módulo de Gestión de Finanzas` mediante evento asíncrono SQS.
 
 **Transiciones permitidas**: `Entregado` → `Pendiente Sincronización Contable` (automático, vía MOD1-UC-009).
 
@@ -268,17 +268,17 @@ Los estados operativos representan la posición del paquete en el ciclo de vida 
 
 ### 4.15 Pendiente Sincronización Contable
 
-**Condiciones de entrada**: MOD1-UC-009 fue invocado pero el `Módulo de Gestión de Finanzas` aún no respondió con ACK.
+**Condiciones de entrada**: MOD1-UC-009 publicó el evento SQS en `eventos-financieros-paquete-queue` pero el `Módulo de Gestión de Finanzas` aún no ha consumido ni confirmado el procesamiento.
 
-**Restricciones**: El sistema reintenta automáticamente la notificación cada 5 minutos. No se realizan operaciones adicionales sobre el paquete mientras el ACK esté pendiente.
+**Restricciones**: La cola SQS `eventos-financieros-paquete-queue` gestiona los reintentos mediante su política de redrive (DLQ configurada). No se realizan operaciones adicionales sobre el paquete mientras M3 no confirme el procesamiento.
 
-**Transiciones permitidas**: `Pendiente Sincronización Contable` → `Sincronizado Contablemente` (al recibir ACK de M3).
+**Transiciones permitidas**: `Pendiente Sincronización Contable` → `Sincronizado Contablemente` (M3 confirma el procesamiento del evento SQS).
 
 ---
 
 ### 4.16 Sincronizado Contablemente
 
-**Condiciones de entrada**: El `Módulo de Gestión de Finanzas` confirmó (ACK) la recepción del estado final del paquete y ejecutó las acciones financieras correspondientes.
+**Condiciones de entrada**: El `Módulo de Gestión de Finanzas` consumió el evento SQS de `eventos-financieros-paquete-queue` y ejecutó las acciones financieras correspondientes.
 
 **Restricciones**: Estado terminal. Es el cierre definitivo del ciclo de vida del paquete en el `Módulo de Gestión de Paquetes`. Ningún actor puede modificar ningún atributo del paquete desde este estado. El registro del paquete queda archivado de forma permanente e inmutable.
 

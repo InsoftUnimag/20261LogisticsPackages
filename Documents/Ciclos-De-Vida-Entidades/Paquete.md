@@ -12,7 +12,7 @@ Un paquete nace cuando el Empleado de Envío y Recepción inicia su registro y c
 
 **Módulos externos que interactúan:**
 - `Módulo de Gestión de Rutas` (M2): recibe la solicitud de ruta durante la admisión, asigna vehículo, ruta y tiempo estimado, y emite los estados `En Tránsito` y `Entregado`.
-- `Módulo de Gestión de Finanzas` (M3): recibe el estado final del paquete para ejecutar pagos o cobros.
+- `Módulo de Gestión de Finanzas` (M3): consume el estado final del paquete mediante eventos asíncronos SQS para ejecutar pagos o cobros.
 
 **Categorías que afectan el ciclo de vida**: Un paquete puede tener simultáneamente categorías de tipo de mercancía (`Estándar`, `Frágil`, `Peligroso`) y categoría de carga (`Normal`, `Carga Especial`). Estas categorías determinan las zonas de almacenamiento válidas, los vehículos elegibles y los recargos tarifarios. Ver [MOD1-CATEGORIAS-Y-ESTADOS-PAQUETE.md](./MOD1-CATEGORIAS-Y-ESTADOS-PAQUETE.md) para la definición completa de cada categoría.
 
@@ -47,7 +47,7 @@ El evento `solicitar_ruta` al `Módulo de Gestión de Rutas` se emite **durante 
 | `Devolución` | Retornado a sede; en análisis post-devolución | Controlador de Novedades |
 | `En Espera de Instrucción` | Análisis post-devolución requiere instrucción del remitente | Controlador de Novedades |
 | `Excepción de Ruta` | M2 rechazó la solicitud de ruta (cobertura no disponible o campo inválido) | Sistema |
-| `Pendiente Sincronización Contable` | Estado final registrado; esperando ACK de M3 | Sistema |
+| `Pendiente Sincronización Contable` | Estado final registrado; evento SQS publicado, esperando confirmación de M3 | Sistema |
 | `Sincronizado Contablemente` | M3 confirmó el cierre contable (fin del ciclo) | Sistema |
 
 ---
@@ -174,7 +174,7 @@ El evento `solicitar_ruta` al `Módulo de Gestión de Rutas` se emite **durante 
     │
     ├──[M2 reporta Entregado]──► invocar MOD1-UC-009
     │       └──► Pendiente Sincronización Contable
-    │               └──[ACK de M3]──► Sincronizado Contablemente ──► [FIN DEL CICLO]
+    │               └──[M3 consume evento SQS]──► Sincronizado Contablemente ──► [FIN DEL CICLO]
     │
     └──[M2 reporta novedad (Dañado / Extraviado / No entregado)]
             └──► DERIVAR A ETAPA 6 (Novedad)
@@ -191,12 +191,12 @@ El evento `solicitar_ruta` al `Módulo de Gestión de Rutas` se emite **durante 
     │       └──[Con evidencia válida (JPEG/PNG/MP4 ≤ 10 MB)]
     │               ├──[Notificación a remitente y destinatario vía mensaje]
     │               └──[invocar MOD1-UC-009]──► Pendiente Sincronización Contable
-    │                       └──[ACK de M3]──► Sincronizado Contablemente ──► [FIN]
+    │                       └──[M3 consume evento SQS]──► Sincronizado Contablemente ──► [FIN]
     │
     ├──[Tipo: Extraviado]
     │       ├──[Notificación a remitente y destinatario vía mensaje]
     │       └──[invocar MOD1-UC-009]──► Pendiente Sincronización Contable
-    │               └──[ACK de M3]──► Sincronizado Contablemente ──► [FIN]
+    │               └──[M3 consume evento SQS]──► Sincronizado Contablemente ──► [FIN]
     │
     └──[Tipo: Devolución]
             ├──[Notificación a remitente y destinatario vía mensaje]
@@ -276,7 +276,7 @@ El coordinador opera sobre paquetes en estado `Clasificado` (con `id_ruta` e `id
 **Actor externo**: Módulo de Gestión de Rutas (M2)  
 **Caso de uso**: MOD1-UC-009
 
-El módulo de paquetes actúa reactivamente: escucha los eventos de M2 y, al recibir un estado final, invoca MOD1-UC-009 para notificar a M3.
+El módulo de paquetes actúa reactivamente: escucha los eventos de M2 desde la cola `eventos-paquete-queue` y, al recibir un estado final, invoca MOD1-UC-009 que publica un evento asíncrono en la cola `eventos-financieros-paquete-queue` para notificar a M3.
 
 ---
 
@@ -310,7 +310,7 @@ Puede ocurrir desde `En Clasificación` en adelante. El estado del paquete despu
 
 5. **`Borrador` es efímero**: eliminado automáticamente tras 30 min de inactividad.
 
-6. **El ciclo cierra en `Sincronizado Contablemente`**: ningún paquete se considera procesado completamente hasta el ACK de M3.
+6. **El ciclo cierra en `Sincronizado Contablemente`**: ningún paquete se considera procesado completamente hasta que M3 confirma la recepción del evento SQS.
 
 7. **Las devoluciones no implican estado `Listo para Despacho` automático**: el estado post-devolución depende del análisis físico del paquete. El estado por defecto es `En Clasificación`.
 
@@ -334,4 +334,4 @@ Puede ocurrir desde `En Clasificación` en adelante. El estado del paquete despu
 | `En Tránsito` → `Entregado` | M2 (externo) |
 | Cualquier estado → `Dañado` / `Extraviado` / `Devolución` | MOD1-UC-008 |
 | Estado final → `Pendiente Sincronización Contable` | MOD1-UC-009 |
-| `Pendiente Sinc. Contable` → `Sincronizado Contablemente` | MOD1-UC-009 (ACK de M3) |
+| `Pendiente Sinc. Contable` → `Sincronizado Contablemente` | MOD1-UC-009 (confirmación de M3 vía SQS) |
