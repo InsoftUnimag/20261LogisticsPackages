@@ -18,15 +18,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Controller REST para la clasificación de paquetes por zona de destino.
  * MOD1-IP-005: T512, T513 - Phase 4
  * 
  * Endpoints:
- * - GET /api/clasificacion/sugerencia/{paqueteId} - Obtiene sugerencia de zona
- * - POST /api/clasificacion/confirmar - Confirma la clasificación
+ * - GET /api/paquetes/clasificacion/zonas - Obtiene lista de zonas disponibles
+ * - GET /api/paquetes/clasificacion/sugerencia/{paqueteId} - Obtiene sugerencia de zona
+ * - POST /api/paquetes/clasificacion/confirmar - Confirma la clasificación
  */
 @Tag(name = "Clasificación", description = "Sugerencia y confirmación de zonas de destino para clasificación de paquetes")
 @Slf4j
@@ -68,13 +73,20 @@ public class ClasificacionController {
                     ? paquete.getDireccionDestino().getCiudad()
                     : "Desconocida";
             
+            // Obtener la zona de destino para validar capacidad
+            var zonaSugerida = zonaDestinoRepository.findById(sugerencia.getZonaDestinoId())
+                    .orElse(null);
+            
+            boolean tieneCapacidad = zonaSugerida != null && zonaSugerida.tieneCapacidadDisponible();
+            
             ClasificacionSugeridaResponseDTO response = ClasificacionSugeridaResponseDTO.builder()
                     .paqueteId(sugerencia.getPaqueteId())
                     .zonaDestinoId(sugerencia.getZonaDestinoId())
                     .nombreZona(sugerencia.getNombreZona())
                     .codigoZona(sugerencia.getCodigoZona())
                     .ciudadDestino(ciudadDestino)
-                    .tieneCapacidad(true) // La validación se hace en la confirmación
+                    .tipoMercancia(paquete.getTipoMercancia() != null ? paquete.getTipoMercancia().toString() : "NORMAL")
+                    .tieneCapacidad(tieneCapacidad)
                     .mensaje("Zona sugerida exitosamente")
                     .build();
             
@@ -86,6 +98,39 @@ public class ClasificacionController {
             throw e;
         }
     }
+
+     /**
+      * Obtiene la lista de zonas de destino disponibles.
+      * 
+      * @return Lista de zonas disponibles
+      */
+     @Operation(summary = "Obtener zonas de destino disponibles", description = "Retorna la lista de zonas de destino disponibles para clasificación de paquetes")
+     @ApiResponse(responseCode = "200", description = "Lista de zonas obtenida exitosamente")
+     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+     @GetMapping("/clasificacion/zonas")
+     public ResponseEntity<List<Map<String, Object>>> obtenerZonasDisponibles() {
+         log.info("Solicitud de lista de zonas de destino disponibles");
+         
+         try {
+             // Obtener todas las zonas de destino activas del repositorio
+             List<Map<String, Object>> zonas = zonaDestinoRepository.findAllActivas()
+                     .stream()
+                     .map(zona -> {
+                         Map<String, Object> mapa = new HashMap<>();
+                         mapa.put("id", zona.getId().toString());
+                         mapa.put("nombre", zona.getNombre());
+                         mapa.put("codigo", zona.getCodigo());
+                         mapa.put("categoria", zona.getCategoria() != null ? zona.getCategoria().toString() : "NORMAL");
+                         return mapa;
+                     })
+                     .toList();
+             log.info("Retornando {} zonas disponibles", zonas.size());
+             return ResponseEntity.ok(zonas);
+         } catch (Exception e) {
+             log.error("Error obteniendo zonas disponibles: {}", e.getMessage(), e);
+             throw e;
+         }
+     }
 
     /**
      * Confirma la clasificación de un paquete en una zona de destino.

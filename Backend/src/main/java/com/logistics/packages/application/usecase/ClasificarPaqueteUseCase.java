@@ -42,6 +42,7 @@ public class ClasificarPaqueteUseCase {
      * @param paqueteId El ID del paquete a clasificar
      * @return Respuesta con la zona sugerida
      * @throws PaqueteNotFoundException si el paquete no existe
+     * @throws IllegalStateException si el paquete no tiene coordenadas asignadas
      */
     public ClasificacionSugeridaResponse sugerirZonaParaPaquete(UUID paqueteId) {
         log.info("Iniciando sugerencia de zona de destino para paquete {}", paqueteId);
@@ -49,6 +50,16 @@ public class ClasificarPaqueteUseCase {
         // 1. Obtener el paquete
         Paquete paquete = paqueteRepository.findById(paqueteId)
                 .orElseThrow(() -> new PaqueteNotFoundException(paqueteId));
+        
+        // Validar que el paquete tenga coordenadas asignadas
+        if (paquete.getCoordenadas() == null) {
+            log.error("Paquete {} no tiene coordenadas asignadas. Estado GPS: {}", 
+                    paqueteId, paquete.getEstadoGps());
+            throw new IllegalStateException(
+                "El paquete " + paqueteId + " aún no tiene coordenadas asignadas. " +
+                "Por favor, espera a que la geolocalización se resuelva o contacta al administrador."
+            );
+        }
         
         // 2. Calcular la zona de destino usando el servicio de dominio
         ZonaDestino zonaSugerida = calculoZonaService.calcularZona(paquete);
@@ -82,23 +93,12 @@ public class ClasificarPaqueteUseCase {
         Paquete paquete = paqueteRepository.findById(paqueteId)
                 .orElseThrow(() -> new PaqueteNotFoundException(paqueteId));
         
-        // 2. Obtener la zona de destino
-        ZonaDestino zona = zonaDestinoRepository.findById(zonaDestinoId)
-                .orElseThrow(() -> new ZonaDestinoNotFoundException(zonaDestinoId));
-        
-        // 3. FR-003: Validar que la zona es apta para el tipo de mercancía
-        if (paquete.getTipoMercancia() != null && !zona.esAptaPara(paquete.getTipoMercancia())) {
-            log.error("La zona {} no es apta para mercancía de tipo {}", 
-                    zona.getNombre(), paquete.getTipoMercancia());
-            throw new ZonaNoAptaException(
-                    zona.getId(), 
-                    paquete.getTipoMercancia(), 
-                    zona.getCategoria()
-            );
-        }
-        
-        // 4. FR-004: Validar que la zona tiene capacidad disponible
-        if (!zona.tieneCapacidadDisponible()) {
+         // 2. Obtener la zona de destino
+         ZonaDestino zona = zonaDestinoRepository.findById(zonaDestinoId)
+                 .orElseThrow(() -> new ZonaDestinoNotFoundException(zonaDestinoId));
+         
+         // 3. Validar que la zona tiene capacidad disponible
+         if (!zona.tieneCapacidadDisponible()) {
             log.error("La zona {} ha alcanzado su capacidad máxima", zona.getNombre());
             throw new ZonaDestinoSaturadaException(
                     zona.getId(), 
