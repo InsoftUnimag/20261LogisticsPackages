@@ -384,31 +384,6 @@ curl -X POST http://localhost:8080/api/paquetes/{paqueteId}/novedades \
 
 ---
 
-### 3. Consultas Financieras (Requiere JWT)
-
-#### `GET /route/{idRoute}/package/{idPaquete}`
-Consultar estado y ruta de un paquete para el módulo financiero.
-
-**Response 200 OK:**
-```json
-{
-  "paqueteId": "uuid",
-  "rutaId": "uuid",
-  "estadoActual": "EN_TRANSITO",
-  "historialEstados": [
-    {
-      "estado": "RECIBIDO_EN_SEDE",
-      "fecha": "2026-05-12T05:00:00Z",
-      "observaciones": "Paquete recibido en sede"
-    }
-  ],
-  "fechaIngreso": "2026-05-12T05:00:00Z",
-  "fechaEntrega": null
-}
-```
-
----
-
 ## Esquemas de Datos (Value Objects)
 
 ### `Direccion`

@@ -74,12 +74,6 @@
 | `POST` | `/api/auth/login` | `LoginRequest` (username, password) | `JwtResponse { token, username, rol }` |
 | `POST` | `/api/auth/register` | `RegisterRequest` (username, password, email, nombreCompleto, rol) | `JwtResponse` |
 
-### ConsultaFinancieraController — `/route`
-
-| Método | Ruta | Request | Response | Caso de Uso |
-|---|---|---|---|---|
-| `GET` | `/route/{idRoute}/package/{idPaquete}` | Path: idRoute, idPaquete | `ConsultaPaqueteResponse` | `ConsultarEstadoPaqueteUseCase` |
-
 ## Tabla de Errores por Operación
 
 ### Errores en Admisión
@@ -136,7 +130,6 @@ graph LR
         CLAS_SUG[GET /api/paquetes/clasificacion/sugerencia/{id}]
         CLAS_CONF[POST /api/paquetes/clasificacion/confirmar]
         NOV[POST /api/paquetes/{id}/novedades]
-        FIN[GET /route/{idR}/package/{idP}]
     end
     subgraph PUBLIC[Public]
         LOGIN[POST /api/auth/login]
@@ -233,6 +226,7 @@ Todos los UUIDs referenciados en los endpoints corresponden a datos semilla carg
 | `EventoPaqueteM2Mapper` (componente) | — | Traduce los 6 tipos M2 (`PAQUETE_EN_TRANSITO`, `PAQUETE_ENTREGADO`, `PARADA_FALLIDA`, `NOVEDAD_GRAVE`, `PARADAS_SIN_GESTIONAR`, `PAQUETE_EXCLUIDO_DESPACHO`) a comandos `EventoRutaDto` de la capa de aplicación. |
 | `PaqueteListoClasificacionSqsListener` (consumidor) | `paquete-listo-clasificar-queue` | Recibe eventos de paquete listo para clasificar |
 | `NovedadEventAdapter` (productor) | `novedad-registrada-queue` | Publica evento de novedad registrada |
+| `FinanzasEventSqsAdapter` (productor) | `eventos-financieros-paquete-queue` | Publica evento con payload mínimo (`id_paquete`, `id_ruta`, `estado`) para el Módulo de Gestión de Finanzas (M3). Implementa el puerto `EstadoPaqueteFinanzasPublisher`. **No silencia excepciones**: el catch relanza la excepción para forzar rollback transaccional. |
 
 Config:
 - Spring Cloud AWS SQS con `DefaultCredentialsProviderChain`
@@ -313,6 +307,7 @@ Config:
 | 🟦 Cls | `DistanceCalculatorAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `calcularDistanciaKm, calcularDistanciaDesdeSede` |
 | 🟦 Cls | `GoogleMapsAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `verifyApiKey` |
 | 🟦 Cls | `EventoPaqueteM2Mapper` | `com.logistics.packages.infrastructure.adapter.messaging` | `—` |
+| 🟦 Cls | `FinanzasEventSqsAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarEstadoFinal` |
 | 🟦 Cls | `NovedadEventAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarNovedadRegistrada` |
 | 🟦 Cls | `PaqueteListoClasificacionSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `procesarPaqueteListoParaClasificacion` |
 | 🟦 Cls | `RutaEventAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarSolicitudRuta` |
@@ -353,11 +348,11 @@ Config:
 | 🟦 Cls | `AlmacenajeController` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `AuthController` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `ClasificacionController` | `com.logistics.packages.infrastructure.controller` | `—` |
-| 🟦 Cls | `ConsultaFinancieraController` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `GlobalExceptionHandler` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `NovedadController` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `PesajeController` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `ApiError` | `com.logistics.packages.infrastructure.dto` | `—` |
+| 🟦 Cls | `EventoFinancieroPaqueteDto` | `com.logistics.packages.infrastructure.dto.event` | `—` |
 | 🔷 Abs | `EventoPaqueteM2Dto` | `com.logistics.packages.infrastructure.dto.event` | `—` |
 | 🟨 Enm | `TipoNovedadGrave` | `com.logistics.packages.infrastructure.dto.event` | `NovedadGraveEvento` |
 | 🟦 Cls | `PaqueteEnTransitoEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |

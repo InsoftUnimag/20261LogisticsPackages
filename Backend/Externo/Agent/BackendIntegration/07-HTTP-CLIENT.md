@@ -154,9 +154,6 @@ export const paqueteService = {
     });
   },
 
-  getFinancialRoute(idRuta, idPaquete) {
-    return api.get(`/route/${idRuta}/package/${idPaquete}`);
-  }
 };
 ```
 

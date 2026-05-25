@@ -11,9 +11,8 @@
 | 5 | `SolicitarRutaUseCase` | (directo) `handle(SolicitudRutaEvent)` | `PaqueteRepository`, `RutaQueuePort` | `SolicitudRutaEvent` | void |
 | 6 | `AsignarRutaUseCase` | (directo) `asignarRuta(AsignarRutaCommand)` | `PaqueteRepository` | `AsignarRutaCommand` | void |
 | 7 | `ConsultarPaqueteUseCase` | `ConsultarPaqueteIn.consultarPaquete()` | `PaqueteRepository` | UUID paqueteId | `Optional<Paquete>` |
-| 8 | `ConsultarEstadoPaqueteUseCase` | (directo) `consultar(UUID, UUID)` | `PaqueteRepository`, `HistorialEstadoRepository` | rutaId + paqueteId | `GestionNovedadPaqueteResponse` |
-| 9 | `ProcesarEventoRutaUseCase` | (directo) `procesar(EventoRutaDto)` | `PaqueteRepository`, `HistorialEstadoRepository`, `EventoProcesadoRepository`, `NotificacionPort` | `EventoRutaDto` | void |
-| 10 | `RegistrarNovedadUseCase` | (directo) `registrarNovedad(RegistrarNovedadCommand)` | `PaqueteRepository`, `HistorialEstadoRepository`, `ArchivoStoragePort`, `NovedadEventPublisher` | `RegistrarNovedadCommand` | `RegistroNovedadResponse` |
+| 8 | `ProcesarEventoRutaUseCase` | (directo) `procesar(EventoRutaDto)` | `PaqueteRepository`, `HistorialEstadoRepository`, `EventoProcesadoRepository`, `NotificacionPort`, `EstadoPaqueteFinanzasPublisher` | `EventoRutaDto` | void |
+| 9 | `RegistrarNovedadUseCase` | (directo) `registrarNovedad(RegistrarNovedadCommand)` | `PaqueteRepository`, `HistorialEstadoRepository`, `ArchivoStoragePort`, `NovedadEventPublisher`, `EstadoPaqueteFinanzasPublisher` | `RegistrarNovedadCommand` | `RegistroNovedadResponse` |
 
 ## Puertos de Salida (Interfaces del Application Layer)
 
@@ -35,6 +34,7 @@
 | `RutaQueuePort` | enviarSolicitud(Paquete) | `RutaSqsAdapter` |
 | ~~`RutaEventPublisher` (app.repository)~~ | ~~publicarSolicitudRuta(UUID)~~ | ~~`RutaEventAdapter` — ❌ Eliminado~~ |
 | `NovedadEventPublisher` | publicarNovedadRegistrada(UUID, UUID) | `NovedadEventAdapter` |
+| `EstadoPaqueteFinanzasPublisher` | publicarEstadoFinal(Paquete) | `FinanzasEventSqsAdapter` |
 | `NotificacionPort` | enviarSms, enviarEmail, enviar | `MockNotificacionAdapter` |
 | `ClasificacionEventPublisher` | publicarPaqueteListoParaClasificar(UUID) | (sin impl visible) |
 | `GeocodingService` (app.ports) | localizar(String) | `GoogleMapsAdapter` (también implementa este) |
@@ -125,15 +125,7 @@
 2. Retornar Optional<Paquete>
 ```
 
-### UC-8: ConsultarEstadoPaqueteUseCase
-```
-1. Buscar paquete por ID → PaqueteNotFoundException
-2. Validar que paquete pertenezca a la ruta especificada
-3. Obtener historial completo (HistorialEstadoRepository)
-4. Construir ConsultaPaqueteResponse (DTO para Finanzas)
-```
-
-### UC-9: ProcesarEventoRutaUseCase
+### UC-8: ProcesarEventoRutaUseCase
 
 **Entrada asíncrona:** El `RutaEventSqsListener` recibe un `EventoPaqueteM2Dto` desde la cola `eventos-paquete-queue`. Jackson deserializa polimórficamente según el discriminador `tipo_evento` (`@JsonTypeInfo`). `EventoPaqueteM2Mapper` traduce los 6 tipos M2 a comandos `EventoRutaDto`:
 
@@ -161,9 +153,13 @@
 5. Guardar historial de estado
 6. Marcar evento como procesado
 7. Enviar notificaciones (SMS a remitente, SMS+Email a destinatario)
+8. Si el estado es final (ENTREGADO, DEVOLUCION, DAÑADO, EXTRAVIADO):
+   └── Publicar evento asíncrono a Finanzas (EstadoPaqueteFinanzasPublisher)
+   └── Payload: {id_paquete, id_ruta, estado} con snake_case
+   └── Si SQS falla → excepción propagada → rollback @Transactional
 ```
 
-### UC-10: RegistrarNovedadUseCase
+### UC-9: RegistrarNovedadUseCase
 ```
 1. Buscar paquete por ID
 2. Si hay evidencia → guardar en S3 (ArchivoStoragePort)
@@ -173,7 +169,10 @@
    └── Retorna HistorialEstado
 4. Guardar paquete + historial
 5. Publicar evento novedad (NovedadEventPublisher → AWS SQS)
-6. Retornar RegistroNovedadResponse
+6. Publicar evento asíncrono a Finanzas (EstadoPaqueteFinanzasPublisher → SQS)
+   └── Payload mínimo: {id_paquete, id_ruta, estado} con snake_case
+   └── Si falla → excepción propagada → rollback transaccional (FR-006)
+7. Retornar RegistroNovedadResponse
 ```
 
 ## Diagrama de Dependencias entre Casos de Uso
@@ -185,9 +184,11 @@ graph TD
     UC5 -->|enviarSolicitud| SQS_OUT[Amazon SQS: solicitar-ruta-queue]
     SQS_IN[Amazon SQS: respuestas-ruta-queue] -->|asignarRuta| UC6[AsignarRutaUseCase]
     MOD2[Módulo Gestión Rutas] -->|eventos-paquete-queue| LSN2[RutaEventSqsListener]
-    LSN2 -->|EventoPaqueteM2Mapper| UC9[ProcesarEventoRutaUseCase]
+    LSN2 -->|EventoPaqueteM2Mapper| UC8[ProcesarEventoRutaUseCase]
     UC4[PrepararAlmacenajeUseCase] -->|publica evento| UC3[ClasificarPaqueteUseCase]
-    UC10[RegistrarNovedadUseCase] -->|publica evento SQS| SQS[AWS SQS]
+    UC9[RegistrarNovedadUseCase] -->|publica evento SQS| SQS[AWS SQS]
+    UC8 -->|EstadoPaqueteFinanzasPublisher| M3_SQS[AWS SQS: eventos-financieros-paquete-queue]
+    UC9 -->|EstadoPaqueteFinanzasPublisher| M3_SQS
 ```
 
 ## Commands y DTOs de Aplicación
@@ -201,8 +202,8 @@ graph TD
 | `RegistrarNovedadCommand` | paqueteId, tipoNovedad, observaciones, usuarioId, evidencia(MultipartFile) |
 | `RegistroNovedadResponse` | paqueteId, estadoActual, historialId |
 | `ClasificacionSugeridaResponse` | paqueteId, zonaDestinoId, nombreZona, codigoZona |
-| `GestionNovedadPaqueteResponse` | idRoute, idPaquete, estado, valorDeclarado, precioEnvio, metodoPago, fechaIngresoUtc, fechaEntregaUtc, urlEvidenciaEntrega, nombreFirmante, historialEstados |
 | `EventoRutaDto` | eventoId, paqueteId, rutaId, tipoEvento, observaciones, urlEvidencia, nombreFirmante, motivo |
+| `EventoFinancieroPaqueteDto` | idPaquete, idRuta, estado (snake_case via @JsonProperty) |
 
 
 ---
@@ -258,8 +259,6 @@ graph TD
 | 🟦 Cls | `ClasificacionSugeridaResponse` | `com.logistics.packages.application.usecase` | `—` |
 | 🟦 Cls | `ClasificarPaqueteUseCase` | `com.logistics.packages.application.usecase` | `sugerirZonaParaPaquete, confirmarClasificacion` |
 | 🟦 Cls | `ConsultarPaqueteUseCase` | `com.logistics.packages.application.usecase` | `—` |
-| 🟦 Cls | `GestionNovedadPaqueteResponse` | `com.logistics.packages.application.usecase.gestionnovedad` | `—` |
-| 🟦 Cls | `ConsultarEstadoPaqueteUseCase` | `com.logistics.packages.application.usecase.gestionnovedad` | `consultar` |
 | 🟨 Enm | `TipoEventoRuta` | `com.logistics.packages.application.usecase.gestionnovedad` | `—` |
 | 🟦 Cls | `ProcesarEventoRutaUseCase` | `com.logistics.packages.application.usecase.gestionnovedad` | `procesar` |
 | 🟦 Cls | `RegistrarNovedadCommand` | `com.logistics.packages.application.usecase.novedad` | `—` |

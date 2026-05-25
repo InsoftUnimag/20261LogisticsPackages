@@ -30,7 +30,6 @@ Este documento es la guía maestra para conectar una aplicación frontend (React
 |---|---|---|---|
 | Autenticación | `/api/auth/` | No requiere (público) | `03-AUTHENTICATION.md` |
 | Paquetes (CRUD + Pesaje + Almacenaje + Clasificación + Novedades) | `/api/paquetes/` | Requiere JWT | `01-API-CONTRACT.md` |
-| Consultas Financieras | `/route/` | Requiere JWT | `01-API-CONTRACT.md` |
 | Documentación Swagger | `/swagger-ui.html` | No requiere | `01-API-CONTRACT.md` |
 
 ## 3. Plan de Conexión (Paso a Paso)
@@ -89,7 +88,6 @@ Este documento es la guía maestra para conectar una aplicación frontend (React
 | `GET` | `/api/paquetes/clasificacion/sugerencia/{id}` | Sugerencia de clasificación |
 | `POST` | `/api/paquetes/clasificacion/confirmar` | Confirmar clasificación |
 | `POST` | `/api/paquetes/{id}/novedades` | Reportar novedad (multipart) |
-| `GET` | `/route/{idRuta}/package/{idPaquete}` | Consulta financiera de ruta |
 
 ---
 
