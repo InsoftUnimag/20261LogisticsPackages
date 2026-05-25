@@ -34,4 +34,12 @@ public class HistorialEstadoJpaAdapter implements HistorialEstadoRepository {
             .map(mapper::toDomain)
             .collect(Collectors.toList());
     }
+
+    @Override
+    public List<HistorialEstado> obtenerTodasLasNovedades() {
+        List<HistorialEstadoEntity> entities = jpaRepository.findByTipoNovedadIsNotNullOrderByFechaTransicionUtcDesc();
+        return entities.stream()
+            .map(mapper::toDomain)
+            .collect(Collectors.toList());
+    }
 }

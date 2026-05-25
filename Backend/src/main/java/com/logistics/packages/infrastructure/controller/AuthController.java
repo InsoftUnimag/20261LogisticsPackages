@@ -61,7 +61,7 @@ public class AuthController {
             List<String> roles = List.of(usuario.getRol());
             String token = jwtTokenProvider.generateToken(username, roles);
 
-            return ResponseEntity.ok(new JwtResponse(token, username, usuario.getRol()));
+            return ResponseEntity.ok(new JwtResponse(token, username, usuario.getRol(), usuario.getId()));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("mensaje", "Credenciales inválidas"));
@@ -92,6 +92,6 @@ public class AuthController {
         String token = jwtTokenProvider.generateToken(usuario.getUsername(), roles);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(new JwtResponse(token, usuario.getUsername(), usuario.getRol()));
+            .body(new JwtResponse(token, usuario.getUsername(), usuario.getRol(), usuario.getId()));
     }
 }

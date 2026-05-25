@@ -26,4 +26,12 @@ public interface HistorialEstadoRepository {
      * @return Lista de registros de historial ordenados por fecha
      */
     List<HistorialEstado> obtenerHistorialPorPaqueteId(UUID paqueteId);
+
+    /**
+     * Obtiene todas las novedades (registros de historial donde tipoNovedad no es null).
+     * MOD1-UC-007: Listar novedades activas para la interfaz de control.
+     * 
+     * @return Lista de todas las novedades ordenadas por fecha descendente (más recientes primero)
+     */
+    List<HistorialEstado> obtenerTodasLasNovedades();
 }
