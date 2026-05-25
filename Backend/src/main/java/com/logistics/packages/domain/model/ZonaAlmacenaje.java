@@ -50,6 +50,11 @@ public class ZonaAlmacenaje {
             return false;
         }
 
+        // Las zonas de RETENCION aceptan cualquier tipo de mercancía
+        if (this.categoria == CategoriaZona.RETENCION) {
+            return true;
+        }
+
         return switch (paquete.getTipoMercancia()) {
             case PELIGROSO -> this.categoria == CategoriaZona.ALTO_RIESGO;
             case FRAGIL -> this.categoria == CategoriaZona.DELICADA || this.categoria == CategoriaZona.ALTO_RIESGO;

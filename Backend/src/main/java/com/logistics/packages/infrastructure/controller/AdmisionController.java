@@ -118,23 +118,34 @@ public class AdmisionController {
         return ResponseEntity.ok(paquetes.map(PaqueteListadoResponse::fromDomain));
     }
 
-    @Operation(summary = "Consultar paquete por ID", description = "Obtiene la información básica de un paquete (ID de ruta, ID de paquete y estado actual) dado su ID único")
-    @ApiResponse(responseCode = "200", description = "Paquete encontrado")
-    @ApiResponse(responseCode = "404", description = "Paquete no encontrado")
-    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
-    @GetMapping("/{idPaquete}")
-    public ResponseEntity<ConsultaPaqueteResponse> consultarPaquete(@PathVariable UUID idPaquete) {
-        Optional<Paquete> paqueteOpt = consultarPaqueteIn.consultarPaquete(idPaquete);
+     @Operation(summary = "Consultar paquete por ID", description = "Obtiene la información de un paquete incluyendo su ruta, estado y datos físicos (peso, dimensiones)")
+     @ApiResponse(responseCode = "200", description = "Paquete encontrado")
+     @ApiResponse(responseCode = "404", description = "Paquete no encontrado")
+     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+     @GetMapping("/{idPaquete}")
+     public ResponseEntity<ConsultaPaqueteResponse> consultarPaquete(@PathVariable UUID idPaquete) {
+         Optional<Paquete> paqueteOpt = consultarPaqueteIn.consultarPaquete(idPaquete);
 
-        return paqueteOpt
-                .map(paquete -> ResponseEntity.ok(ConsultaPaqueteResponse.builder()
-                        .rutaId(paquete.getRutaId())
-                        .idPaquete(paquete.getId())
-                        .estado(paquete.getEstado())
-                        .fechaEntregaSujetaConfirmacion(paquete.getRutaId() == null)
-                        .build()))
-                .orElse(ResponseEntity.notFound().build());
-    }
+         return paqueteOpt
+                 .map(paquete -> {
+                     Double pesoKg = paquete.getPeso() != null ? paquete.getPeso().getKilogramos() : null;
+                     Double largoCm = paquete.getDimensiones() != null ? paquete.getDimensiones().getLargoCm() : null;
+                     Double anchoCm = paquete.getDimensiones() != null ? paquete.getDimensiones().getAnchoCm() : null;
+                     Double altoCm = paquete.getDimensiones() != null ? paquete.getDimensiones().getAltoCm() : null;
+                     
+                     return ResponseEntity.ok(ConsultaPaqueteResponse.builder()
+                             .rutaId(paquete.getRutaId())
+                             .idPaquete(paquete.getId())
+                             .estado(paquete.getEstado())
+                             .fechaEntregaSujetaConfirmacion(paquete.getRutaId() == null)
+                             .pesoKg(pesoKg)
+                             .largoCm(largoCm)
+                             .anchoCm(anchoCm)
+                             .altoCm(altoCm)
+                             .build());
+                 })
+                 .orElse(ResponseEntity.notFound().build());
+     }
 
     @Operation(summary = "Actualizar coordenadas de un paquete", description = "Permite actualizar manualmente las coordenadas de un paquete cuando el GPS está en estado PENDIENTE. FE-5: Contingencia GPS")
     @ApiResponse(responseCode = "200", description = "Coordenadas actualizadas exitosamente")
@@ -166,6 +177,42 @@ public class AdmisionController {
                         "latitud", nuevasCoordenadas.latitud(),
                         "longitud", nuevasCoordenadas.longitud()
                 )
+        ));
+    }
+
+    @Operation(summary = "Actualizar datos físicos de un paquete", description = "Actualiza solo peso y dimensiones de un paquete sin afectar su asignación de zona. MOD1-UC-004")
+    @ApiResponse(responseCode = "200", description = "Datos físicos actualizados correctamente")
+    @ApiResponse(responseCode = "404", description = "Paquete no encontrado")
+    @ApiResponse(responseCode = "400", description = "Datos inválidos")
+    @PatchMapping("/{paqueteId}/datos-fisicos")
+    public ResponseEntity<?> actualizarDatosFisicos(
+            @PathVariable UUID paqueteId,
+            @RequestBody Map<String, Double> request) {
+        
+        Paquete paquete = paqueteRepository.findById(paqueteId)
+                .orElseThrow(() -> new com.logistics.packages.domain.exception.PaqueteNotFoundException(paqueteId));
+        
+        Double pesoKg = request.get("pesoKg");
+        Double largoCm = request.get("largoCm");
+        Double anchoCm = request.get("anchoCm");
+        Double altoCm = request.get("altoCm");
+        
+        if (pesoKg != null && largoCm != null && anchoCm != null && altoCm != null) {
+            com.logistics.packages.domain.valueobject.Peso nuevoPeso = new com.logistics.packages.domain.valueobject.Peso(pesoKg);
+            com.logistics.packages.domain.valueobject.Dimensiones nuevasDimensiones = 
+                    new com.logistics.packages.domain.valueobject.Dimensiones(largoCm, anchoCm, altoCm);
+            
+            paquete.actualizarDatosFisicos(nuevoPeso, nuevasDimensiones);
+            paqueteRepository.save(paquete);
+        }
+        
+        return ResponseEntity.ok(Map.of(
+                "mensaje", "Datos físicos actualizados correctamente",
+                "paqueteId", paquete.getId().toString(),
+                "pesoKg", paquete.getPeso().getKilogramos(),
+                "largoCm", paquete.getDimensiones().getLargoCm(),
+                "anchoCm", paquete.getDimensiones().getAnchoCm(),
+                "altoCm", paquete.getDimensiones().getAltoCm()
         ));
     }
 }

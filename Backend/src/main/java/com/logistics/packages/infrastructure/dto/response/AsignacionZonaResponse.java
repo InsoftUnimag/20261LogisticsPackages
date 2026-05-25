@@ -56,4 +56,7 @@ public class AsignacionZonaResponse {
     private UUID zonaContingenciaId;
     @Schema(description = "Indica si se está usando una zona de contingencia")
     private boolean usandoZonaContingencia;
+    
+    @Schema(description = "Nombre de la zona principal (cuando se sugiere zona de contingencia)")
+    private String nombreZonaPrincipal;
 }
