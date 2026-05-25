@@ -27,6 +27,8 @@ public class ClasificacionSugeridaResponseDTO {
     private String codigoZona;
     @Schema(description = "Ciudad de destino del paquete")
     private String ciudadDestino;
+    @Schema(description = "Tipo de mercancía del paquete (NORMAL, FRAGIL, PELIGROSO)")
+    private String tipoMercancia;
     @Schema(description = "Indica si la zona tiene capacidad disponible")
     private boolean tieneCapacidad;
     @Schema(description = "Mensaje informativo de la sugerencia")

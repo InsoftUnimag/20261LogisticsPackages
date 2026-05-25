@@ -124,6 +124,18 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.NOT_FOUND, "ZONA_DESTINO_NO_ENCONTRADA", ex.getMessage());
     }
 
+    @ExceptionHandler(ZonaDestinoNoEncontradaException.class)
+    public ResponseEntity<ApiError> handleZonaDestinoNoEncontrada(ZonaDestinoNoEncontradaException ex) {
+        log.warn("Zona de destino no encontrada para las coordenadas: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.UNPROCESSABLE_ENTITY, "ZONA_DESTINO_NO_ENCONTRADA", ex.getMessage());
+    }
+
+    @ExceptionHandler(ZonaDestinoSaturadaException.class)
+    public ResponseEntity<ApiError> handleZonaDestinoSaturada(ZonaDestinoSaturadaException ex) {
+        log.warn("Zona de destino saturada: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.CONFLICT, "ZONA_DESTINO_SATURADA", ex.getMessage());
+    }
+
     @ExceptionHandler(CoordenadasInvalidasException.class)
     public ResponseEntity<ApiError> handleCoordenadasInvalidas(CoordenadasInvalidasException ex) {
         log.warn("Coordenadas inválidas: {}", ex.getMessage());

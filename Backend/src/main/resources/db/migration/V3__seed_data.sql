@@ -57,89 +57,13 @@ VALUES
 );
 
 -- ============================================
--- ZONAS DE DESTINO
+-- ZONAS DE DESTINO - MEDELLÍN Y CALI
+-- (Las zonas de destino de BOGOTÁ están en V6__seed_zonas_bogota.sql)
 -- ============================================
 
 INSERT INTO zonas_destino (id, nombre, codigo, categoria, latitud_min, latitud_max, longitud_min, longitud_max, capacidad_max_paquetes, contador_paquetes, id_sede)
 VALUES 
-(
-    '660e8400-e29b-41d4-a716-446655440001',
-    'Zona Norte',
-    'ZD-NORTE-01',
-    'NORMAL',
-    4.5,
-    4.8,
-    -74.2,
-    -74.0,
-    500,
-    0,
-    '550e8400-e29b-41d4-a716-446655440001'
-),
-(
-    '660e8400-e29b-41d4-a716-446655440002',
-    'Zona Sur',
-    'ZD-SUR-01',
-    'NORMAL',
-    4.4,
-    4.6,
-    -74.2,
-    -74.0,
-    500,
-    0,
-    '550e8400-e29b-41d4-a716-446655440001'
-),
-(
-    '660e8400-e29b-41d4-a716-446655440003',
-    'Zona Centro',
-    'ZD-CENTRO-01',
-    'NORMAL',
-    4.6,
-    4.7,
-    -74.1,
-    -74.0,
-    300,
-    0,
-    '550e8400-e29b-41d4-a716-446655440001'
-),
-(
-    '660e8400-e29b-41d4-a716-446655440004',
-    'Zona Fragil Especial',
-    'ZD-FRAGIL-01',
-    'DELICADA',
-    4.5,
-    4.8,
-    -74.2,
-    -74.0,
-    100,
-    0,
-    '550e8400-e29b-41d4-a716-446655440001'
-),
-(
-    '660e8400-e29b-41d4-a716-446655440005',
-    'Zona Peligroso',
-    'ZD-PELIGROSO-01',
-    'ALTO_RIESGO',
-    4.5,
-    4.8,
-    -74.2,
-    -74.0,
-    50,
-    0,
-    '550e8400-e29b-41d4-a716-446655440001'
-),
-(
-    '660e8400-e29b-41d4-a716-446655440006',
-    'Zona Retencion',
-    'ZD-RETB-01',
-    'RETENCION',
-    4.5,
-    4.8,
-    -74.2,
-    -74.0,
-    20,
-    0,
-    '550e8400-e29b-41d4-a716-446655440001'
-),
+-- Zonas Medellín
 (
     '660e8400-e29b-41d4-a716-446655440007',
     'Zona Norte Medellín',
@@ -166,6 +90,7 @@ VALUES
     0,
     '550e8400-e29b-41d4-a716-446655440002'
 ),
+-- Zonas Cali
 (
     '660e8400-e29b-41d4-a716-446655440009',
     'Zona Norte Cali',
