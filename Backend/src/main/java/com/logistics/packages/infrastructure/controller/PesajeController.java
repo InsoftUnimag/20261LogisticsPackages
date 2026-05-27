@@ -3,8 +3,6 @@ package com.logistics.packages.infrastructure.controller;
 import com.logistics.packages.application.usecase.PesajeCommand;
 import com.logistics.packages.application.usecase.PesajeResponse;
 import com.logistics.packages.application.usecase.ProcesarPesajeUseCase;
-import com.logistics.packages.application.usecase.SolicitarRutaUseCase;
-import com.logistics.packages.domain.event.SolicitudRutaEvent;
 import com.logistics.packages.domain.valueobject.Dimensiones;
 import com.logistics.packages.domain.valueobject.Peso;
 import com.logistics.packages.domain.valueobject.TipoMercancia;
@@ -21,9 +19,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-import java.util.UUID;
-
 /**
  * Controlador REST para el procesamiento de pesaje de paquetes (MOD1-UC-002)
  * T208: Expone el endpoint POST /api/paquetes/pesaje
@@ -38,7 +33,6 @@ import java.util.UUID;
 public class PesajeController {
 
     private final ProcesarPesajeUseCase procesarPesajeUseCase;
-    private final SolicitarRutaUseCase solicitarRutaUseCase;
     private final TarifasConfigProperties tarifasConfig;
 
     /**
@@ -130,37 +124,5 @@ public class PesajeController {
     @GetMapping("/pesaje/health")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Servicio de pesaje operativo");
-    }
-    
-    /**
-     * Solicita la asignación de ruta para un paquete pesado.
-     * Feature 3.1-c: Después de confirmar el pesaje, el operador dispara la solicitud de ruta.
-     * 
-     * @param paqueteId ID del paquete para el cual se solicita ruta
-     * @return ResponseEntity con confirmación de la solicitud enviada
-     */
-    @Operation(summary = "Solicitar ruta para un paquete", description = "Envía una solicitud de asignación de ruta al módulo de gestión de rutas. Debe invocarse después de confirmar exitosamente el pesaje.")
-    @ApiResponse(responseCode = "200", description = "Solicitud de ruta enviada exitosamente")
-    @ApiResponse(responseCode = "404", description = "Paquete no encontrado")
-    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
-    @PostMapping("/{paqueteId}/solicitar-ruta")
-    public ResponseEntity<Map<String, String>> solicitarRuta(@PathVariable UUID paqueteId) {
-        log.info("Recibida solicitud para solicitar ruta para paquete: {}", paqueteId);
-        
-        try {
-            // Crear el evento y procesarlo con el use case
-            SolicitudRutaEvent event = SolicitudRutaEvent.of(paqueteId);
-            solicitarRutaUseCase.handle(event);
-            
-            log.info("Solicitud de ruta enviada exitosamente para paquete: {}", paqueteId);
-            
-            return ResponseEntity.ok(Map.of(
-                    "mensaje", "Solicitud de ruta enviada exitosamente",
-                    "paqueteId", paqueteId.toString()
-            ));
-        } catch (Exception e) {
-            log.error("Error al solicitar ruta para paquete {}: {}", paqueteId, e.getMessage());
-            throw e;
-        }
     }
 }
