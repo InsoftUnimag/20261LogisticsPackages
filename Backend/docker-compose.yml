@@ -55,6 +55,6 @@ services:
       - SPRING_PROFILES_ACTIVE=local
 
       #Google Maps
-      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+      - GOOGLE_MAPS_API_KEY=AIzaSyAprQ3JrOi-3R7g3YErN0xApWs694RLSNA
 volumes:
   postgres-data:
