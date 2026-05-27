@@ -1,11 +1,6 @@
-# Ignorar TODO por defecto
-**
-
-# Permitir lo necesario
-!build/
-!build/libs/
-!build/libs/*.jar
-
-# (Opcional) permitir Dockerfile si lo necesitas
-!Dockerfile
-!docker-compose.yml
+.gradle/
+.idea/
+build/
+out/
+.git/
+*.iml
