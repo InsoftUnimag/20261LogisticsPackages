@@ -13,11 +13,14 @@ import com.logistics.packages.domain.model.HistorialEstado;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.model.ZonaAlmacenaje;
 import com.logistics.packages.domain.valueobject.Dimensiones;
+import com.logistics.packages.domain.valueobject.EstadoPaquete;
 import com.logistics.packages.domain.valueobject.Peso;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 /**
  * Caso de uso para preparar un paquete para almacenaje.
@@ -39,6 +42,9 @@ public class PrepararAlmacenajeUseCase implements PrepararAlmacenajeIn {
     private final ZonaAlmacenajeRepository zonaAlmacenajeRepository;
     private final ClasificacionEventPublisher clasificacionEventPublisher;
     private final HistorialEstadoRepository historialEstadoRepository;
+    
+    // ID del sistema para registros de transiciones automáticas
+    private static final UUID SISTEMA_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
 
     @Override
     public void prepararAlmacenaje(PrepararAlmacenajeCommand command) {
@@ -94,6 +100,17 @@ public class PrepararAlmacenajeUseCase implements PrepararAlmacenajeIn {
         // 7. Persistir cambios
         paqueteRepository.save(paquete);
         zonaAlmacenajeRepository.save(zona);
+        
+        // Registrar en el historial la transición: RECIBIDO_EN_SEDE → EN_CLASIFICACION
+        HistorialEstado historialTransicion = new HistorialEstado(
+                paquete.getId(),
+                EstadoPaquete.RECIBIDO_EN_SEDE,
+                EstadoPaquete.EN_CLASIFICACION,
+                "Paquete asignado a zona de almacenaje: " + zona.getNombre(),
+                command.usuarioId(),
+                null // Sin evidencia para transición de almacenaje
+        );
+        historialEstadoRepository.guardar(historialTransicion);
         
         log.info("Paquete {} asignado a zona {} con estado EN_CLASIFICACION", 
                 paquete.getId(), zona.getNombre());

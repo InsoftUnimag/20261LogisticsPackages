@@ -26,7 +26,8 @@ public class HistorialEstadoMapper {
         HistorialEstadoEntity entity = new HistorialEstadoEntity();
         entity.setId(historial.getId());
         entity.setPaqueteId(historial.getPaqueteId());
-        entity.setEstadoAnterior(historial.getEstadoAnterior().name());
+        // Estado anterior puede ser null para la primera transición (admisión)
+        entity.setEstadoAnterior(historial.getEstadoAnterior() != null ? historial.getEstadoAnterior().name() : null);
         entity.setEstadoNuevo(historial.getEstadoNuevo().name());
         entity.setObservaciones(historial.getObservaciones());
         entity.setUsuarioId(historial.getUsuarioId());
@@ -52,7 +53,8 @@ public class HistorialEstadoMapper {
         return new HistorialEstado(
             entity.getId(),
             entity.getPaqueteId(),
-            EstadoPaquete.valueOf(entity.getEstadoAnterior()),
+            // Estado anterior puede ser null para la primera transición (admisión)
+            entity.getEstadoAnterior() != null ? EstadoPaquete.valueOf(entity.getEstadoAnterior()) : null,
             EstadoPaquete.valueOf(entity.getEstadoNuevo()),
             entity.getObservaciones(),
             entity.getUsuarioId(),
