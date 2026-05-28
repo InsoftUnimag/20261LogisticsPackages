@@ -24,6 +24,7 @@ public record RegistroAdmisionCommand(
         Double largo,
         Double ancho,
         Double alto,
-        Coordenadas coordenadasManuales
+        Coordenadas coordenadasManuales,
+        UUID usuarioId
 ) {
 }

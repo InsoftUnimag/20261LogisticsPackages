@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import com.logistics.packages.application.ports.UsuarioRepository;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -43,6 +44,7 @@ public class AlmacenajeController {
     private final PaqueteRepository paqueteRepository;
     private final ZonaAlmacenajeRepository zonaAlmacenajeRepository;
     private final PrepararAlmacenajeIn prepararAlmacenajeIn;
+    private final UsuarioRepository usuarioRepository;
 
     /**
      * Obtiene la zona de almacenamiento sugerida para un paquete.
@@ -157,19 +159,19 @@ public class AlmacenajeController {
             return ResponseEntity.badRequest().build();
         }
         
-        // Obtener usuarioId del contexto de seguridad
-         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-          // En un caso de producción, buscaríamos el usuarioId por username desde el repositorio
-          // Por ahora usamos el username como identificador único
-          UUID usuarioId = UUID.nameUUIDFromBytes(username.getBytes());
-          
-          // Delegar toda la lógica de negocio al UseCase
-          PrepararAlmacenajeCommand command = new PrepararAlmacenajeCommand(
-                  paqueteId,
-                  request.getZonaId(),
-                  usuarioId,
-                  request.tieneDiscrepancias() ? Optional.of(request.getDatosDiscrepancia()) : Optional.empty()
-          );
+        // Obtener usuarioId del contexto de seguridad (usuario autenticado)
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        UUID usuarioId = usuarioRepository.findByUsername(username)
+                .map(usuario -> usuario.getId())
+                .orElse(null);
+        
+        // Delegar toda la lógica de negocio al UseCase
+        PrepararAlmacenajeCommand command = new PrepararAlmacenajeCommand(
+                paqueteId,
+                request.getZonaId(),
+                usuarioId,
+                request.tieneDiscrepancias() ? Optional.of(request.getDatosDiscrepancia()) : Optional.empty()
+        );
          
          prepararAlmacenajeIn.prepararAlmacenaje(command);
          

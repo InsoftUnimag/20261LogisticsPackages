@@ -1,47 +1,25 @@
---Seed Data: Zonas de Almacenaje y Destino EXPANDIDAS para Bogotá
+--Seed Data: Zonas de Almacenaje y Destino OPTIMIZADAS para Bogotá
 --Fecha: 2026-05-22
---Descripción: Inserción de 17 zonas de almacenaje y 20 zonas de destino por localidades de Bogotá
---Actualizado: Corregidas coordenadas para evitar solapamientos. Todas las zonas de destino son NORMAL.
+--Descripción: 4 zonas de almacenaje (Normal, Delicada, Alto Riesgo, Retención) + 21 zonas de destino por localidades
+--Actualización: Simplificadas zonas de almacenaje para alinearse con otras sedes (4 por sede)
 
 -- ============================================
--- ZONAS DE ALMACENAJE - BOGOTÁ (17 zonas expandidas)
+-- ZONAS DE ALMACENAJE - BOGOTÁ (4 zonas solamente)
 -- ============================================
 
--- Zona Contingencia (se referenciaran desde otras)
 INSERT INTO zonas_almacenaje (id, nombre, codigo, categoria, capacidad_max_kg, capacidad_max_m3, capacidad_max_paquetes, peso_actual_kg, volumen_actual_m3, contador_paquetes, estado, ubicacion_fisica, id_sede, zona_contingencia_id)
 VALUES 
-('770e8400-e29b-41d4-a716-446655440011', 'Zona Retención 1', 'ZA-RET-01', 'RETENCION', 6000.00, 200.000, 400, 0.00, 0.000, 0, 'DISPONIBLE', 'Área auxiliar CONT-1', '550e8400-e29b-41d4-a716-446655440001', NULL),
-('770e8400-e29b-41d4-a716-446655440012', 'Zona Retención 2', 'ZA-RET-02', 'RETENCION', 6000.00, 200.000, 400, 0.00, 0.000, 0, 'DISPONIBLE', 'Área auxiliar CONT-2', '550e8400-e29b-41d4-a716-446655440001', NULL)
-ON CONFLICT DO NOTHING;
+-- Zona NORMAL - Bogotá
+('770e8400-e29b-41d4-a716-446655440001', 'Zona Normal Bogotá', 'ZA-BOG-NORMAL', 'NORMAL', 5000.00, 100.000, 400, 0.00, 0.000, 0, 'DISPONIBLE', 'Pasillo A-B', '550e8400-e29b-41d4-a716-446655440001', NULL),
 
--- Zonas NORMAL (8 zonas)
-INSERT INTO zonas_almacenaje (id, nombre, codigo, categoria, capacidad_max_kg, capacidad_max_m3, capacidad_max_paquetes, peso_actual_kg, volumen_actual_m3, contador_paquetes, estado, ubicacion_fisica, id_sede, zona_contingencia_id)
-VALUES 
-('770e8400-e29b-41d4-a716-446655440100', 'Zona Normal Norte A', 'ZA-NOR-N1', 'NORMAL', 5000.00, 200.000, 300, 0.00, 0.000, 0, 'DISPONIBLE', 'Pasillo A - Fila 1-10', '550e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440011'),
-('770e8400-e29b-41d4-a716-446655440101', 'Zona Normal Norte B', 'ZA-NOR-N2', 'NORMAL', 5000.00, 200.000, 300, 0.00, 0.000, 0, 'DISPONIBLE', 'Pasillo A - Fila 11-20', '550e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440011'),
-('770e8400-e29b-41d4-a716-446655440102', 'Zona Normal Sur A', 'ZA-SUR-N1', 'NORMAL', 5000.00, 200.000, 300, 0.00, 0.000, 0, 'DISPONIBLE', 'Pasillo B - Fila 1-10', '550e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440011'),
-('770e8400-e29b-41d4-a716-446655440103', 'Zona Normal Sur B', 'ZA-SUR-N2', 'NORMAL', 5000.00, 200.000, 300, 0.00, 0.000, 0, 'DISPONIBLE', 'Pasillo B - Fila 11-20', '550e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440011'),
-('770e8400-e29b-41d4-a716-446655440104', 'Zona Normal Occidente A', 'ZA-OCC-N1', 'NORMAL', 4000.00, 160.000, 250, 0.00, 0.000, 0, 'DISPONIBLE', 'Pasillo C - Fila 1-8', '550e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440012'),
-('770e8400-e29b-41d4-a716-446655440105', 'Zona Normal Occidente B', 'ZA-OCC-N2', 'NORMAL', 4000.00, 160.000, 250, 0.00, 0.000, 0, 'DISPONIBLE', 'Pasillo C - Fila 9-16', '550e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440012'),
-('770e8400-e29b-41d4-a716-446655440106', 'Zona Normal Oriente A', 'ZA-ORI-N1', 'NORMAL', 4000.00, 160.000, 250, 0.00, 0.000, 0, 'DISPONIBLE', 'Pasillo D - Fila 1-8', '550e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440012'),
-('770e8400-e29b-41d4-a716-446655440107', 'Zona Normal Oriente B', 'ZA-ORI-N2', 'NORMAL', 4000.00, 160.000, 250, 0.00, 0.000, 0, 'DISPONIBLE', 'Pasillo D - Fila 9-16', '550e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440012')
-ON CONFLICT DO NOTHING;
+-- Zona DELICADA - Bogotá
+('770e8400-e29b-41d4-a716-446655440002', 'Zona Delicada Bogotá', 'ZA-BOG-DELICADA', 'DELICADA', 1500.00, 30.000, 100, 0.00, 0.000, 0, 'DISPONIBLE', 'Pasillo C climatizado', '550e8400-e29b-41d4-a716-446655440001', NULL),
 
--- Zonas DELICADA (4 zonas)
-INSERT INTO zonas_almacenaje (id, nombre, codigo, categoria, capacidad_max_kg, capacidad_max_m3, capacidad_max_paquetes, peso_actual_kg, volumen_actual_m3, contador_paquetes, estado, ubicacion_fisica, id_sede, zona_contingencia_id)
-VALUES 
-('770e8400-e29b-41d4-a716-446655440108', 'Zona Delicada Norte', 'ZA-NOR-D1', 'DELICADA', 2000.00, 80.000, 150, 0.00, 0.000, 0, 'DISPONIBLE', 'Pasillo E - Estantes climatizados 1-5', '550e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440011'),
-('770e8400-e29b-41d4-a716-446655440109', 'Zona Delicada Sur', 'ZA-SUR-D1', 'DELICADA', 2000.00, 80.000, 150, 0.00, 0.000, 0, 'DISPONIBLE', 'Pasillo E - Estantes climatizados 6-10', '550e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440011'),
-('770e8400-e29b-41d4-a716-446655440110', 'Zona Delicada Occidente', 'ZA-OCC-D1', 'DELICADA', 1500.00, 60.000, 120, 0.00, 0.000, 0, 'DISPONIBLE', 'Pasillo F - Estantes acolchados 1-4', '550e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440012'),
-('770e8400-e29b-41d4-a716-446655440111', 'Zona Delicada Oriente', 'ZA-ORI-D1', 'DELICADA', 1500.00, 60.000, 120, 0.00, 0.000, 0, 'DISPONIBLE', 'Pasillo F - Estantes acolchados 5-8', '550e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440012')
-ON CONFLICT DO NOTHING;
+-- Zona ALTO_RIESGO - Bogotá
+('770e8400-e29b-41d4-a716-446655440003', 'Zona Alto Riesgo Bogotá', 'ZA-BOG-RIESGO', 'ALTO_RIESGO', 2000.00, 50.000, 80, 0.00, 0.000, 0, 'DISPONIBLE', 'Área restringida D', '550e8400-e29b-41d4-a716-446655440001', NULL),
 
--- Zonas ALTO_RIESGO (3 zonas)
-INSERT INTO zonas_almacenaje (id, nombre, codigo, categoria, capacidad_max_kg, capacidad_max_m3, capacidad_max_paquetes, peso_actual_kg, volumen_actual_m3, contador_paquetes, estado, ubicacion_fisica, id_sede, zona_contingencia_id)
-VALUES 
-('770e8400-e29b-41d4-a716-446655440112', 'Zona Alto Riesgo Sector 1', 'ZA-AR-01', 'ALTO_RIESGO', 3000.00, 100.000, 100, 0.00, 0.000, 0, 'DISPONIBLE', 'Área restringida AR-1 - Con ventilación forzada', '550e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440011'),
-('770e8400-e29b-41d4-a716-446655440113', 'Zona Alto Riesgo Sector 2', 'ZA-AR-02', 'ALTO_RIESGO', 3000.00, 100.000, 100, 0.00, 0.000, 0, 'DISPONIBLE', 'Área restringida AR-2 - Con ventilación forzada', '550e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440011'),
-('770e8400-e29b-41d4-a716-446655440114', 'Zona Alto Riesgo Pesados', 'ZA-AR-03', 'ALTO_RIESGO', 8000.00, 150.000, 50, 0.00, 0.000, 0, 'DISPONIBLE', 'Área carga pesada AP-1 - Acceso montacargas', '550e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440012')
+-- Zona RETENCION - Bogotá
+('770e8400-e29b-41d4-a716-446655440004', 'Zona Retención Bogotá', 'ZA-BOG-RETENCION', 'RETENCION', 800.00, 20.000, 50, 0.00, 0.000, 0, 'DISPONIBLE', 'Cuarto de retención E', '550e8400-e29b-41d4-a716-446655440001', NULL)
 ON CONFLICT DO NOTHING;
 
 -- ============================================

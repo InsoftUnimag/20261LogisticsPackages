@@ -46,4 +46,7 @@ public class HistorialEstadoItemDto {
     
     @Schema(description = "Timestamp UTC del momento en que se registró la transición", example = "2026-05-25T16:15:00.000")
     private LocalDateTime fechaTransicionUtc;
+    
+    @Schema(description = "Estado de la novedad en el flujo de control (PENDIENTE, NOTIFICADO, CERRADO)", nullable = true, example = "PENDIENTE")
+    private String estadoNovedad;
 }

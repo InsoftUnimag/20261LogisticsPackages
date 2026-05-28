@@ -60,6 +60,12 @@ public class SedeDbo {
     @Column(name = "metodos_pago_habilitados", columnDefinition = "text[]")
     private String[] metodosPagoHabilitados;
 
+    @Column(name = "latitud")
+    private Double latitud;
+
+    @Column(name = "longitud")
+    private Double longitud;
+
     @Column(name = "fecha_creacion")
     private Instant fechaCreacion;
 }

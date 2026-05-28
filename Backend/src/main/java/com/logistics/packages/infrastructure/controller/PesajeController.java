@@ -1,14 +1,20 @@
 package com.logistics.packages.infrastructure.controller;
 
+import com.logistics.packages.application.ports.SedeRepository;
 import com.logistics.packages.application.usecase.PesajeCommand;
 import com.logistics.packages.application.usecase.PesajeResponse;
 import com.logistics.packages.application.usecase.ProcesarPesajeUseCase;
+import com.logistics.packages.application.usecase.SolicitarRutaUseCase;
+import com.logistics.packages.domain.event.SolicitudRutaEvent;
+import com.logistics.packages.domain.model.Sede;
 import com.logistics.packages.domain.valueobject.Dimensiones;
 import com.logistics.packages.domain.valueobject.Peso;
 import com.logistics.packages.domain.valueobject.TipoMercancia;
 import com.logistics.packages.infrastructure.config.TarifasConfigProperties;
 import com.logistics.packages.infrastructure.dto.request.PesajeRequest;
 import com.logistics.packages.infrastructure.dto.response.PesajeResponseDto;
+import com.logistics.packages.application.repository.PaqueteRepository;
+import com.logistics.packages.domain.model.Paquete;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,7 +39,10 @@ import org.springframework.web.bind.annotation.*;
 public class PesajeController {
 
     private final ProcesarPesajeUseCase procesarPesajeUseCase;
+    private final SolicitarRutaUseCase solicitarRutaUseCase;
     private final TarifasConfigProperties tarifasConfig;
+    private final SedeRepository sedeRepository;
+    private final PaqueteRepository paqueteRepository;
 
     /**
      * Procesa el pesaje de un paquete existente.
@@ -61,26 +70,49 @@ public class PesajeController {
             // Crear el comando con tarifas desde la configuración (BE-3)
             TipoMercancia tipoMercancia = request.getTipoMercancia() != null ? request.getTipoMercancia() : TipoMercancia.ESTANDAR;
             
-            // BE-3: Seleccionar el recargo según el tipo de mercancía
-            java.math.BigDecimal recargoMercancia;
-            switch (tipoMercancia) {
-                case FRAGIL -> recargoMercancia = tarifasConfig.getRecargoFragil();
-                case PELIGROSO -> recargoMercancia = tarifasConfig.getRecargoPeligroso();
-                default -> recargoMercancia = java.math.BigDecimal.ZERO;
-            }
-            
-            PesajeCommand command = PesajeCommand.builder()
-                    .paqueteId(request.getPaqueteId())
-                    .peso(peso)
-                    .dimensiones(dimensiones)
-                    .tipoMercancia(tipoMercancia)
-                    .formaIrregular(request.getFormaIrregular() != null ? request.getFormaIrregular() : false)
-                    .tarifaBase(tarifasConfig.getBase())
-                    .tarifaPorKg(tarifasConfig.getPorKg())
-                    .tarifaPorKm(tarifasConfig.getPorKm())
-                    .recargoTipoMercancia(recargoMercancia)
-                    .recargoCategoriaCarga(tarifasConfig.getRecargoCargaEspecial())
-                    .build();
+             // BE-3: Obtener tarifas de la sede si existen, si no usar globales
+             Paquete paquete = paqueteRepository.findById(request.getPaqueteId())
+                     .orElseThrow(() -> new IllegalArgumentException("Paquete no encontrado"));
+             
+             java.math.BigDecimal tarifaBase = tarifasConfig.getBase();
+             java.math.BigDecimal tarifaPorKg = tarifasConfig.getPorKg();
+             java.math.BigDecimal tarifaPorKm = tarifasConfig.getPorKm();
+             
+             if (paquete.getSedeId() != null) {
+                 try {
+                     Sede sede = sedeRepository.findById(paquete.getSedeId())
+                             .orElse(null);
+                     if (sede != null) {
+                         tarifaBase = sede.getTarifaBase() != null ? sede.getTarifaBase() : tarifaBase;
+                         tarifaPorKg = sede.getTarifaPorKg() != null ? sede.getTarifaPorKg() : tarifaPorKg;
+                         tarifaPorKm = sede.getTarifaPorKm() != null ? sede.getTarifaPorKm() : tarifaPorKm;
+                         log.info("Usando tarifas de sede {} para paquete {}", paquete.getSedeId(), request.getPaqueteId());
+                     }
+                 } catch (Exception e) {
+                     log.warn("Error al obtener tarifas de sede: {}, usando tarifas globales", e.getMessage());
+                 }
+             }
+             
+             // BE-3: Seleccionar el recargo según el tipo de mercancía
+             java.math.BigDecimal recargoMercancia;
+             switch (tipoMercancia) {
+                 case FRAGIL -> recargoMercancia = tarifasConfig.getRecargoFragil();
+                 case PELIGROSO -> recargoMercancia = tarifasConfig.getRecargoPeligroso();
+                 default -> recargoMercancia = java.math.BigDecimal.ZERO;
+             }
+             
+             PesajeCommand command = PesajeCommand.builder()
+                     .paqueteId(request.getPaqueteId())
+                     .peso(peso)
+                     .dimensiones(dimensiones)
+                     .tipoMercancia(tipoMercancia)
+                     .formaIrregular(request.getFormaIrregular() != null ? request.getFormaIrregular() : false)
+                     .tarifaBase(tarifaBase)
+                     .tarifaPorKg(tarifaPorKg)
+                     .tarifaPorKm(tarifaPorKm)
+                     .recargoTipoMercancia(recargoMercancia)
+                     .recargoCategoriaCarga(tarifasConfig.getRecargoCargaEspecial())
+                     .build();
             
             // Ejecutar el caso de uso
             PesajeResponse response = procesarPesajeUseCase.procesarPesaje(command);
@@ -104,6 +136,11 @@ public class PesajeController {
             
             log.info("Pesaje procesado exitosamente. Precio: {}, Alertas: {}", 
                     response.getPrecioEnvio(), responseDto.getAlertas().size());
+            
+            // MOD1-UC-002 Fix: Solicitar ruta al backend del Módulo 2 después de confirmar pesaje
+            SolicitudRutaEvent evento = SolicitudRutaEvent.of(request.getPaqueteId());
+            solicitarRutaUseCase.handle(evento);
+            log.info("Solicitud de ruta disparada para paquete: {}", request.getPaqueteId());
             
             return ResponseEntity.ok(responseDto);
             

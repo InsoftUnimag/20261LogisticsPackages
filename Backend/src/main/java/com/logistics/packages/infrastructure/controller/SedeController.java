@@ -48,7 +48,12 @@ public class SedeController {
                             sede.getId(),
                             sede.getNombre(),
                             sede.getDireccion() != null ? sede.getDireccion().getCiudad() : null,
-                            sede.getTipo() != null ? sede.getTipo().toString() : null
+                            sede.getTipo() != null ? sede.getTipo().toString() : null,
+                            sede.getTarifaBase(),
+                            sede.getTarifaPorKg(),
+                            sede.getTarifaPorKm(),
+                            sede.getLatitud(),
+                            sede.getLongitud()
                     ))
                     .toList();
             
@@ -62,12 +67,19 @@ public class SedeController {
 
     /**
      * DTO simple para la respuesta del endpoint GET /api/sedes.
-     * Contiene solo los campos necesarios para el selector del frontend.
+     * Contiene los campos necesarios para el selector del frontend y tarifas por sede.
+     * Las tarifas pueden ser null si no están configuradas en la sede (usar globales).
+     * latitud y longitud se utilizan para calcular distancias precisas desde cada sede.
      */
     public record SedeResponseDto(
             UUID id,
             String nombre,
             String ciudad,
-            String tipo
+            String tipo,
+            java.math.BigDecimal tarifaBase,
+            java.math.BigDecimal tarifaPorKg,
+            java.math.BigDecimal tarifaPorKm,
+            Double latitud,
+            Double longitud
     ) {}
 }

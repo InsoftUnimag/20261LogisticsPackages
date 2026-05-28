@@ -13,6 +13,7 @@ import java.util.UUID;
  * MOD1-UC-006: FR-001, FR-002, FR-003 - Historial cronológico inmutable de transiciones.
  */
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -63,6 +64,13 @@ public class HistorialEstado {
     private LocalDateTime fechaTransicionUtc = LocalDateTime.now(ZoneOffset.UTC);
     
     /**
+     * FE-4: Estado de la novedad (PENDIENTE, NOTIFICADO, CERRADO)
+     * Persiste el estado del flujo de control de novedades en el frontend
+     */
+    @Builder.Default
+    private String estadoNovedad = "PENDIENTE";
+    
+    /**
      * Constructor de dominio para crear un nuevo registro de historial.
      * El ID y el timestamp se generan automáticamente.
      * 
@@ -89,5 +97,6 @@ public class HistorialEstado {
         this.urlEvidencia = urlEvidencia;
         this.tipoNovedad = tipoNovedad;
         this.fechaTransicionUtc = LocalDateTime.now(ZoneOffset.UTC);
+        this.estadoNovedad = "PENDIENTE";
     }
 }

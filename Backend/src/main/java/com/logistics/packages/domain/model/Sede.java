@@ -25,6 +25,8 @@ public class Sede {
     private BigDecimal tarifaPorKg;
     private BigDecimal tarifaPorKm;
     private List<MetodoPago> metodosPagoHabilitados;
+    private Double latitud;
+    private Double longitud;
 
     public boolean validarMetodoPagoSoportado(MetodoPago metodoPago) {
         return metodosPagoHabilitados != null && metodosPagoHabilitados.contains(metodoPago);

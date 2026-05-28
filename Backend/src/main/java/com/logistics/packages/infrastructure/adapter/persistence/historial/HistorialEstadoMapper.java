@@ -19,25 +19,26 @@ public class HistorialEstadoMapper {
      * @return Entidad JPA para persistencia
      */
     public HistorialEstadoEntity toEntity(HistorialEstado historial) {
-        if (historial == null) {
-            return null;
-        }
-        
-        HistorialEstadoEntity entity = new HistorialEstadoEntity();
-        entity.setId(historial.getId());
-        entity.setPaqueteId(historial.getPaqueteId());
-        // Estado anterior puede ser null para la primera transición (admisión)
-        entity.setEstadoAnterior(historial.getEstadoAnterior() != null ? historial.getEstadoAnterior().name() : null);
-        entity.setEstadoNuevo(historial.getEstadoNuevo().name());
-        entity.setObservaciones(historial.getObservaciones());
-        entity.setUsuarioId(historial.getUsuarioId());
-        entity.setUrlEvidencia(historial.getUrlEvidencia());
-        entity.setFechaTransicionUtc(historial.getFechaTransicionUtc());
-        if (historial.getTipoNovedad() != null) {
-            entity.setTipoNovedad(historial.getTipoNovedad().name());
-        }
-        return entity;
-    }
+         if (historial == null) {
+             return null;
+         }
+         
+         HistorialEstadoEntity entity = new HistorialEstadoEntity();
+         entity.setId(historial.getId());
+         entity.setPaqueteId(historial.getPaqueteId());
+         // Estado anterior puede ser null para la primera transición (admisión)
+         entity.setEstadoAnterior(historial.getEstadoAnterior() != null ? historial.getEstadoAnterior().name() : null);
+         entity.setEstadoNuevo(historial.getEstadoNuevo().name());
+         entity.setObservaciones(historial.getObservaciones());
+         entity.setUsuarioId(historial.getUsuarioId());
+         entity.setUrlEvidencia(historial.getUrlEvidencia());
+         entity.setFechaTransicionUtc(historial.getFechaTransicionUtc());
+         if (historial.getTipoNovedad() != null) {
+             entity.setTipoNovedad(historial.getTipoNovedad().name());
+         }
+         entity.setEstadoNovedad(historial.getEstadoNovedad());
+         return entity;
+     }
     
     /**
      * Convierte una entidad JPA a un objeto del dominio.
@@ -45,22 +46,22 @@ public class HistorialEstadoMapper {
      * @param entity Entidad JPA
      * @return Objeto de dominio
      */
-    public HistorialEstado toDomain(HistorialEstadoEntity entity) {
-        if (entity == null) {
-            return null;
-        }
-        
-        return new HistorialEstado(
-            entity.getId(),
-            entity.getPaqueteId(),
-            // Estado anterior puede ser null para la primera transición (admisión)
-            entity.getEstadoAnterior() != null ? EstadoPaquete.valueOf(entity.getEstadoAnterior()) : null,
-            EstadoPaquete.valueOf(entity.getEstadoNuevo()),
-            entity.getObservaciones(),
-            entity.getUsuarioId(),
-            entity.getUrlEvidencia(),
-            entity.getTipoNovedad() != null ? TipoNovedad.valueOf(entity.getTipoNovedad()) : null,
-            entity.getFechaTransicionUtc()
-        );
-    }
+     public HistorialEstado toDomain(HistorialEstadoEntity entity) {
+         if (entity == null) {
+             return null;
+         }
+         
+         return HistorialEstado.builder()
+             .id(entity.getId())
+             .paqueteId(entity.getPaqueteId())
+             .estadoAnterior(entity.getEstadoAnterior() != null ? EstadoPaquete.valueOf(entity.getEstadoAnterior()) : null)
+             .estadoNuevo(EstadoPaquete.valueOf(entity.getEstadoNuevo()))
+             .observaciones(entity.getObservaciones())
+             .usuarioId(entity.getUsuarioId())
+             .urlEvidencia(entity.getUrlEvidencia())
+             .tipoNovedad(entity.getTipoNovedad() != null ? TipoNovedad.valueOf(entity.getTipoNovedad()) : null)
+             .fechaTransicionUtc(entity.getFechaTransicionUtc())
+             .estadoNovedad(entity.getEstadoNovedad())
+             .build();
+     }
 }

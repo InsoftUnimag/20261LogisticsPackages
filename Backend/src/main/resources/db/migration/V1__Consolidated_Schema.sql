@@ -81,7 +81,7 @@ CREATE TABLE personas (
     direccion VARCHAR(255)
 );
 
--- Tabla de sedes (V8)
+-- Tabla de sedes (V8, con coordenadas en V9)
 CREATE TABLE sedes (
     id UUID PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
@@ -96,6 +96,8 @@ CREATE TABLE sedes (
     tarifa_por_kg NUMERIC(10, 2),
     tarifa_por_km NUMERIC(10, 2),
     metodos_pago_habilitados TEXT[],
+    latitud DOUBLE PRECISION,
+    longitud DOUBLE PRECISION,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

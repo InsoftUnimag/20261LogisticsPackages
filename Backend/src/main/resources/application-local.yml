@@ -22,6 +22,22 @@ spring:
       ddl-auto: validate
     show-sql: false
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: unimagt3ch@gmail.com    # CAMBIAR: tu correo de Gmail
+    password: kpuq cbce lunr utaq        # CAMBIAR: contraseña de aplicación (NO tu contraseña de Google)
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
   server:
     port: 8080
 

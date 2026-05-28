@@ -1,11 +1,5 @@
 # Ignorar TODO por defecto
 **
 
-# Permitir lo necesario
-!build/
-!build/libs/
+# Permitir solo el JAR compilado
 !build/libs/*.jar
-
-# (Opcional) permitir Dockerfile si lo necesitas
-!Dockerfile
-!docker-compose.yml
