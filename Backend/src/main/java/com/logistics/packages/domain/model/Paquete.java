@@ -52,6 +52,9 @@ public class Paquete {
     private String urlEvidenciaEntrega;  // URL de la foto POD (Proof of Delivery)
     private String nombreFirmante;  // Nombre de quien recibe el paquete
     private LocalDateTime fechaEntregaUtc;  // Timestamp de entrega
+    
+    // Atributo para novedad (MOD1-UC-007 FR-004)
+    private TipoNovedad tipoNovedad;  // Tipo de novedad registrada (inmutable una vez establecida)
 
     @Getter
     @Builder.Default
@@ -271,7 +274,8 @@ public class Paquete {
     }
 
     /**
-     * FR-003: Asigna una ruta al paquete y cambia su estado a LISTO_PARA_DESPACHO
+     * FR-003: Asigna una ruta al paquete (sin cambiar estado).
+     * El estado LISTO_PARA_DESPACHO debe ser establecido por asignarZonaDestino().
      * T302 [P] - MOD1-IP-003: No permite reasignar si ya tiene ruta
      * 
      * @param rutaId El ID de la ruta asignada por el Módulo de Gestión de Rutas
@@ -286,7 +290,9 @@ public class Paquete {
             throw new IllegalStateException("El paquete ya tiene una ruta asignada.");
         }
         this.rutaId = rutaId;
-        this.estado = EstadoPaquete.LISTO_PARA_DESPACHO;
+        // NOTA: No cambiar estado aquí. El estado LISTO_PARA_DESPACHO se establece
+        // únicamente en asignarZonaDestino() cuando el operario completa la clasificación.
+        // AsignarRutaUseCase registrará esta asignación en el historial como evento informativo.
     }
 
     public void asignarZonaAlmacenamiento(UUID zonaAlmacenamientoId) {
@@ -377,6 +383,14 @@ public class Paquete {
             throw new EstadoTransicionInvalidaException(this.id, this.estado);
         }
 
+        // FR-004: Validar que no se haya registrado una novedad diferente previamente
+        if (this.tipoNovedad != null && !this.tipoNovedad.equals(novedad.getTipo())) {
+            throw new IllegalStateException(
+                "No se permite cambiar el tipo de novedad una vez registrada. " +
+                "Tipo actual: " + this.tipoNovedad + ", Tipo solicitado: " + novedad.getTipo()
+            );
+        }
+
         // FR-004: Validar evidencia obligatoria para tipo DAÑADO
         if (novedad.getTipo() == TipoNovedad.DAÑADO && (novedad.getUrlEvidencia() == null || novedad.getUrlEvidencia().isBlank())) {
             throw new EvidenciaRequeridaException(this.id);
@@ -387,6 +401,9 @@ public class Paquete {
         
         // Actualizar el estado del paquete
         this.estado = EstadoPaquete.NOVEDAD_EN_BODEGA;
+        
+        // FR-004: Establecer el tipo de novedad (inmutable)
+        this.tipoNovedad = novedad.getTipo();
 
         // Crear y retornar el registro de historial con el contexto completo de la novedad
         return new HistorialEstado(this.id, estadoAnterior, this.estado,
@@ -528,5 +545,26 @@ public class Paquete {
         this.estado = EstadoPaquete.DAÑADO_EN_RUTA;
         
         return new HistorialEstado(this.id, estadoAnterior, this.estado, descripcion, moduloId, urlEvidencia);
+    }
+    
+    /**
+     * MOD1-UC-007 FR-003: Re-ingresa un paquete devuelto a bodega como EN_CLASIFICACION.
+     * Este método es usado cuando un paquete devuelto por M2 llega físicamente a bodega.
+     * 
+     * @param moduloId ID del almacenista o sistema que re-ingresa el paquete
+     * @return HistorialEstado Registro de la transición
+     * @throws EstadoTransicionInvalidaException si el paquete no está en estado DEVOLUCION_EN_RUTA
+     */
+    public HistorialEstado reingresoDevueltoABodega(UUID moduloId) {
+        if (this.estado != EstadoPaquete.DEVOLUCION_EN_RUTA) {
+            throw new EstadoTransicionInvalidaException(this.id, this.estado);
+        }
+        
+        EstadoPaquete estadoAnterior = this.estado;
+        this.estado = EstadoPaquete.EN_CLASIFICACION;
+        
+        return new HistorialEstado(this.id, estadoAnterior, this.estado, 
+                "Paquete devuelto re-ingresado a bodega para nueva clasificación", 
+                moduloId, null);
     }
 }

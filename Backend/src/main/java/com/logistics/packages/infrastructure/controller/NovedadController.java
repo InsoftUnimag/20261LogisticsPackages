@@ -18,8 +18,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.logistics.packages.application.ports.UsuarioRepository;
 
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +41,7 @@ public class NovedadController {
     private final RegistrarNovedadUseCase registrarNovedadUseCase;
     private final ConsultarHistorialPaqueteUseCase consultarHistorialPaqueteUseCase;
     private final HistorialEstadoRepository historialEstadoRepository;
+    private final UsuarioRepository usuarioRepository;
 
     /**
      * Registra una novedad en un paquete (dañado o extraviado).
@@ -63,12 +66,18 @@ public class NovedadController {
         log.info("Recibida solicitud de registro de novedad para paquete: {}, tipo: {}", 
             paqueteId, request.getTipoNovedad());
         
+        // Obtener usuarioId del contexto de seguridad (usuario autenticado)
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        UUID usuarioId = usuarioRepository.findByUsername(username)
+                .map(usuario -> usuario.getId())
+                .orElse(null);
+        
         // Crear el comando
         RegistrarNovedadCommand command = new RegistrarNovedadCommand(
             paqueteId,
             request.getTipoNovedad(),
             request.getObservaciones(),
-            request.getUsuarioId(),
+            usuarioId,
             evidencia
         );
         
@@ -114,13 +123,14 @@ public class NovedadController {
                 .map(h -> HistorialEstadoItemDto.builder()
                         .id(h.getId())
                         .paqueteId(h.getPaqueteId())
-                        .estadoAnterior(h.getEstadoAnterior().name())
+                        .estadoAnterior(h.getEstadoAnterior() != null ? h.getEstadoAnterior().name() : null)
                         .estadoNuevo(h.getEstadoNuevo().name())
                         .observaciones(h.getObservaciones())
                         .usuarioId(h.getUsuarioId())
                         .urlEvidencia(h.getUrlEvidencia())
                         .tipoNovedad(h.getTipoNovedad() != null ? h.getTipoNovedad().name() : null)
                         .fechaTransicionUtc(h.getFechaTransicionUtc())
+                        .estadoNovedad(h.getEstadoNovedad())
                         .build())
                 .toList();
         
@@ -128,6 +138,69 @@ public class NovedadController {
                 dtos.size(), paqueteId);
         
         return ResponseEntity.ok(dtos);
+    }
+
+    /**
+     * Actualiza el estado de una novedad (notificar cliente o cerrar).
+     * MOD1-UC-007: Exposición de acciones de novedad para el frontend.
+     * FE-4: Persiste el cambio en la base de datos para que persista al recargar.
+     * 
+     * @param paqueteId ID del paquete
+     * @param historialId ID del registro de historial/novedad
+     * @param action Acción a realizar: "notify" o "close"
+     * @return ResponseEntity con resultado de la operación
+     */
+    @Operation(summary = "Actualizar estado de novedad", description = "Actualiza el estado de una novedad (NOTIFICADO o CERRADO)")
+    @ApiResponse(responseCode = "200", description = "Estado actualizado exitosamente")
+    @ApiResponse(responseCode = "404", description = "Paquete o novedad no encontrados")
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    @PatchMapping("/{paqueteId}/novedades/{historialId}/estado")
+    public ResponseEntity<HistorialEstadoItemDto> actualizarEstadoNovedad(
+            @PathVariable java.util.UUID paqueteId,
+            @PathVariable java.util.UUID historialId,
+            @RequestParam String action) {
+        
+        log.info("Actualizando estado de novedad {} para paquete {}, action: {}", 
+                historialId, paqueteId, action);
+        
+        List<HistorialEstado> historial = historialEstadoRepository.obtenerHistorialPorPaqueteId(paqueteId);
+        HistorialEstado novedad = historial.stream()
+                .filter(h -> h.getId().equals(historialId) && h.getTipoNovedad() != null)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Novedad no encontrada: " + historialId));
+        
+        // FE-4: Aplicar lógica según la acción y actualizar en base de datos
+        String nuevoEstado = "PENDIENTE";
+        if ("notify".equals(action)) {
+            nuevoEstado = "NOTIFICADO";
+            log.info("Novedad {} notificada al cliente", historialId);
+        } else if ("close".equals(action)) {
+            nuevoEstado = "CERRADO";
+            log.info("Novedad {} cerrada", historialId);
+        } else {
+            throw new IllegalArgumentException("Acción inválida: " + action);
+        }
+        
+        // Actualizar la novedad con el nuevo estado y guardar en BD
+        novedad.setEstadoNovedad(nuevoEstado);
+        historialEstadoRepository.guardar(novedad);
+        log.info("Estado de novedad {} actualizado a {} en base de datos", historialId, nuevoEstado);
+        
+        // Construir la respuesta con el estado actualizado
+        HistorialEstadoItemDto responseDto = HistorialEstadoItemDto.builder()
+                .id(novedad.getId())
+                .paqueteId(novedad.getPaqueteId())
+                .estadoAnterior(novedad.getEstadoAnterior() != null ? novedad.getEstadoAnterior().name() : null)
+                .estadoNuevo(novedad.getEstadoNuevo().name())
+                .observaciones(novedad.getObservaciones())
+                .usuarioId(novedad.getUsuarioId())
+                .urlEvidencia(novedad.getUrlEvidencia())
+                .tipoNovedad(novedad.getTipoNovedad() != null ? novedad.getTipoNovedad().name() : null)
+                .fechaTransicionUtc(novedad.getFechaTransicionUtc())
+                .estadoNovedad(nuevoEstado)
+                .build();
+        
+        return ResponseEntity.ok(responseDto);
     }
 
     /**
@@ -146,17 +219,18 @@ public class NovedadController {
                 .map(h -> HistorialEstadoItemDto.builder()
                         .id(h.getId())
                         .paqueteId(h.getPaqueteId())
-                        .estadoAnterior(h.getEstadoAnterior().name())
+                        .estadoAnterior(h.getEstadoAnterior() != null ? h.getEstadoAnterior().name() : null)
                         .estadoNuevo(h.getEstadoNuevo().name())
                         .observaciones(h.getObservaciones())
                         .usuarioId(h.getUsuarioId())
                         .urlEvidencia(h.getUrlEvidencia())
                         .tipoNovedad(h.getTipoNovedad() != null ? h.getTipoNovedad().name() : null)
                         .fechaTransicionUtc(h.getFechaTransicionUtc())
+                        .estadoNovedad(h.getEstadoNovedad())
                         .build())
                 .toList();
         
-        log.info("Listado de novedades completado: {} novedades encontradas", dtos.size());
+        log.info("Listado de novedades completado: {} novedades encontrados", dtos.size());
         return ResponseEntity.ok(dtos);
     }
 }

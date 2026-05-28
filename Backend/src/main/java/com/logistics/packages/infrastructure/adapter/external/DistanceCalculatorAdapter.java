@@ -32,6 +32,16 @@ public class DistanceCalculatorAdapter implements DistanceService {
         return distancia;
     }
 
+    @Override
+    public double calcularDistanciaDesdeSede(Coordenadas origen, Coordenadas destino) {
+        double distancia = haversine(origen.latitud(), origen.longitud(), destino.latitud(), destino.longitud());
+        log.info("Distancia desde ({}, {}) a ({}, {}): {} km", 
+            origen.latitud(), origen.longitud(), 
+            destino.latitud(), destino.longitud(), 
+            distancia);
+        return distancia;
+    }
+
     private double haversine(double lat1, double lon1, double lat2, double lon2) {
         double dLat = Math.toRadians(lat2 - lat1);
         double dLon = Math.toRadians(lon2 - lon1);

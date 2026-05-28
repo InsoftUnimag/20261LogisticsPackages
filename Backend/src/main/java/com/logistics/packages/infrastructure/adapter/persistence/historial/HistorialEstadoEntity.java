@@ -52,4 +52,7 @@ public class HistorialEstadoEntity {
 
     @Column(name = "tipo_novedad", length = 50)
     private String tipoNovedad;
+    
+    @Column(name = "estado_novedad", length = 50)
+    private String estadoNovedad;
 }

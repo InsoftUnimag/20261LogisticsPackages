@@ -30,6 +30,8 @@ public abstract class SedeMapper {
                 .tarifaPorKg(sedeDbo.getTarifaPorKg())
                 .tarifaPorKm(sedeDbo.getTarifaPorKm())
                 .metodosPagoHabilitados(parseMetodosPago(sedeDbo.getMetodosPagoHabilitados()))
+                .latitud(sedeDbo.getLatitud())
+                .longitud(sedeDbo.getLongitud())
                 .build();
     }
 

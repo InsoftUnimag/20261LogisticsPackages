@@ -68,27 +68,31 @@ public class ProcesarEventoRutaUseCase {
         // Procesar según el tipo de evento
         HistorialEstado historial = procesarSegunTipoEvento(paquete, eventoDto);
         
-        // Guardar el paquete actualizado
-        paqueteRepository.save(paquete);
-        
-        // Guardar el registro en el historial
-        historialEstadoRepository.guardar(historial);
-        
-        // Marcar el evento como procesado
-        EventoProcesado eventoProcesado = new EventoProcesado(
-                eventoDto.getEventoId(),
-                eventoDto.getPaqueteId(),
-                eventoDto.getTipoEvento().name()
-        );
-        eventoProcesadoRepository.guardar(eventoProcesado);
-        
-        // FR-002: Enviar notificaciones
-        enviarNotificaciones(paquete, eventoDto);
+         // Guardar el paquete actualizado
+         paqueteRepository.save(paquete);
+         
+         // Guardar el registro en el historial
+         historialEstadoRepository.guardar(historial);
+         
+         // Marcar el evento como procesado
+         EventoProcesado eventoProcesado = new EventoProcesado(
+                 eventoDto.getEventoId(),
+                 eventoDto.getPaqueteId(),
+                 eventoDto.getTipoEvento().name()
+         );
+         eventoProcesadoRepository.guardar(eventoProcesado);
+         
+         // FR-002: Enviar notificaciones
+         enviarNotificaciones(paquete, eventoDto);
 
-        // Publicar estado actualizado a la cola de Finanzas (M3)
-        estadoPaqueteFinanzasPublisher.publicarEstadoFinal(paquete);
-        
-        log.info("Evento procesado exitosamente: {}", eventoDto.getEventoId());
+         // Publicar estado actualizado a la cola de Finanzas (M3)
+         // SOLO si el estado es definitivo (final)
+         if (esEstadoFinal(paquete.getEstado())) {
+             estadoPaqueteFinanzasPublisher.publicarEstadoFinal(paquete);
+             log.info("Estado final publicado a M3 para cálculo de liquidación: {}", paquete.getEstado());
+         }
+         
+         log.info("Evento procesado exitosamente: {}", eventoDto.getEventoId());
     }
     
     /**
@@ -219,5 +223,21 @@ public class ProcesarEventoRutaUseCase {
             default:
                 return String.format("Su paquete %s ha sido actualizado.", idPaquete);
         }
+    }
+    
+    /**
+     * Determina si un estado del paquete es final (definitivo).
+     * Los estados finales son aquellos donde el paquete ha completado su ciclo de vida.
+     * 
+     * @param estado El estado del paquete a evaluar
+     * @return true si el estado es final, false en caso contrario
+     */
+    private boolean esEstadoFinal(com.logistics.packages.domain.valueobject.EstadoPaquete estado) {
+        // Estados finales: paquete ha completado su ciclo de vida
+        return estado == com.logistics.packages.domain.valueobject.EstadoPaquete.ENTREGADO ||
+               estado == com.logistics.packages.domain.valueobject.EstadoPaquete.DAÑADO_EN_RUTA ||
+               estado == com.logistics.packages.domain.valueobject.EstadoPaquete.EXTRAVIADO_EN_RUTA ||
+               estado == com.logistics.packages.domain.valueobject.EstadoPaquete.DEVOLUCION_EN_RUTA ||
+               estado == com.logistics.packages.domain.valueobject.EstadoPaquete.NOVEDAD_EN_BODEGA;
     }
 }
