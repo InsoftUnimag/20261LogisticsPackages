@@ -3,6 +3,7 @@ package com.logistics.packages.application.usecase;
 import com.logistics.packages.application.repository.*;
 import com.logistics.packages.domain.event.SolicitudRutaEvent;
 import com.logistics.packages.domain.exception.InvalidCoverageException;
+import com.logistics.packages.domain.model.HistorialEstado;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.valueobject.*;
 import lombok.AllArgsConstructor;
@@ -24,6 +25,10 @@ public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
     private final CoverageService coverageService;
     private final PriceCalculationService priceCalculationService;
     private final DistanceService distanceService;
+    private final HistorialEstadoRepository historialEstadoRepository;
+    
+    // ID del sistema para registros de transiciones automáticas
+    private static final UUID SISTEMA_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
 
     @Override
     public UUID registrarAdmision(RegistroAdmisionCommand command) {
@@ -62,6 +67,17 @@ public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
             }
 
             Paquete saved = paqueteRepository.save(paquete);
+            
+            // Registrar en el historial la transición inicial: RECIBIDO_EN_SEDE
+            HistorialEstado historialInicial = new HistorialEstado(
+                    saved.getId(),
+                    null, // No hay estado anterior (es el inicio)
+                    saved.getEstado(), // RECIBIDO_EN_SEDE
+                    "Paquete recibido en sede",
+                    SISTEMA_ID,
+                    null // Sin evidencia para admisión
+            );
+            historialEstadoRepository.guardar(historialInicial);
 
             if (haEjecutadoPesaje(command)) {
                 SolicitudRutaEvent evento = SolicitudRutaEvent.of(saved.getId());

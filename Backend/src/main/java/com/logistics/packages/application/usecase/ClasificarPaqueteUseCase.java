@@ -1,14 +1,17 @@
 package com.logistics.packages.application.usecase;
 
+import com.logistics.packages.application.repository.HistorialEstadoRepository;
 import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.application.ports.ZonaDestinoRepository;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.exception.ZonaDestinoNotFoundException;
 import com.logistics.packages.domain.exception.ZonaDestinoSaturadaException;
 import com.logistics.packages.domain.exception.ZonaNoAptaException;
+import com.logistics.packages.domain.model.HistorialEstado;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.model.ZonaDestino;
 import com.logistics.packages.domain.service.CalculoZonaDestinoService;
+import com.logistics.packages.domain.valueobject.EstadoPaquete;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,6 +38,10 @@ public class ClasificarPaqueteUseCase {
     private final PaqueteRepository paqueteRepository;
     private final ZonaDestinoRepository zonaDestinoRepository;
     private final CalculoZonaDestinoService calculoZonaService;
+    private final HistorialEstadoRepository historialEstadoRepository;
+    
+    // ID del sistema para registros de transiciones automáticas
+    private static final UUID SISTEMA_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
 
     /**
      * Sugiere una zona de destino para un paquete basándose en sus coordenadas.
@@ -113,11 +120,22 @@ public class ClasificarPaqueteUseCase {
         // 6. Incrementar contador de la zona
         zona.incrementarContador();
         
-        // 7. Guardar cambios
-        paqueteRepository.save(paquete);
-        zonaDestinoRepository.save(zona);
-        
-        log.info("Clasificación confirmada. Paquete {} asignado a zona {}. Estado: {}", 
-                paquete.getId(), zona.getNombre(), paquete.getEstado());
-    }
+         // 7. Guardar cambios
+         paqueteRepository.save(paquete);
+         zonaDestinoRepository.save(zona);
+         
+         // Registrar en el historial la transición: EN_CLASIFICACION → LISTO_PARA_DESPACHO
+         HistorialEstado historialTransicion = new HistorialEstado(
+                 paqueteId,
+                 EstadoPaquete.EN_CLASIFICACION,
+                 EstadoPaquete.LISTO_PARA_DESPACHO,
+                 "Paquete clasificado en zona de destino: " + zona.getNombre(),
+                 SISTEMA_ID,
+                 null // Sin evidencia para transición de clasificación
+         );
+         historialEstadoRepository.guardar(historialTransicion);
+         
+         log.info("Clasificación confirmada. Paquete {} asignado a zona {}. Estado: {}", 
+                 paquete.getId(), zona.getNombre(), paquete.getEstado());
+     }
 }

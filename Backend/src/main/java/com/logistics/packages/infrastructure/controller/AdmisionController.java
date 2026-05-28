@@ -11,6 +11,10 @@ import com.logistics.packages.infrastructure.dto.request.RegistroAdmisionRequest
 import com.logistics.packages.infrastructure.dto.response.ConsultaPaqueteResponse;
 import com.logistics.packages.infrastructure.dto.response.PaqueteListadoResponse;
 import com.logistics.packages.infrastructure.dto.response.RegistroAdmisionResponse;
+import com.logistics.packages.infrastructure.dto.response.TrackingPaqueteResponse;
+import com.logistics.packages.infrastructure.dto.response.HistorialEstadoItemDto;
+import com.logistics.packages.domain.model.HistorialEstado;
+import com.logistics.packages.application.repository.HistorialEstadoRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,6 +42,7 @@ public class AdmisionController {
     private final RegistrarAdmisionIn registrarAdmisionIn;
     private final ConsultarPaqueteIn consultarPaqueteIn;
     private final PaqueteRepository paqueteRepository;
+    private final HistorialEstadoRepository historialEstadoRepository;
 
     @Operation(summary = "Registrar admisión de paquete", description = "Registra un nuevo paquete en el sistema con datos del remitente, destinatario, tipo de mercancía y método de pago. Retorna el ID asignado al paquete")
     @ApiResponse(responseCode = "200", description = "Paquete registrado exitosamente")
@@ -214,5 +220,55 @@ public class AdmisionController {
                 "anchoCm", paquete.getDimensiones().getAnchoCm(),
                 "altoCm", paquete.getDimensiones().getAltoCm()
         ));
+    }
+
+    @Operation(summary = "Consultar tracking en tiempo real de un paquete", description = "Obtiene el estado actual y el historial completo de transiciones de un paquete. FT-3: feature/tracking-paquete-en-ruta")
+    @ApiResponse(responseCode = "200", description = "Tracking consultado exitosamente")
+    @ApiResponse(responseCode = "404", description = "Paquete no encontrado")
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    @GetMapping("/{paqueteId}/tracking")
+    public ResponseEntity<TrackingPaqueteResponse> obtenerTracking(@PathVariable UUID paqueteId) {
+        Paquete paquete = paqueteRepository.findById(paqueteId)
+                .orElseThrow(() -> new com.logistics.packages.domain.exception.PaqueteNotFoundException(paqueteId));
+        
+        // Obtener el historial de transiciones
+        List<HistorialEstado> historial = historialEstadoRepository.obtenerHistorialPorPaqueteId(paqueteId);
+         List<HistorialEstadoItemDto> historialDto = historial.stream()
+                 .map(h -> HistorialEstadoItemDto.builder()
+                         .id(h.getId())
+                         .paqueteId(h.getPaqueteId())
+                         .estadoAnterior(h.getEstadoAnterior() != null ? h.getEstadoAnterior().name() : null)
+                         .estadoNuevo(h.getEstadoNuevo().name())
+                         .observaciones(h.getObservaciones())
+                         .usuarioId(h.getUsuarioId())
+                         .urlEvidencia(h.getUrlEvidencia())
+                         .tipoNovedad(h.getTipoNovedad() != null ? h.getTipoNovedad().name() : null)
+                         .fechaTransicionUtc(h.getFechaTransicionUtc())
+                         .build())
+                 .toList();
+        
+        // Construir la respuesta
+        String remitenteNombre = paquete.getRemitente() != null ? paquete.getRemitente().getNombreCompleto() : null;
+        String destinatarioNombre = paquete.getDestinatario() != null ? paquete.getDestinatario().getNombreCompleto() : null;
+        String ciudadDestino = paquete.getDireccionDestino() != null ? paquete.getDireccionDestino().getCiudad() : null;
+        String departamentoDestino = paquete.getDireccionDestino() != null ? paquete.getDireccionDestino().getDepartamento() : null;
+        
+        TrackingPaqueteResponse response = TrackingPaqueteResponse.builder()
+                .paqueteId(paquete.getId())
+                .etiquetaDigital(paquete.getEtiquetaDigital())
+                .estado(paquete.getEstado().toString())
+                .remitenteNombre(remitenteNombre)
+                .destinatarioNombre(destinatarioNombre)
+                .ciudadDestino(ciudadDestino)
+                .departamentoDestino(departamentoDestino)
+                .distanciaEstimadaKm(paquete.getDistanciaEstimadaKm())
+                .rutaId(paquete.getRutaId())
+                .fechaEntregaUtc(paquete.getFechaEntregaUtc())
+                .nombreFirmante(paquete.getNombreFirmante())
+                .urlEvidenciaEntrega(paquete.getUrlEvidenciaEntrega())
+                .historial(historialDto)
+                .build();
+        
+        return ResponseEntity.ok(response);
     }
 }
