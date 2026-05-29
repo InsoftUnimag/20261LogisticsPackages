@@ -1,10 +1,13 @@
 package com.logistics.packages.application.usecase;
 
 import com.logistics.packages.application.ports.EventoProcesadoRepository;
+import com.logistics.packages.application.repository.ArchivoStoragePort;
+import com.logistics.packages.application.repository.HistorialEstadoRepository;
 import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.domain.event.SolicitudRutaEvent;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.model.EventoProcesado;
+import com.logistics.packages.domain.model.HistorialEstado;
 import com.logistics.packages.domain.model.Paquete;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProcesarPesajeUseCase {
 
     private final PaqueteRepository paqueteRepository;
+    private final HistorialEstadoRepository historialEstadoRepository;
+    private final ArchivoStoragePort archivoStoragePort;
     private final SolicitarRutaUseCase solicitarRutaUseCase;
     private final EventoProcesadoRepository eventoProcesadoRepository;
 
@@ -57,8 +62,29 @@ public class ProcesarPesajeUseCase {
                 command.getRecargoCategoriaCarga()
         );
 
+        // Subir evidencia fotográfica si se proporcionó
+        String urlEvidencia = null;
+        if (command.getEvidencia() != null && !command.getEvidencia().isEmpty()) {
+            urlEvidencia = archivoStoragePort.guardar(
+                "pesaje",
+                command.getPaqueteId().toString(),
+                command.getEvidencia()
+            );
+        }
+
         // Persistir los cambios
         paqueteRepository.save(paquete);
+
+        // Registrar en el historial la transición de pesaje
+        HistorialEstado historialPesaje = new HistorialEstado(
+                command.getPaqueteId(),
+                null,
+                paquete.getEstado(),
+                "Pesaje procesado",
+                null,
+                urlEvidencia
+        );
+        historialEstadoRepository.guardar(historialPesaje);
 
         // MOD1-IP-003: Después del pesaje exitoso, disparar solicitud de ruta (CON GUARDIA DE IDEMPOTENCIA - BE-1)
         log.info("Pesaje completado exitosamente para paquete {}. Verificando idempotencia antes de disparar solicitud de ruta", paquete.getId());
