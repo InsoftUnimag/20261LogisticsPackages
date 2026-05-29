@@ -1,5 +1,9 @@
 # Ignorar TODO por defecto
 **
 
+# Re-incluir directorios padres (requisito de Docker)
+!build/
+!build/libs/
+
 # Permitir solo el JAR compilado
 !build/libs/*.jar
