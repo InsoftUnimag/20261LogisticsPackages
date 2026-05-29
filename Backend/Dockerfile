@@ -10,7 +10,7 @@ COPY --chown=gradle:gradle gradle /home/gradle/src/gradle
 # Elimina los caracteres ocultos de Windows (\r) y repara permisos
 RUN sed -i 's/\r$//' gradlew && chmod +x gradlew
 
-RUN ./gradlew clean bootJar -x test
+RUN gradle clean bootJar -x test --no-daemon
 
 # Stage 2: Runtime ligero de producción
 FROM eclipse-temurin:21-jre-alpine
