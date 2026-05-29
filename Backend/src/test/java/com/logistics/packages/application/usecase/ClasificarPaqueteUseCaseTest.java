@@ -2,6 +2,8 @@ package com.logistics.packages.application.usecase;
 
 import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.application.ports.ZonaDestinoRepository;
+import com.logistics.packages.application.repository.ArchivoStoragePort;
+import com.logistics.packages.application.repository.HistorialEstadoRepository;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.exception.ZonaDestinoNotFoundException;
 import com.logistics.packages.domain.exception.ZonaDestinoSaturadaException;
@@ -41,6 +43,12 @@ class ClasificarPaqueteUseCaseTest {
     @Mock
     private CalculoZonaDestinoService calculoZonaService;
 
+    @Mock
+    private HistorialEstadoRepository historialEstadoRepository;
+
+    @Mock
+    private ArchivoStoragePort archivoStoragePort;
+
     private ClasificarPaqueteUseCase clasificarUseCase;
 
     private Paquete paquete;
@@ -51,7 +59,9 @@ class ClasificarPaqueteUseCaseTest {
         clasificarUseCase = new ClasificarPaqueteUseCase(
                 paqueteRepository, 
                 zonaDestinoRepository, 
-                calculoZonaService
+                calculoZonaService,
+                historialEstadoRepository,
+                archivoStoragePort
         );
 
         Coordenadas coordenadas = new Coordenadas(4.70, -74.05);
@@ -116,7 +126,7 @@ class ClasificarPaqueteUseCaseTest {
         when(paqueteRepository.save(any(Paquete.class))).thenReturn(paquete);
 
         // When
-        clasificarUseCase.confirmarClasificacion(paquete.getId(), zonaDestino.getId());
+        clasificarUseCase.confirmarClasificacion(paquete.getId(), zonaDestino.getId(), null);
 
         // Then
         assertEquals(zonaDestino.getId(), paquete.getZonaDestinoId());
@@ -138,7 +148,7 @@ class ClasificarPaqueteUseCaseTest {
 
         // When & Then
         assertThrows(PaqueteNotFoundException.class,
-                () -> clasificarUseCase.confirmarClasificacion(paqueteId, zonaDestino.getId()));
+                () -> clasificarUseCase.confirmarClasificacion(paqueteId, zonaDestino.getId(), null));
         
         verify(paqueteRepository).findById(paqueteId);
         verify(zonaDestinoRepository, never()).findById(any());
@@ -154,7 +164,7 @@ class ClasificarPaqueteUseCaseTest {
 
         // When & Then
         assertThrows(ZonaDestinoNotFoundException.class,
-                () -> clasificarUseCase.confirmarClasificacion(paquete.getId(), zonaId));
+                () -> clasificarUseCase.confirmarClasificacion(paquete.getId(), zonaId, null));
         
         verify(paqueteRepository).findById(paquete.getId());
         verify(zonaDestinoRepository).findById(zonaId);
@@ -178,7 +188,7 @@ class ClasificarPaqueteUseCaseTest {
 
         // When & Then
         assertThrows(ZonaNoAptaException.class,
-                () -> clasificarUseCase.confirmarClasificacion(paquete.getId(), zonaDestino.getId()));
+                () -> clasificarUseCase.confirmarClasificacion(paquete.getId(), zonaDestino.getId(), null));
         
         verify(paqueteRepository).findById(paquete.getId());
         verify(zonaDestinoRepository).findById(zonaDestino.getId());
@@ -197,7 +207,7 @@ class ClasificarPaqueteUseCaseTest {
 
         // When & Then
         assertThrows(ZonaDestinoSaturadaException.class,
-                () -> clasificarUseCase.confirmarClasificacion(paquete.getId(), zonaDestino.getId()));
+                () -> clasificarUseCase.confirmarClasificacion(paquete.getId(), zonaDestino.getId(), null));
         
         verify(paqueteRepository).findById(paquete.getId());
         verify(zonaDestinoRepository).findById(zonaDestino.getId());

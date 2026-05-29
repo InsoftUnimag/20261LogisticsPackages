@@ -1,9 +1,10 @@
 package com.logistics.packages.application.usecase;
 
+import com.logistics.packages.application.repository.ArchivoStoragePort;
+import com.logistics.packages.application.repository.CoverageService;
 import com.logistics.packages.application.repository.DistanceService;
 import com.logistics.packages.application.repository.GeocodingService;
 import com.logistics.packages.application.repository.PaqueteRepository;
-import com.logistics.packages.application.repository.CoverageService;
 import com.logistics.packages.application.repository.PriceCalculationService;
 import com.logistics.packages.domain.event.SolicitudRutaEvent;
 import com.logistics.packages.domain.model.Paquete;
@@ -45,6 +46,9 @@ class RegistrarAdmisionUseCaseTest {
 
     @Mock
     private SolicitarRutaUseCase solicitarRutaUseCase;
+
+    @Mock
+    private ArchivoStoragePort archivoStoragePort;
 
     @InjectMocks
     private RegistrarAdmisionUseCase registrarAdmisionUseCase;
