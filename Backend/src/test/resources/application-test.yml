@@ -1,11 +1,4 @@
 spring:
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
-      - io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration
-      - io.awspring.cloud.autoconfigure.sqs.SqsAutoConfiguration
   flyway:
     enabled: false
   jpa:
@@ -16,4 +9,9 @@ spring:
       stack:
         auto: false
       region:
-        static: us-east-1
+        static: us-east-2
+
+aws:
+  s3:
+    bucket-name: logistics-packages-test
+    auto-create-bucket: true
