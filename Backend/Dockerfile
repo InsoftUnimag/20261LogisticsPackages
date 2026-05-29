@@ -3,7 +3,11 @@ FROM gradle:8.5-jdk21-alpine AS build
 COPY --chown=gradle:gradle . /home/gradle/src
 WORKDIR /home/gradle/src
 
-# CRUCIAL: Elimina los caracteres ocultos de Windows (\r) y repara permisos
+# PASO DE SEGURIDAD: Forzar el copiado manual saltándose cualquier bloqueo de .dockerignore
+COPY --chown=gradle:gradle gradlew /home/gradle/src/gradlew
+COPY --chown=gradle:gradle gradle /home/gradle/src/gradle
+
+# Elimina los caracteres ocultos de Windows (\r) y repara permisos
 RUN sed -i 's/\r$//' gradlew && chmod +x gradlew
 
 RUN ./gradlew clean bootJar -x test
