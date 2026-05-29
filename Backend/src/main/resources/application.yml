@@ -24,7 +24,6 @@ aws:
   sqs:
     ruta-request-queue: solicitudes-ruta-queue
     ruta-response-queue: respuestas-ruta-queue
-    clasificacion-queue: paquete-listo-clasificar-queue
 
 app:
   sqs:
