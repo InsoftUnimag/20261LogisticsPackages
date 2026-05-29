@@ -6,6 +6,7 @@ import com.logistics.packages.domain.valueobject.Direccion;
 import com.logistics.packages.domain.valueobject.MetodoPago;
 import com.logistics.packages.domain.valueobject.TipoMercancia;
 import lombok.Builder;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -25,6 +26,7 @@ public record RegistroAdmisionCommand(
         Double ancho,
         Double alto,
         Coordenadas coordenadasManuales,
-        UUID usuarioId
+        UUID usuarioId,
+        MultipartFile evidencia
 ) {
 }
