@@ -1,5 +1,21 @@
-# Ignorar TODO por defecto
-**
+# ── Exclusión para multi-stage build ──────────────────────────
+# El stage "build" del Dockerfile necesita gradlew, gradle/, src/, build.gradle, etc.
+# Solo excluimos lo que no debe estar en el contexto.
 
-# Permitir solo el JAR compilado
-!build/libs/*.jar
+# Entorno local e IDE
+.git/
+.gitattributes
+.gitignore
+.idea/
+
+# Cache y artefactos locales de Gradle
+.gradle/
+build/
+
+# Documentación y config locales
+.env
+docker-compose.yml
+flyway.conf
+
+# Scripts de Windows / helper local
+gradlew.bat
