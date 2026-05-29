@@ -1,5 +1,6 @@
 package com.logistics.packages.application.usecase;
 
+import com.logistics.packages.application.repository.ArchivoStoragePort;
 import com.logistics.packages.application.repository.HistorialEstadoRepository;
 import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.application.ports.ZonaDestinoRepository;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -39,6 +41,7 @@ public class ClasificarPaqueteUseCase {
     private final ZonaDestinoRepository zonaDestinoRepository;
     private final CalculoZonaDestinoService calculoZonaService;
     private final HistorialEstadoRepository historialEstadoRepository;
+    private final ArchivoStoragePort archivoStoragePort;
     
     // ID del sistema para registros de transiciones automáticas
     private static final UUID SISTEMA_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
@@ -93,7 +96,7 @@ public class ClasificarPaqueteUseCase {
      * @throws ZonaNoAptaException si la zona no es apta para el tipo de mercancía
      * @throws ZonaDestinoSaturadaException si la zona ha alcanzado su capacidad máxima
      */
-    public void confirmarClasificacion(UUID paqueteId, UUID zonaDestinoId) {
+    public void confirmarClasificacion(UUID paqueteId, UUID zonaDestinoId, MultipartFile evidencia) {
         log.info("Confirmando clasificación. Paquete: {}, Zona: {}", paqueteId, zonaDestinoId);
         
         // 1. Obtener el paquete
@@ -114,6 +117,16 @@ public class ClasificarPaqueteUseCase {
             );
         }
         
+        // 4. Subir evidencia fotográfica si se proporcionó
+        String urlEvidencia = null;
+        if (evidencia != null && !evidencia.isEmpty()) {
+            urlEvidencia = archivoStoragePort.guardar(
+                "clasificacion",
+                paqueteId.toString(),
+                evidencia
+            );
+        }
+        
         // 5. FR-002: Asignar zona de destino al paquete (cambia estado a LISTO_PARA_DESPACHO)
         paquete.asignarZonaDestino(zona.getId());
         
@@ -131,7 +144,7 @@ public class ClasificarPaqueteUseCase {
                  EstadoPaquete.LISTO_PARA_DESPACHO,
                  "Paquete clasificado en zona de destino: " + zona.getNombre(),
                  SISTEMA_ID,
-                 null // Sin evidencia para transición de clasificación
+                 urlEvidencia
          );
          historialEstadoRepository.guardar(historialTransicion);
          

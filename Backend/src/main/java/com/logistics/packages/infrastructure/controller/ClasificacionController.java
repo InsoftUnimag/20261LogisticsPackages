@@ -5,18 +5,18 @@ import com.logistics.packages.application.usecase.ClasificacionSugeridaResponse;
 import com.logistics.packages.application.ports.ZonaDestinoRepository;
 import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.domain.model.Paquete;
-import com.logistics.packages.infrastructure.dto.request.ConfirmarZonaRequest;
 import com.logistics.packages.infrastructure.dto.response.ClasificacionSugeridaResponseDTO;
 import com.logistics.packages.infrastructure.dto.response.ConfirmacionClasificacionResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -145,27 +145,30 @@ public class ClasificacionController {
     @ApiResponse(responseCode = "400", description = "Solicitud inválida: datos de confirmación incorrectos")
     @ApiResponse(responseCode = "404", description = "Paquete o zona de destino no encontrados")
     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
-    @PostMapping("/clasificacion/confirmar")
+    @PostMapping(value = "/clasificacion/confirmar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ConfirmacionClasificacionResponse> confirmarClasificacion(
-            @Valid @RequestBody ConfirmarZonaRequest request) {
+            @RequestParam UUID paqueteId,
+            @RequestParam UUID zonaDestinoId,
+            @RequestParam(required = false) MultipartFile evidencia) {
         
         log.info("Confirmando clasificación - Paquete: {}, Zona: {}", 
-                request.getPaqueteId(), request.getZonaDestinoId());
+                paqueteId, zonaDestinoId);
         
         try {
             clasificarPaqueteUseCase.confirmarClasificacion(
-                    request.getPaqueteId(), 
-                    request.getZonaDestinoId()
+                    paqueteId, 
+                    zonaDestinoId,
+                    evidencia
             );
             
             // Obtener el nombre real de la zona desde el repositorio
-            String nombreZona = zonaDestinoRepository.findById(request.getZonaDestinoId())
+            String nombreZona = zonaDestinoRepository.findById(zonaDestinoId)
                     .map(zona -> zona.getNombre())
                     .orElse("Zona de destino");
             
             ConfirmacionClasificacionResponse response = ConfirmacionClasificacionResponse.builder()
-                    .paqueteId(request.getPaqueteId())
-                    .zonaDestinoId(request.getZonaDestinoId())
+                    .paqueteId(paqueteId)
+                    .zonaDestinoId(zonaDestinoId)
                     .nombreZona(nombreZona)
                     .estadoPaquete("LISTO_PARA_DESPACHO")
                     .mensaje("Paquete clasificado exitosamente y listo para despacho")
@@ -175,7 +178,7 @@ public class ClasificacionController {
             
         } catch (Exception e) {
             log.error("Error confirmando clasificación para paquete {}: {}", 
-                    request.getPaqueteId(), e.getMessage(), e);
+                    paqueteId, e.getMessage(), e);
             throw e;
         }
     }
