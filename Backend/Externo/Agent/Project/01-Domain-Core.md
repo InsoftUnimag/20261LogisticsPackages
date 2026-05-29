@@ -206,17 +206,19 @@ DAÑADO_EN_RUTA ← EN_TRANSITO | EN_PARADA_DE_ENTREGA
 
 ---
 
+---
+
 ## Anexo: Estado de Archivos Actual (domain)
-*Generado automáticamente por sync-agent-docs.py el 2026-05-18 07:01:05 UTC*
+*Generado automáticamente por sync-agent-docs.py el 2026-05-25 23:27:36 UTC*
 
 | Indicador | Valor |
 |---|---|
-| Clases | 29 |
+| Clases | 30 |
 | Interfaces | 0 |
 | Enumeraciones | 11 |
 | Records | 1 |
-| Métodos públicos (significativos) | 32 |
-| Archivos analizados | 41 |
+| Métodos públicos (significativos) | 37 |
+| Archivos analizados | 42 |
 
 ### Tipos Detectados
 
@@ -241,7 +243,7 @@ DAÑADO_EN_RUTA ← EN_TRANSITO | EN_PARADA_DE_ENTREGA
 | 🟦 Cls | `EventoProcesado` | `com.logistics.packages.domain.model` | `—` |
 | 🟦 Cls | `HistorialEstado` | `com.logistics.packages.domain.model` | `—` |
 | 🟨 Enm | `TipoNotificacion` | `com.logistics.packages.domain.model` | `marcarComoEnviada, marcarComoFallida` |
-| 🟦 Cls | `Paquete` | `com.logistics.packages.domain.model` | `asignarCoordenadas, asignarPrecio, procesarPesaje, calcularPrecioEnvio, cambiarEstado, asignarRut...` |
+| 🟦 Cls | `Paquete` | `com.logistics.packages.domain.model` | `crearNuevo, reconstruir, asignarCoordenadas, asignarPrecio, asignarPrecioEnvio, procesarPesaje, c...` |
 | 🟦 Cls | `Persona` | `com.logistics.packages.domain.model` | `—` |
 | 🟦 Cls | `Sede` | `com.logistics.packages.domain.model` | `validarMetodoPagoSoportado, tieneCapacidadPara` |
 | 🟦 Cls | `Usuario` | `com.logistics.packages.domain.model` | `—` |
@@ -257,6 +259,7 @@ DAÑADO_EN_RUTA ← EN_TRANSITO | EN_PARADA_DE_ENTREGA
 | 🟨 Enm | `EstadoPaquete` | `com.logistics.packages.domain.valueobject` | `permiteNovedadEnBodega, esTransicionValidaDesde` |
 | 🟨 Enm | `EstadoZona` | `com.logistics.packages.domain.valueobject` | `—` |
 | 🟨 Enm | `MetodoPago` | `com.logistics.packages.domain.valueobject` | `—` |
+| 🟦 Cls | `NovedadBodega` | `com.logistics.packages.domain.valueobject` | `—` |
 | 🟦 Cls | `Peso` | `com.logistics.packages.domain.valueobject` | `—` |
 | 🟦 Cls | `PrecioEnvio` | `com.logistics.packages.domain.valueobject` | `—` |
 | 🟨 Enm | `TipoDocumento` | `com.logistics.packages.domain.valueobject` | `—` |

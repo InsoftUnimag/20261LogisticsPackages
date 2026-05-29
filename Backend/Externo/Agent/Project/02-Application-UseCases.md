@@ -216,27 +216,29 @@ graph TD
 
 ---
 
+---
+
 ## Anexo: Estado de Archivos Actual (application)
-*Generado automáticamente por sync-agent-docs.py el 2026-05-18 07:01:05 UTC*
+*Generado automáticamente por sync-agent-docs.py el 2026-05-25 23:27:37 UTC*
 
 | Indicador | Valor |
 |---|---|
-| Clases | 17 |
-| Interfaces | 21 |
+| Clases | 15 |
+| Interfaces | 20 |
 | Enumeraciones | 1 |
 | Records | 3 |
 | Métodos públicos (significativos) | 12 |
-| Archivos analizados | 42 |
+| Archivos analizados | 39 |
 
 ### Tipos Detectados
 
 | Tipo | Nombre | Paquete | Métodos públicos |
 |---|---|---|---|
 | 🟩 Int | `ClasificacionEventPublisher` | `com.logistics.packages.application.ports` | `—` |
+| 🟩 Int | `EstadoPaqueteFinanzasPublisher` | `com.logistics.packages.application.ports` | `—` |
 | 🟩 Int | `EventoProcesadoRepository` | `com.logistics.packages.application.ports` | `—` |
 | 🟩 Int | `GeocodingService` | `com.logistics.packages.application.ports` | `—` |
 | 🟩 Int | `NotificacionPort` | `com.logistics.packages.application.ports` | `—` |
-| 🟩 Int | `RutaEventPublisher` | `com.logistics.packages.application.ports` | `—` |
 | 🟩 Int | `RutaQueuePort` | `com.logistics.packages.application.ports` | `—` |
 | 🟩 Int | `UsuarioRepository` | `com.logistics.packages.application.ports` | `—` |
 | 🟩 Int | `ZonaDestinoRepository` | `com.logistics.packages.application.ports` | `—` |
@@ -252,7 +254,6 @@ graph TD
 | 🟩 Int | `PriceCalculationService` | `com.logistics.packages.application.repository` | `—` |
 | 🟦 Cls | `PriceCalculationServiceImpl` | `com.logistics.packages.application.repository` | `calculatePrice, calcularSubtotal` |
 | 🟩 Int | `RegistrarAdmisionIn` | `com.logistics.packages.application.repository` | `—` |
-| 🟩 Int | `RutaEventPublisher` | `com.logistics.packages.application.repository` | `—` |
 | 🟩 Int | `ZonaAlmacenajeRepository` | `com.logistics.packages.application.repository` | `—` |
 | 🟪 Rec | `AsignarRutaCommand` | `com.logistics.packages.application.usecase` | `—` |
 | 🟦 Cls | `AsignarRutaUseCase` | `com.logistics.packages.application.usecase` | `asignarRuta` |
@@ -266,7 +267,7 @@ graph TD
 | 🟦 Cls | `RegistroNovedadResponse` | `com.logistics.packages.application.usecase.novedad` | `—` |
 | 🟦 Cls | `PesajeCommand` | `com.logistics.packages.application.usecase` | `—` |
 | 🟦 Cls | `PesajeResponse` | `com.logistics.packages.application.usecase` | `—` |
-| 🟪 Rec | `PrepararAlmacenajeCommand` | `com.logistics.packages.application.usecase` | `—` |
+| 🟪 Rec | `PrepararAlmacenajeCommand` | `com.logistics.packages.application.usecase` | `tieneDiscrepancias` |
 | 🟦 Cls | `PrepararAlmacenajeUseCase` | `com.logistics.packages.application.usecase` | `prepararAlmacenaje` |
 | 🟦 Cls | `ProcesarPesajeUseCase` | `com.logistics.packages.application.usecase` | `procesarPesaje` |
 | 🟦 Cls | `RegistrarAdmisionUseCase` | `com.logistics.packages.application.usecase` | `registrarAdmision` |
