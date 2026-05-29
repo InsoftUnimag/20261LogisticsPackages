@@ -4,7 +4,6 @@ import com.logistics.packages.application.ports.EstadoPaqueteFinanzasPublisher;
 import com.logistics.packages.application.ports.NotificacionPort;
 import com.logistics.packages.application.repository.ArchivoStoragePort;
 import com.logistics.packages.application.repository.HistorialEstadoRepository;
-import com.logistics.packages.application.repository.NovedadEventPublisher;
 import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.model.Persona;
@@ -45,9 +44,6 @@ class RegistrarNovedadUseCaseTest {
 
     @Mock
     private ArchivoStoragePort archivoStoragePort;
-
-    @Mock
-    private NovedadEventPublisher novedadEventPublisher;
 
     @Mock
     private EstadoPaqueteFinanzasPublisher estadoPaqueteFinanzasPublisher;
@@ -118,7 +114,6 @@ class RegistrarNovedadUseCaseTest {
         verify(archivoStoragePort).guardar(eq("novedades"), eq(paqueteId.toString()), eq(archivo));
         verify(paqueteRepository).save(paquete);
         verify(historialRepository).guardar(any(HistorialEstado.class));
-        verify(novedadEventPublisher).publicarNovedadRegistrada(eq(paqueteId), any(UUID.class));
         
         // FR-002: Verificar que se enviaron notificaciones (no hacen rollback si fallan)
         verify(notificacionPort, atLeastOnce()).enviarSms(anyString(), anyString());
@@ -156,7 +151,6 @@ class RegistrarNovedadUseCaseTest {
         verify(archivoStoragePort, never()).guardar(any(), any(), any());
         verify(paqueteRepository).save(paquete);
         verify(historialRepository).guardar(any(HistorialEstado.class));
-        verify(novedadEventPublisher).publicarNovedadRegistrada(eq(paqueteId), any(UUID.class));
         
         // FR-002: Verificar que se enviaron notificaciones incluso sin evidencia
         verify(notificacionPort, atLeastOnce()).enviarSms(anyString(), anyString());
@@ -188,7 +182,6 @@ class RegistrarNovedadUseCaseTest {
         verify(archivoStoragePort, never()).guardar(any(), any(), any());
         verify(paqueteRepository, never()).save(any());
         verify(historialRepository, never()).guardar(any());
-        verify(novedadEventPublisher, never()).publicarNovedadRegistrada(any(), any());
         verify(notificacionPort, never()).enviarSms(any(), any());
         verify(notificacionPort, never()).enviarEmail(any(), any(), any());
         verify(estadoPaqueteFinanzasPublisher, never()).publicarEstadoFinal(any());
@@ -220,14 +213,13 @@ class RegistrarNovedadUseCaseTest {
         verify(archivoStoragePort).guardar(any(), any(), any());
         verify(paqueteRepository, never()).save(any());
         verify(historialRepository, never()).guardar(any());
-        verify(novedadEventPublisher, never()).publicarNovedadRegistrada(any(), any());
         verify(notificacionPort, never()).enviarSms(any(), any());
         verify(notificacionPort, never()).enviarEmail(any(), any(), any());
         verify(estadoPaqueteFinanzasPublisher, never()).publicarEstadoFinal(any());
     }
 
     @Test
-    @DisplayName("Debe publicar evento después de persistir exitosamente")
+    @DisplayName("Debe publicar estado a Finanzas después de persistir exitosamente")
     void registrarNovedad_PersistenciaExitosa_DebePublicarEvento() {
         // Given
         when(paqueteRepository.findById(paqueteId)).thenReturn(Optional.of(paquete));
@@ -247,11 +239,10 @@ class RegistrarNovedadUseCaseTest {
         registrarNovedadUseCase.registrarNovedad(command);
 
         // Then - Verificar orden de ejecución (notificaciones antes de publicar a Finanzas)
-        var inOrder = inOrder(paqueteRepository, historialRepository, novedadEventPublisher, notificacionPort, estadoPaqueteFinanzasPublisher);
+        var inOrder = inOrder(paqueteRepository, historialRepository, notificacionPort, estadoPaqueteFinanzasPublisher);
         inOrder.verify(paqueteRepository).findById(paqueteId);
         inOrder.verify(paqueteRepository).save(paquete);
         inOrder.verify(historialRepository).guardar(any(HistorialEstado.class));
-        inOrder.verify(novedadEventPublisher).publicarNovedadRegistrada(eq(paqueteId), any(UUID.class));
         inOrder.verify(notificacionPort, atLeastOnce()).enviarSms(anyString(), anyString());
         inOrder.verify(estadoPaqueteFinanzasPublisher).publicarEstadoFinal(paquete);
     }
@@ -286,7 +277,6 @@ class RegistrarNovedadUseCaseTest {
         // Verificar que el historial SÍ se guardó (no rollback por notificación)
         verify(paqueteRepository).save(paquete);
         verify(historialRepository).guardar(any(HistorialEstado.class));
-        verify(novedadEventPublisher).publicarNovedadRegistrada(eq(paqueteId), any(UUID.class));
         
         // La publicación a Finanzas se ejecutó normalmente
         verify(estadoPaqueteFinanzasPublisher).publicarEstadoFinal(paquete);
