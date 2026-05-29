@@ -11,8 +11,7 @@ COPY --chown=gradle:gradle gradle /home/gradle/src/gradle
 RUN sed -i 's/\r$//' gradlew && chmod +x gradlew
 
 # CAMBIO CRUCIAL: Usar el wrapper local (./gradlew) en lugar del comando global
-RUN ./gradlew clean bootJar -x test --no-daemon
-
+RUN GRADLE_OPTS="-Xmx384m -Xms128m -XX:MaxMetaspaceSize=128m" ./gradlew clean bootJar -x test --no-daemon
 # Stage 2: Runtime ligero de producción
 FROM eclipse-temurin:21-jre-alpine
 RUN addgroup -S spring && adduser -S spring -G spring
