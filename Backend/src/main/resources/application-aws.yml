@@ -3,10 +3,17 @@ spring:
     aws:
       region:
         static: us-east-2
+      s3:
+        region: us-east-2
+        path-style-access-enabled: false
 
 app:
   sqs:
     eventos-paquete-queue: arn:aws:sqs:us-east-2:383941187903:logistics-eventos-paquete
+
+# S3 Bucket for evidence storage (MOD1-UC-006 FR-004)
 aws:
+  s3:
+    bucket-name: logistics-packages-prod
   sqs:
     ruta-response-queue: arn:aws:sqs:us-east-2:383941187903:respuestas-ruta-queue
