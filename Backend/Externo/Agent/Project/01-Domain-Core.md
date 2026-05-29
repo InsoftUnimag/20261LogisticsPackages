@@ -208,8 +208,10 @@ DAÑADO_EN_RUTA ← EN_TRANSITO | EN_PARADA_DE_ENTREGA
 
 ---
 
+---
+
 ## Anexo: Estado de Archivos Actual (domain)
-*Generado automáticamente por sync-agent-docs.py el 2026-05-29 16:33:10 UTC*
+*Generado automáticamente por sync-agent-docs.py el 2026-05-29 20:43:45 UTC*
 
 | Indicador | Valor |
 |---|---|

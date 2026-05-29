@@ -218,23 +218,24 @@ graph TD
 
 ---
 
+---
+
 ## Anexo: Estado de Archivos Actual (application)
-*Generado automáticamente por sync-agent-docs.py el 2026-05-29 16:33:10 UTC*
+*Generado automáticamente por sync-agent-docs.py el 2026-05-29 20:43:45 UTC*
 
 | Indicador | Valor |
 |---|---|
 | Clases | 16 |
-| Interfaces | 21 |
+| Interfaces | 19 |
 | Enumeraciones | 1 |
 | Records | 3 |
 | Métodos públicos (significativos) | 12 |
-| Archivos analizados | 41 |
+| Archivos analizados | 39 |
 
 ### Tipos Detectados
 
 | Tipo | Nombre | Paquete | Métodos públicos |
 |---|---|---|---|
-| 🟩 Int | `ClasificacionEventPublisher` | `com.logistics.packages.application.ports` | `—` |
 | 🟩 Int | `EstadoPaqueteFinanzasPublisher` | `com.logistics.packages.application.ports` | `—` |
 | 🟩 Int | `EventoProcesadoRepository` | `com.logistics.packages.application.ports` | `—` |
 | 🟩 Int | `GeocodingService` | `com.logistics.packages.application.ports` | `—` |
@@ -249,7 +250,6 @@ graph TD
 | 🟩 Int | `DistanceService` | `com.logistics.packages.application.repository` | `—` |
 | 🟩 Int | `GeocodingService` | `com.logistics.packages.application.repository` | `—` |
 | 🟩 Int | `HistorialEstadoRepository` | `com.logistics.packages.application.repository` | `—` |
-| 🟩 Int | `NovedadEventPublisher` | `com.logistics.packages.application.repository` | `—` |
 | 🟩 Int | `PaqueteRepository` | `com.logistics.packages.application.repository` | `—` |
 | 🟩 Int | `PrepararAlmacenajeIn` | `com.logistics.packages.application.repository` | `—` |
 | 🟩 Int | `PriceCalculationService` | `com.logistics.packages.application.repository` | `—` |

@@ -289,17 +289,19 @@ Config:
 
 ---
 
+---
+
 ## Anexo: Estado de Archivos Actual (infrastructure)
-*Generado automáticamente por sync-agent-docs.py el 2026-05-29 16:33:10 UTC*
+*Generado automáticamente por sync-agent-docs.py el 2026-05-29 20:43:45 UTC*
 
 | Indicador | Valor |
 |---|---|
-| Clases | 78 |
+| Clases | 75 |
 | Interfaces | 13 |
 | Enumeraciones | 2 |
 | Records | 1 |
-| Métodos públicos (significativos) | 48 |
-| Archivos analizados | 96 |
+| Métodos públicos (significativos) | 45 |
+| Archivos analizados | 93 |
 
 ### Tipos Detectados
 
@@ -308,11 +310,8 @@ Config:
 | 🟦 Cls | `CoverageAreaAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `—` |
 | 🟦 Cls | `DistanceCalculatorAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `calcularDistanciaKm, calcularDistanciaDesdeSede, calcularDistanciaDesdeSede` |
 | 🟦 Cls | `GoogleMapsAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `verifyApiKey` |
-| 🟦 Cls | `ClasificacionEventAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarPaqueteListoParaClasificar` |
 | 🟦 Cls | `EventoPaqueteM2Mapper` | `com.logistics.packages.infrastructure.adapter.messaging` | `—` |
 | 🟦 Cls | `FinanzasEventSqsAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarEstadoFinal` |
-| 🟦 Cls | `NovedadEventAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarNovedadRegistrada` |
-| 🟦 Cls | `PaqueteListoClasificacionSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `procesarPaqueteListoParaClasificacion` |
 | 🟦 Cls | `RutaEventSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `onEventoPaquete` |
 | 🟦 Cls | `RutaSqsAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `enviarSolicitud` |
 | 🟦 Cls | `RutaSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `recibirRespuesta` |
