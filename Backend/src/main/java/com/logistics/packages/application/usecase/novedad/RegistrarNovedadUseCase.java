@@ -4,7 +4,6 @@ import com.logistics.packages.application.ports.EstadoPaqueteFinanzasPublisher;
 import com.logistics.packages.application.ports.NotificacionPort;
 import com.logistics.packages.application.repository.ArchivoStoragePort;
 import com.logistics.packages.application.repository.HistorialEstadoRepository;
-import com.logistics.packages.application.repository.NovedadEventPublisher;
 import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.model.HistorialEstado;
@@ -35,7 +34,6 @@ public class RegistrarNovedadUseCase {
     private final PaqueteRepository paqueteRepository;
     private final HistorialEstadoRepository historialRepository;
     private final ArchivoStoragePort archivoStoragePort;
-    private final NovedadEventPublisher novedadEventPublisher;
     private final EstadoPaqueteFinanzasPublisher estadoPaqueteFinanzasPublisher;
     private final NotificacionPort notificacionPort;
 
@@ -76,9 +74,6 @@ public class RegistrarNovedadUseCase {
         // 4. Persistir cambios en base de datos
         paqueteRepository.save(paquete);
         historialRepository.guardar(historial);
-
-        // 5. Publicar evento para notificar al Controlador de Novedades (FR-005)
-        novedadEventPublisher.publicarNovedadRegistrada(paquete.getId(), historial.getId());
 
         // FR-002: Enviar notificaciones al remitente y destinatario
         enviarNotificacionesBodega(paquete, novedad.getTipo());
