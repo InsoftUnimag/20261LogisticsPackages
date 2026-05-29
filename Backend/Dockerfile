@@ -1,7 +1,11 @@
-# Stage 1: Build y compilación usando Gradle y Java 21
+# Stage 1: Build y compilación
 FROM gradle:8.5-jdk21-alpine AS build
 COPY --chown=gradle:gradle . /home/gradle/src
 WORKDIR /home/gradle/src
+
+# CRUCIAL: Elimina los caracteres ocultos de Windows (\r) y repara permisos
+RUN sed -i 's/\r$//' gradlew && chmod +x gradlew
+
 RUN ./gradlew clean bootJar -x test
 
 # Stage 2: Runtime ligero de producción
