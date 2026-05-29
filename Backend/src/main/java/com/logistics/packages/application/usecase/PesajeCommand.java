@@ -6,6 +6,7 @@ import com.logistics.packages.domain.valueobject.TipoMercancia;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -30,4 +31,7 @@ public class PesajeCommand {
     private final BigDecimal tarifaPorKm;
     private final BigDecimal recargoTipoMercancia;
     private final BigDecimal recargoCategoriaCarga;
+
+    // Evidencia fotográfica opcional (MOD1-UC-002 FR-004)
+    private final MultipartFile evidencia;
 }

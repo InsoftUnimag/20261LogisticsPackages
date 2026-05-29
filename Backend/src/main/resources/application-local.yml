@@ -8,7 +8,7 @@ spring:
   cloud:
     aws:
       region:
-        static: us-east-1
+        static: us-east-2
       credentials:
         access-key: test
         secret-key: test
@@ -16,6 +16,11 @@ spring:
         endpoint: http://localhost:4566
       s3:
         endpoint: http://localhost:4566
+
+aws:
+  s3:
+    bucket-name: logistics-packages-local
+    auto-create-bucket: true
 
   jpa:
     hibernate:

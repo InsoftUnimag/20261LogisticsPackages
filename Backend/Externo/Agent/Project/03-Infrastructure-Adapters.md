@@ -287,34 +287,36 @@ Config:
 
 ---
 
+---
+
 ## Anexo: Estado de Archivos Actual (infrastructure)
-*Generado automáticamente por sync-agent-docs.py el 2026-05-18 07:01:05 UTC*
+*Generado automáticamente por sync-agent-docs.py el 2026-05-29 16:33:10 UTC*
 
 | Indicador | Valor |
 |---|---|
-| Clases | 68 |
-| Interfaces | 11 |
+| Clases | 78 |
+| Interfaces | 13 |
 | Enumeraciones | 2 |
-| Records | 0 |
-| Métodos públicos (significativos) | 39 |
-| Archivos analizados | 82 |
+| Records | 1 |
+| Métodos públicos (significativos) | 48 |
+| Archivos analizados | 96 |
 
 ### Tipos Detectados
 
 | Tipo | Nombre | Paquete | Métodos públicos |
 |---|---|---|---|
 | 🟦 Cls | `CoverageAreaAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `—` |
-| 🟦 Cls | `DistanceCalculatorAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `calcularDistanciaKm, calcularDistanciaDesdeSede` |
+| 🟦 Cls | `DistanceCalculatorAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `calcularDistanciaKm, calcularDistanciaDesdeSede, calcularDistanciaDesdeSede` |
 | 🟦 Cls | `GoogleMapsAdapter` | `com.logistics.packages.infrastructure.adapter.external` | `verifyApiKey` |
+| 🟦 Cls | `ClasificacionEventAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarPaqueteListoParaClasificar` |
 | 🟦 Cls | `EventoPaqueteM2Mapper` | `com.logistics.packages.infrastructure.adapter.messaging` | `—` |
 | 🟦 Cls | `FinanzasEventSqsAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarEstadoFinal` |
 | 🟦 Cls | `NovedadEventAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarNovedadRegistrada` |
 | 🟦 Cls | `PaqueteListoClasificacionSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `procesarPaqueteListoParaClasificacion` |
-| 🟦 Cls | `RutaEventAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `publicarSolicitudRuta` |
 | 🟦 Cls | `RutaEventSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `onEventoPaquete` |
 | 🟦 Cls | `RutaSqsAdapter` | `com.logistics.packages.infrastructure.adapter.messaging` | `enviarSolicitud` |
 | 🟦 Cls | `RutaSqsListener` | `com.logistics.packages.infrastructure.adapter.messaging` | `recibirRespuesta` |
-| 🟦 Cls | `MockNotificacionAdapter` | `com.logistics.packages.infrastructure.adapter.notification` | `enviarSms, enviarEmail, enviar` |
+| 🟦 Cls | `JavaMailNotificacionAdapter` | `com.logistics.packages.infrastructure.adapter.notification` | `enviarSms, enviarEmail, enviar` |
 | 🟦 Cls | `EventoProcesadoEntity` | `com.logistics.packages.infrastructure.adapter.persistence.eventoprocesado` | `—` |
 | 🟦 Cls | `EventoProcesadoJpaAdapter` | `com.logistics.packages.infrastructure.adapter.persistence.eventoprocesado` | `guardar, yaFueProcesado` |
 | 🟩 Int | `EventoProcesadoJpaRepository` | `com.logistics.packages.infrastructure.adapter.persistence.eventoprocesado` | `—` |
@@ -327,7 +329,12 @@ Config:
 | 🟩 Int | `PaqueteJpaRepository` | `com.logistics.packages.infrastructure.adapter.persistence.paquete` | `—` |
 | 🟩 Int | `PaqueteMapper` | `com.logistics.packages.infrastructure.adapter.persistence.paquete` | `—` |
 | 🟦 Cls | `PersonaDbo` | `com.logistics.packages.infrastructure.adapter.persistence.persona` | `—` |
+| 🟩 Int | `PersonaJpaRepository` | `com.logistics.packages.infrastructure.adapter.persistence.persona` | `—` |
 | 🟩 Int | `PersonaMapper` | `com.logistics.packages.infrastructure.adapter.persistence.persona` | `—` |
+| 🟦 Cls | `SedeDbo` | `com.logistics.packages.infrastructure.adapter.persistence.sede` | `—` |
+| 🟦 Cls | `SedeJpaAdapter` | `com.logistics.packages.infrastructure.adapter.persistence.sede` | `—` |
+| 🟩 Int | `SedeJpaRepository` | `com.logistics.packages.infrastructure.adapter.persistence.sede` | `—` |
+| 🔷 Abs | `SedeMapper` | `com.logistics.packages.infrastructure.adapter.persistence.sede` | `toDomain, toDbo` |
 | 🟦 Cls | `UsuarioEntity` | `com.logistics.packages.infrastructure.adapter.persistence.usuario` | `—` |
 | 🟦 Cls | `UsuarioJpaAdapter` | `com.logistics.packages.infrastructure.adapter.persistence.usuario` | `save, existsByUsername` |
 | 🟩 Int | `UsuarioJpaRepository` | `com.logistics.packages.infrastructure.adapter.persistence.usuario` | `—` |
@@ -340,10 +347,12 @@ Config:
 | 🟦 Cls | `ZonaDestinoJpaAdapter` | `com.logistics.packages.infrastructure.adapter.persistence.zonadestino` | `save` |
 | 🟩 Int | `ZonaDestinoJpaRepository` | `com.logistics.packages.infrastructure.adapter.persistence.zonadestino` | `—` |
 | 🟩 Int | `ZonaDestinoMapper` | `com.logistics.packages.infrastructure.adapter.persistence.zonadestino` | `—` |
-| 🟦 Cls | `S3ArchivoStorageAdapter` | `com.logistics.packages.infrastructure.adapter.storage` | `guardar` |
+| 🟦 Cls | `S3ArchivoStorageAdapter` | `com.logistics.packages.infrastructure.adapter.storage` | `guardar, eliminar, obtenerUrlFirmada` |
 | 🟦 Cls | `CorsConfig` | `com.logistics.packages.infrastructure.config` | `addCorsMappings` |
 | 🟦 Cls | `OpenApiConfig` | `com.logistics.packages.infrastructure.config` | `logisticsPackagesOpenAPI` |
 | 🟦 Cls | `RestTemplateConfig` | `com.logistics.packages.infrastructure.config` | `restTemplate` |
+| 🟦 Cls | `S3BucketInitializer` | `com.logistics.packages.infrastructure.config` | `run` |
+| 🟦 Cls | `TarifasConfigProperties` | `com.logistics.packages.infrastructure.config` | `—` |
 | 🟦 Cls | `AdmisionController` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `AlmacenajeController` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `AuthController` | `com.logistics.packages.infrastructure.controller` | `—` |
@@ -351,6 +360,7 @@ Config:
 | 🟦 Cls | `GlobalExceptionHandler` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `NovedadController` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `PesajeController` | `com.logistics.packages.infrastructure.controller` | `—` |
+| 🟪 Rec | `SedeResponseDto` | `com.logistics.packages.infrastructure.controller` | `—` |
 | 🟦 Cls | `ApiError` | `com.logistics.packages.infrastructure.dto` | `—` |
 | 🟦 Cls | `EventoFinancieroPaqueteDto` | `com.logistics.packages.infrastructure.dto.event` | `—` |
 | 🔷 Abs | `EventoPaqueteM2Dto` | `com.logistics.packages.infrastructure.dto.event` | `—` |
@@ -362,8 +372,10 @@ Config:
 | 🟦 Cls | `ParadasSinGestionarEvento` | `com.logistics.packages.infrastructure.dto.event` | `—` |
 | 🟦 Cls | `AsignarZonaRequest` | `com.logistics.packages.infrastructure.dto.request` | `tieneDiscrepancias` |
 | 🟦 Cls | `ConfirmarZonaRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
+| 🟦 Cls | `CoordenadasUpdateRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
 | 🟦 Cls | `DatosFisicosDiscrepanciaDto` | `com.logistics.packages.infrastructure.dto.request` | `—` |
 | 🟦 Cls | `LoginRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
+| 🟦 Cls | `PersonaRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
 | 🟦 Cls | `PesajeRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
 | 🟦 Cls | `RegisterRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
 | 🟦 Cls | `RegistroAdmisionRequest` | `com.logistics.packages.infrastructure.dto.request` | `—` |
@@ -373,16 +385,19 @@ Config:
 | 🟦 Cls | `ClasificacionSugeridaResponseDTO` | `com.logistics.packages.infrastructure.dto.response` | `—` |
 | 🟦 Cls | `ConfirmacionClasificacionResponse` | `com.logistics.packages.infrastructure.dto.response` | `—` |
 | 🟦 Cls | `ConsultaPaqueteResponse` | `com.logistics.packages.infrastructure.dto.response` | `—` |
+| 🟦 Cls | `HistorialEstadoItemDto` | `com.logistics.packages.infrastructure.dto.response` | `—` |
 | 🟦 Cls | `JwtResponse` | `com.logistics.packages.infrastructure.dto.response` | `—` |
 | 🟦 Cls | `PaqueteListadoResponse` | `com.logistics.packages.infrastructure.dto.response` | `fromDomain` |
 | 🟦 Cls | `PesajeResponseDto` | `com.logistics.packages.infrastructure.dto.response` | `agregarAlertaSiAplica` |
 | 🟦 Cls | `RegistroAdmisionResponse` | `com.logistics.packages.infrastructure.dto.response` | `—` |
 | 🟦 Cls | `RegistroNovedadResponseDto` | `com.logistics.packages.infrastructure.dto.response` | `—` |
 | 🟦 Cls | `RespuestaRutaPayload` | `com.logistics.packages.infrastructure.dto.response` | `—` |
+| 🟦 Cls | `TrackingPaqueteResponse` | `com.logistics.packages.infrastructure.dto.response` | `—` |
 | 🟦 Cls | `SqsCommunicationException` | `com.logistics.packages.infrastructure.exception` | `—` |
+| 🟦 Cls | `for` | `com.logistics.packages.infrastructure.messaging.consumers` | `merge` |
 | 🟦 Cls | `CustomUserDetailsService` | `com.logistics.packages.infrastructure.security` | `loadUserByUsername` |
 | 🟦 Cls | `DataInitializer` | `com.logistics.packages.infrastructure.security` | `run` |
 | 🟦 Cls | `JwtAuthenticationFilter` | `com.logistics.packages.infrastructure.security` | `—` |
 | 🟦 Cls | `JwtTokenProvider` | `com.logistics.packages.infrastructure.security` | `generateToken, validateToken` |
-| 🟦 Cls | `SecurityConfig` | `com.logistics.packages.infrastructure.security` | `filterChain, authenticationManager, passwordEncoder` |
+| 🟦 Cls | `SecurityConfig` | `com.logistics.packages.infrastructure.security` | `filterChain, authenticationManager, passwordEncoder, corsConfigurationSource` |
 | 🟦 Cls | `S3Service` | `com.logistics.packages.infrastructure.services` | `listBuckets` |

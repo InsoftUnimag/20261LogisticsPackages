@@ -9,6 +9,8 @@ import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.model.Sede;
 import com.logistics.packages.domain.valueobject.*;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
 
+    private static final Logger log = LoggerFactory.getLogger(RegistrarAdmisionUseCase.class);
+
     private final PaqueteRepository paqueteRepository;
     private final GeocodingService geocodingService;
     private final SolicitarRutaUseCase solicitarRutaUseCase;
@@ -29,6 +33,7 @@ public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
     private final DistanceService distanceService;
     private final HistorialEstadoRepository historialEstadoRepository;
     private final SedeRepository sedeRepository;
+    private final ArchivoStoragePort archivoStoragePort;
     
     @Override
     public UUID registrarAdmision(RegistroAdmisionCommand command) {
@@ -79,6 +84,16 @@ public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
 
             Paquete saved = paqueteRepository.save(paquete);
             
+            // Subir evidencia fotográfica si se proporcionó
+            String urlEvidencia = null;
+            if (command.evidencia() != null && !command.evidencia().isEmpty()) {
+                urlEvidencia = archivoStoragePort.guardar(
+                    "admision",
+                    saved.getId().toString(),
+                    command.evidencia()
+                );
+            }
+
             // Registrar en el historial la transición inicial: RECIBIDO_EN_SEDE
             // Bug Fix: Usar usuarioId del comando en lugar del hardcodeado SISTEMA_ID
             HistorialEstado historialInicial = new HistorialEstado(
@@ -87,7 +102,7 @@ public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
                     saved.getEstado(), // RECIBIDO_EN_SEDE
                     "Paquete recibido en sede",
                     command.usuarioId(),
-                    null // Sin evidencia para admisión
+                    urlEvidencia
             );
             historialEstadoRepository.guardar(historialInicial);
 

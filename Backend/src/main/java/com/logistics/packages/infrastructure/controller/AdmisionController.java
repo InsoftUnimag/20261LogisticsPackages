@@ -24,8 +24,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.logistics.packages.application.ports.UsuarioRepository;
 
@@ -54,8 +56,10 @@ public class AdmisionController {
     @ApiResponse(responseCode = "200", description = "Paquete registrado exitosamente")
     @ApiResponse(responseCode = "400", description = "Error de validación en los datos de entrada")
     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
-    @PostMapping("/admision")
-    public ResponseEntity<RegistroAdmisionResponse> registrarAdmision(@Valid @RequestBody RegistroAdmisionRequest request) {
+    @PostMapping(value = "/admision", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<RegistroAdmisionResponse> registrarAdmision(
+            @Valid @ModelAttribute RegistroAdmisionRequest request,
+            @RequestParam(required = false) MultipartFile evidencia) {
         // FIX Bug 7: Mapear explícitamente PersonaRequest → Persona
         com.logistics.packages.domain.model.Persona remitente = request.getRemitente() != null ?
                 com.logistics.packages.domain.model.Persona.builder()
@@ -99,6 +103,7 @@ public class AdmisionController {
                 .ancho(request.getAncho())
                 .alto(request.getAlto())
                 .usuarioId(usuarioId)
+                .evidencia(evidencia)
                 .build();
 
         UUID paqueteId = registrarAdmisionIn.registrarAdmision(command);

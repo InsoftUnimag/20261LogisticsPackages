@@ -10,7 +10,7 @@ spring:
       baseline-on-migrate: true
     aws:
       region:
-        static: us-east-1
+        static: us-east-2
       credentials:
         access-key: test
         secret-key: test
@@ -19,6 +19,8 @@ spring:
 
 # Queue names for M1-M2 SQS communication
 aws:
+  s3:
+    bucket-name: logistics-packages
   sqs:
     ruta-request-queue: solicitudes-ruta-queue
     ruta-response-queue: respuestas-ruta-queue

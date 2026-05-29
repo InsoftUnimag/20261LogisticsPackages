@@ -22,8 +22,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Controlador REST para el procesamiento de pesaje de paquetes (MOD1-UC-002)
@@ -54,8 +56,10 @@ public class PesajeController {
     @ApiResponse(responseCode = "200", description = "Pesaje procesado exitosamente con precio calculado")
     @ApiResponse(responseCode = "400", description = "Error de validación en los datos de pesaje")
     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
-    @PostMapping("/pesaje")
-    public ResponseEntity<PesajeResponseDto> procesarPesaje(@Valid @RequestBody PesajeRequest request) {
+    @PostMapping(value = "/pesaje", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<PesajeResponseDto> procesarPesaje(
+            @Valid @ModelAttribute PesajeRequest request,
+            @RequestParam(required = false) MultipartFile evidencia) {
         log.info("Procesando pesaje para paquete ID: {}", request.getPaqueteId());
         
         try {
@@ -112,6 +116,7 @@ public class PesajeController {
                      .tarifaPorKm(tarifaPorKm)
                      .recargoTipoMercancia(recargoMercancia)
                      .recargoCategoriaCarga(tarifasConfig.getRecargoCargaEspecial())
+                     .evidencia(evidencia)
                      .build();
             
             // Ejecutar el caso de uso

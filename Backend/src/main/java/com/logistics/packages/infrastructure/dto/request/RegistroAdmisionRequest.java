@@ -5,7 +5,10 @@ import com.logistics.packages.domain.valueobject.MetodoPago;
 import com.logistics.packages.domain.valueobject.TipoMercancia;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -15,6 +18,9 @@ import java.util.UUID;
  * Permite que Jackson deserialice correctamente los datos HTTP.
  */
 @Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class RegistroAdmisionRequest {
     @NotNull
     @Schema(description = "ID de la sede donde se registra el paquete")

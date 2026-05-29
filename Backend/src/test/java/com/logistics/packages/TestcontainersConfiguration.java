@@ -37,5 +37,8 @@ class TestcontainersConfiguration {
         registry.add("spring.cloud.aws.credentials.access-key", localstackContainer()::getAccessKey);
         registry.add("spring.cloud.aws.credentials.secret-key", localstackContainer()::getSecretKey);
         registry.add("spring.cloud.aws.region.static", localstackContainer()::getRegion);
+        registry.add("spring.cloud.aws.s3.endpoint", () -> localstackContainer().getEndpoint().toString());
+        registry.add("spring.cloud.aws.s3.path-style-access-enabled", () -> "true");
+        registry.add("aws.s3.bucket-name", () -> "logistics-packages-test");
     }
 }

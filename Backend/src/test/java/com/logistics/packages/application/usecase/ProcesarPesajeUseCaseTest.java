@@ -1,6 +1,8 @@
 package com.logistics.packages.application.usecase;
 
 import com.logistics.packages.application.ports.EventoProcesadoRepository;
+import com.logistics.packages.application.repository.ArchivoStoragePort;
+import com.logistics.packages.application.repository.HistorialEstadoRepository;
 import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.domain.event.SolicitudRutaEvent;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
@@ -40,6 +42,12 @@ class ProcesarPesajeUseCaseTest {
 
     @Mock
     private EventoProcesadoRepository eventoProcesadoRepository;
+
+    @Mock
+    private ArchivoStoragePort archivoStoragePort;
+
+    @Mock
+    private HistorialEstadoRepository historialEstadoRepository;
 
     @InjectMocks
     private ProcesarPesajeUseCase procesarPesajeUseCase;
