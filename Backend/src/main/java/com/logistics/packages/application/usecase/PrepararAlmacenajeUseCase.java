@@ -1,10 +1,10 @@
 package com.logistics.packages.application.usecase;
 
-import com.logistics.packages.application.ports.ClasificacionEventPublisher;
 import com.logistics.packages.application.repository.HistorialEstadoRepository;
 import com.logistics.packages.application.repository.PaqueteRepository;
 import com.logistics.packages.application.repository.PrepararAlmacenajeIn;
 import com.logistics.packages.application.repository.ZonaAlmacenajeRepository;
+import com.logistics.packages.application.usecase.ClasificarPaqueteUseCase;
 import com.logistics.packages.domain.exception.PaqueteNotFoundException;
 import com.logistics.packages.domain.exception.ZonaAlmacenajeNotFoundException;
 import com.logistics.packages.domain.exception.ZonaIncompatibleException;
@@ -40,7 +40,7 @@ public class PrepararAlmacenajeUseCase implements PrepararAlmacenajeIn {
 
     private final PaqueteRepository paqueteRepository;
     private final ZonaAlmacenajeRepository zonaAlmacenajeRepository;
-    private final ClasificacionEventPublisher clasificacionEventPublisher;
+    private final ClasificarPaqueteUseCase clasificarPaqueteUseCase;
     private final HistorialEstadoRepository historialEstadoRepository;
     
     // ID del sistema para registros de transiciones automáticas
@@ -115,8 +115,8 @@ public class PrepararAlmacenajeUseCase implements PrepararAlmacenajeIn {
         log.info("Paquete {} asignado a zona {} con estado EN_CLASIFICACION", 
                 paquete.getId(), zona.getNombre());
 
-        // 8. FR-009: Publicar evento para iniciar clasificación
-        clasificacionEventPublisher.publicarPaqueteListoParaClasificar(paquete.getId());
-        log.info("Evento de clasificación publicado para paquete: {}", paquete.getId());
+        // 8. FR-009: Invocar clasificación directamente (reemplaza SQS interno)
+        ClasificacionSugeridaResponse sugerencia = clasificarPaqueteUseCase.sugerirZonaParaPaquete(paquete.getId());
+        log.info("Clasificación sugerida para paquete {}: zona {}", paquete.getId(), sugerencia.getNombreZona());
     }
 }
