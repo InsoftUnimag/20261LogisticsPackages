@@ -31,7 +31,7 @@ app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   geocoding:
-    api-key: ${GOOGLE_MAPS_API_KEY:}
+    api-key: AIzaSyAprQ3JrOi-3R7g3YErN0xApWs694RLSNA
     timeout-ms: 5000
   coverage:
     latitud-min: 4.0

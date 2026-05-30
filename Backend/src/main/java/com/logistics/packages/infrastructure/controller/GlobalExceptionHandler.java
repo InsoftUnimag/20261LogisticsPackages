@@ -154,6 +154,13 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "COBERTURA_INVALIDA", ex.getMessage());
     }
 
+    @ExceptionHandler(TimeoutGeocodingException.class)
+    public ResponseEntity<ApiError> handleTimeoutGeocoding(TimeoutGeocodingException ex) {
+        log.warn("Timeout en geocoding: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.ACCEPTED, "GPS_PENDIENTE", 
+            "Geolocalización no disponible. El paquete fue registrado con GPS pendiente para ingreso manual de coordenadas.");
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGenericException(Exception ex) {
         log.error("Error inesperado: ", ex);

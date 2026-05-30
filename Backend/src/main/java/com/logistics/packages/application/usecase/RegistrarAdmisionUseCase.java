@@ -4,6 +4,7 @@ import com.logistics.packages.application.ports.SedeRepository;
 import com.logistics.packages.application.repository.*;
 import com.logistics.packages.domain.event.SolicitudRutaEvent;
 import com.logistics.packages.domain.exception.InvalidCoverageException;
+import com.logistics.packages.domain.exception.TimeoutGeocodingException;
 import com.logistics.packages.domain.model.HistorialEstado;
 import com.logistics.packages.domain.model.Paquete;
 import com.logistics.packages.domain.model.Sede;
@@ -38,14 +39,23 @@ public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
     @Override
     public UUID registrarAdmision(RegistroAdmisionCommand command) {
         Coordenadas coordenadas = null;
+        boolean geolocalizacionFallo = false;
 
         if (command.coordenadasManuales() != null) {
             coordenadas = command.coordenadasManuales();
         } else {
-            Optional<Coordenadas> coordenadasOpt = geocodingService.localizar(command.direccionDestino());
-            coordenadas = coordenadasOpt.orElse(null);
+            try {
+                Optional<Coordenadas> coordenadasOpt = geocodingService.localizar(command.direccionDestino());
+                coordenadas = coordenadasOpt.orElse(null);
+            } catch (TimeoutGeocodingException e) {
+                // FE-5 + Contingencia GPS: Si hay timeout, registrar paquete con GPS PENDIENTE
+                log.warn("Timeout en geocoding para dirección: {}. Paquete será registrado con GPS PENDIENTE", 
+                    command.direccionDestino().getDireccionCompleta(), e);
+                geolocalizacionFallo = true;
+            }
         }
 
+        // Si hay coordenadas válidas Y están dentro de cobertura, proceder normalmente
         if (coordenadas != null && coverageService.isWithinCoverage(coordenadas)) {
             UUID paqueteId = UUID.randomUUID();
             Paquete paquete = Paquete.crearNuevo(
@@ -111,6 +121,53 @@ public class RegistrarAdmisionUseCase implements RegistrarAdmisionIn {
                 solicitarRutaUseCase.handle(evento);
             }
 
+            return saved.getId();
+        }
+
+        // Si falló la geolocalización (timeout) o no hay coordenadas, crear paquete con GPS PENDIENTE
+        if (geolocalizacionFallo || coordenadas == null) {
+            UUID paqueteId = UUID.randomUUID();
+            Paquete paquete = Paquete.crearNuevo(
+                    paqueteId,
+                    command.sedeId(),
+                    command.direccionDestino(),
+                    command.valorDeclarado(),
+                    command.metodoPago(),
+                    command.remitente(),
+                    command.destinatario(),
+                    command.tipoMercancia(),
+                    command.indicadorFormaIrregular()
+            );
+            // NO asignar coordenadas → quedará con estadoGps = PENDIENTE
+
+            Paquete saved = paqueteRepository.save(paquete);
+            
+            // Subir evidencia fotográfica si se proporcionó
+            String urlEvidencia = null;
+            if (command.evidencia() != null && !command.evidencia().isEmpty()) {
+                urlEvidencia = archivoStoragePort.guardar(
+                    "admision",
+                    saved.getId().toString(),
+                    command.evidencia()
+                );
+            }
+
+            // Registrar en el historial: Paquete recibido con GPS PENDIENTE
+            String motivo = geolocalizacionFallo 
+                ? "Paquete recibido con geolocalización pendiente (timeout en servicio)"
+                : "Paquete recibido con geolocalización no disponible";
+            
+            HistorialEstado historialInicial = new HistorialEstado(
+                    saved.getId(),
+                    null,
+                    saved.getEstado(), // RECIBIDO_EN_SEDE
+                    motivo,
+                    command.usuarioId(),
+                    urlEvidencia
+            );
+            historialEstadoRepository.guardar(historialInicial);
+
+            log.info("Paquete {} registrado con GPS PENDIENTE. Operador debe ingresar coordenadas manualmente.", saved.getId());
             return saved.getId();
         }
 
